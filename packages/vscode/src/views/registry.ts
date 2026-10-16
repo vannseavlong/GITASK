@@ -1,6 +1,7 @@
 // View registry. Adding a view = one new file under src/views/ exporting a ViewDef
 // + one line in VIEWS below. Pure module: no `vscode` import.
 import board from "./board.ts";
+import overview from "./overview.ts";
 
 /**
  * A view runs in the webview. `js` is client-side source (a string) that must call
@@ -28,7 +29,7 @@ export const VIEWS: readonly ViewDef[] = [
   board,
   placeholder("list", "List"),
   placeholder("timeline", "Timeline"),
-  placeholder("overview", "Overview"),
+  overview,
 ];
 
 export const DEFAULT_VIEW = "board";

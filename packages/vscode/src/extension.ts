@@ -25,7 +25,8 @@ async function post(): Promise<void> {
   if (!panel || !dir) return;
   try {
     const board = await loadBoard(dir);
-    send({ type: "board", board });
+    const staleDays = vscode.workspace.getConfiguration("gitask").get<number>("staleDays", 14);
+    send({ type: "board", board: { ...board, settings: { staleDays } } });
   } catch (e) {
     send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
   }
