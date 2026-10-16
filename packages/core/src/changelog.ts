@@ -1,3 +1,4 @@
+import { localDate } from "./date.ts";
 import { readFile, writeFile } from "node:fs/promises";
 import { relative } from "node:path";
 import { parseTask } from "./parse.ts";
@@ -12,7 +13,7 @@ export interface ChangelogOptions {
 /** Build the entry text for a task, following the format in `Tasks/README.md`. */
 export function changelogEntry(content: string, absPath: string, opts: ChangelogOptions): string {
   const t = parseTask(absPath, "", content);
-  const date = opts.date ?? new Date().toISOString().slice(0, 10);
+  const date = opts.date ?? localDate();
   const branch = t.fields["branch"] ?? t.fields["worktree"]?.match(/Branch:\*\*\s*(\S+)/)?.[1];
   const lines = [
     `## ${date} · [${t.prefix || "Cross"}] ${opts.type ?? "feat"}: ${t.title}`,

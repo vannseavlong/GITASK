@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { localDate } from "../src/date.ts";
 import { parseTask, loadBoard, moveTask, createTask, bumpUpdated, appendChangelog } from "../src/index.ts";
 
 const TASK = `# Core-demo
@@ -121,4 +122,8 @@ test("appendChangelog is idempotent and inserts above older entries", async () =
   assert.match(log, /- Task: Tasks\/2-todo\/Core-demo\.md/);
   assert.match(log, /- What changed: Make a demo\./);
   assert.equal(log.match(/^## /gm)?.length, 1);
+});
+
+test("localDate uses local calendar fields", () => {
+  assert.equal(localDate(new Date(2026, 9, 17, 0, 30)), "2026-10-17"); // 00:30 local is still the 17th
 });

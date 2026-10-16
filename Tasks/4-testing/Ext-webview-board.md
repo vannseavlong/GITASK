@@ -16,3 +16,7 @@ Kanban webview with drag-and-drop, open file, new task, file watcher, settings.
 ## Done when
 - [ ] Tests for new logic pass
 - [ ] Root CHANGELOG.md entry added
+
+## Gate notes
+- G2 typecheck and G3 core tests pass; extension builds and packages to a .vsix.
+- G4 NOT done: the webview has not been run in a real VS Code window (F5). Do this before moving to 5-done.

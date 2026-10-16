@@ -1,3 +1,4 @@
+import { localDate } from "./date.ts";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { columnLabel } from "./board.ts";
@@ -18,7 +19,6 @@ export interface MoveResult {
   committed: boolean;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
 
 /** Rewrite the second date of `Started / updated: a / b` to `date`. Leaves other formats alone. */
 export function bumpUpdated(content: string, date: string): string {
@@ -50,7 +50,7 @@ export async function moveTask(
   if (useGit) await gitMv(root!, from, to);
   else await rename(from, to);
 
-  const updated = bumpUpdated(await readFile(to, "utf8"), opts.today ?? today());
+  const updated = bumpUpdated(await readFile(to, "utf8"), opts.today ?? localDate());
   await writeFile(to, updated);
 
   let committed = false;

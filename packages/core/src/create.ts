@@ -1,3 +1,4 @@
+import { localDate } from "./date.ts";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -35,7 +36,7 @@ export async function createTask(
   const exists = await access(dest).then(() => true, () => false);
   if (exists) throw new Error(`Task already exists: ${dest}`);
 
-  const date = opts.today ?? new Date().toISOString().slice(0, 10);
+  const date = opts.today ?? localDate();
   const owner = opts.owner ?? "Owner";
   let body: string;
   try {
