@@ -46,3 +46,9 @@ Tokens, publisher, namespace and the `release` environment: [setupguide.md](setu
 
 ## Develop
 pnpm 11 (pinned by `packageManager`), Node 24. `pnpm install`, `pnpm test`, `pnpm typecheck`, `pnpm build`, `pnpm package`.
+
+## Dependency audit
+Check with `pnpm audit` (also `--prod`; in this monorepo it still reports `packages/web`, which is built, not published). Fixes for transitive packages live as `overrides` in `pnpm-workspace.yaml`; drop an override once the parent package requires a patched version itself.
+
+Open advisory (reviewed 2026-10-17):
+- `braces` 3.0.3, high, GHSA-vfj7-8cjw-p6xm (ReDoS on huge brace patterns). The advisory lists `>=3.0.4` as patched but no such version is on npm (latest is 3.0.3), so it cannot be overridden. It comes only from build-time tools (`@vscode/vsce` via secretlint, and Docusaurus in `packages/web`) that run on our own files; nothing ships in the `.vsix` or the `gitask-cli` bundle. Accepted; re-check when `pnpm audit` shows a patched release.
