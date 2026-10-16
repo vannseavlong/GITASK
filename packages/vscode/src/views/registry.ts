@@ -2,6 +2,7 @@
 // + one line in VIEWS below. Pure module: no `vscode` import.
 import board from "./board.ts";
 import overview from "./overview.ts";
+import list from "./list.ts";
 
 /**
  * A view runs in the webview. `js` is client-side source (a string) that must call
@@ -27,7 +28,7 @@ export function placeholder(id: string, label: string): ViewDef {
 /** Tab order. Replace a `placeholder(...)` line with `import x from "./x.ts"` when its view lands. */
 export const VIEWS: readonly ViewDef[] = [
   board,
-  placeholder("list", "List"),
+  list,
   placeholder("timeline", "Timeline"),
   overview,
 ];
