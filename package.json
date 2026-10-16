@@ -1,7 +1,7 @@
 {
   "name": "gitask-monorepo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc -p packages/core && tsc -p packages/cli && tsc -p packages/vscode",
