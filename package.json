@@ -3,20 +3,18 @@
   "private": true,
   "version": "0.1.0",
   "license": "MIT",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "typecheck": "tsc -p packages/core && tsc -p packages/cli && tsc -p packages/vscode",
     "test": "node --test packages/core/test/*.test.ts",
-    "build": "npm run build -w gitask-cli -w gitask-vscode",
-    "package": "npm run package -w gitask-vscode"
+    "build": "pnpm --filter gitask-cli --filter gitask-vscode run build",
+    "package": "pnpm --filter gitask-vscode run package"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/vscode": "^1.85.0",
-    "@vscode/vsce": "^3.0.0",
-    "esbuild": "^0.25.0",
     "typescript": "^5.6.0"
+  },
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22"
   }
 }

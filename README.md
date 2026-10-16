@@ -34,16 +34,20 @@ The H1 is the title; `- **Key:** value` lines above the first `##` are the field
 ## Develop
 
 ```bash
-npm install
-npm test            # core tests run against real temporary git repos
-npm run typecheck
-npm run build       # CLI to packages/cli/dist, extension to packages/vscode/dist
-npm run package     # .vsix in packages/vscode/
+pnpm install
+pnpm test            # core tests run against real temporary git repos
+pnpm typecheck
+pnpm build       # CLI to packages/cli/dist, extension to packages/vscode/dist
+pnpm package     # .vsix in packages/vscode/
 ```
 
 Try the extension: open this folder in VS Code, press F5 on `packages/vscode` (Run Extension), then run **GITASK: Open Board**.
 
 CLI: `node packages/cli/dist/gitask.js board --dir Tasks`
+
+## Release
+
+Push a `vX.Y.Z` tag and CI publishes the CLI to npm and the extension to the VS Code Marketplace and Open VSX. See `Docs/architecture/release.md`.
 
 ## Behaviour to know
 

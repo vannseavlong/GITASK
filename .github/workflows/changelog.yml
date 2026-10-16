@@ -11,9 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 2 }
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 24 }
-      - run: npm ci && npm run build -w gitask-cli
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile && pnpm --filter gitask-cli run build
       - name: Add entries for newly added done tasks
         run: |
           for f in $(git diff --name-only --diff-filter=AR HEAD~1 HEAD -- 'Tasks/5-done/*.md'); do

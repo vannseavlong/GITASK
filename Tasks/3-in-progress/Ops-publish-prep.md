@@ -14,12 +14,15 @@
 CI/CD release on a `v*` tag (same pattern as longcelot-sheet-staging): test, then publish `gitask-cli` to npm, and the extension to VS Code Marketplace + Open VSX, attach the .vsix to a GitHub Release. Switch dev to pnpm. Real publisher id, repo URL, icon, screenshot/GIF in README, then publish to VS Code Marketplace and Open VSX (needs the owner's accounts and tokens; do not publish without owner approval).
 
 ## Gates (copy the rows your tier needs; write `Skipped Gn: reason` if you skip one)
-- [ ] G1 scope  - [ ] G2 static  - [ ] G3 tests  - [ ] G4 run it
-- [ ] G5 code review  - [ ] G6 security  - [ ] G7 docs sync
+- [x] G1 scope  - [x] G2 static  - [x] G3 tests  - [x] G4 run it (pnpm package, npm pack dry run, built CLI `help`; release.yml itself not run until a tag is pushed)
+- [ ] G5 code review  - [ ] G6 security  - [x] G7 docs sync (Docs/architecture/release.md, README, CLAUDE.md)
 - [ ] G8 PR message  - [ ] G9 human review  - [ ] G10 release plan  - [ ] G11 changelog
 
 ## Done when
 - [ ] Owner confirms publisher name
-- [ ] package.json publisher and repository fixed
+- [x] package.json publisher and repository fixed (publisher assumed `vannseavlong`, owner to confirm)
+- [ ] Secrets set: NPM_TOKEN, VSCE_PAT, OVSX_PAT; environment `release` created
+- [ ] Extension icon + screenshot/GIF in README (Marketplace listing)
+- [ ] G5 code review and G6 security review by a fresh agent
 - [ ] Release plan (G10) written
 - [ ] Owner approves publish

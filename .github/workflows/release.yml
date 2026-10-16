@@ -1,0 +1,73 @@
+# Release on a version tag: git tag v0.1.0 && git push origin v0.1.0
+# Publishes gitask-cli to npm, the extension to VS Code Marketplace and Open VSX,
+# and attaches the .vsix to a GitHub Release. Marketplace steps are skipped until
+# their token secret exists. Secrets: NPM_TOKEN, VSCE_PAT, OVSX_PAT.
+name: release
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.guard.outputs.channel }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - id: guard
+        run: echo "channel=$(node scripts/check-release.mjs "$GITHUB_REF")" >> "$GITHUB_OUTPUT"
+      - run: git config --global user.email ci@example.com && git config --global user.name ci
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  npm:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: release
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm, registry-url: "https://registry.npmjs.org" }
+      - run: pnpm install --frozen-lockfile
+      - name: Publish gitask-cli
+        run: |
+          TAG=latest; [ "${{ needs.verify.outputs.channel }}" = "prerelease" ] && TAG=next
+          pnpm --filter gitask-cli publish --no-git-checks --tag "$TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  extension:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: release
+    permissions: { contents: write }
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      PRE: ${{ needs.verify.outputs.channel == 'prerelease' && '--pre-release' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm package
+      - name: Publish to VS Code Marketplace
+        if: env.VSCE_PAT != ''
+        working-directory: packages/vscode
+        run: pnpm exec vsce publish --packagePath *.vsix $PRE
+      - name: Publish to Open VSX
+        if: env.OVSX_PAT != ''
+        working-directory: packages/vscode
+        run: pnpm dlx ovsx publish *.vsix -p "$OVSX_PAT" $PRE
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packages/vscode/*.vsix
+          generate_release_notes: true
+          prerelease: ${{ needs.verify.outputs.channel == 'prerelease' }}
