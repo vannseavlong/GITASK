@@ -22,7 +22,9 @@ GITASK ships two artifacts (`Docs/architecture/release.md`). Neither is a native
 Native per-OS binaries are not built yet (backlog: `Ops-web-later`).
 
 ## Brand
-Decision: use the portfolio palette, which is the owner's personal brand. The LSDB landing is near-black monochrome (`#030213`); use it only if the owner prefers.
+Superseded 2026-10-17: the visual redesign uses the LSDB look, dark by default with a light theme; see `web-redesign-brief.md`. The table below is the old portfolio palette.
+
+Earlier decision: use the portfolio palette, which is the owner's personal brand. The LSDB landing is near-black monochrome (`#030213`); use it only if the owner prefers.
 
 | Token | Value | Source |
 |---|---|---|
