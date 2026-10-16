@@ -9,6 +9,7 @@
 export const MARKDOWN_JS = String.raw`
 const GITASK_MD = (function () {
   const MAX_TEXT = 262144;     // characters parsed per document
+  const MAX_LINE = 4000;       // characters kept per line
   const MAX_BLOCKS = 4000;
   const MAX_INLINE = 4000;     // characters parsed per inline run
   const MAX_BUDGET = 400000;   // inline characters per document
@@ -108,7 +109,7 @@ const GITASK_MD = (function () {
   }
 
   const RE_FENCE = /^\s{0,3}(\x60{3,}|~{3,})\s*([\w+#.-]*)/;
-  const RE_HEAD = /^\s{0,3}(#{1,6})\s+(.*?)(?:\s+#+)?\s*$/;
+  const RE_HEAD = /^\s{0,3}(#{1,6})\s+(.*)$/; // trailing "###" is stripped by headText, not by the regex (linear time)
   const RE_HR = /^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/;
   const RE_LIST = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/;
   const RE_SEP = /^\s*\|?\s*:?-{1,}:?\s*(?:\|\s*:?-{1,}:?\s*)*\|?\s*$/;
@@ -139,7 +140,8 @@ const GITASK_MD = (function () {
   function parse(text) {
     text = String(text == null ? "" : text);
     if (text.length > MAX_TEXT) text = text.slice(0, MAX_TEXT);
-    const lines = text.split(/\r?\n/);
+    // A very long line must not reach the whole-line regexes; the preview cuts it.
+    const lines = text.split(/\r?\n/).map((l) => (l.length > MAX_LINE ? l.slice(0, MAX_LINE) : l));
     const st = { budget: MAX_BUDGET, checks: false, line: 0, ord: 0 };
     const blocks = [];
     let i = 0;
@@ -169,7 +171,7 @@ const GITASK_MD = (function () {
       m = RE_HEAD.exec(line);
       if (m) {
         st.checks = false;
-        blocks.push({ t: "h", level: m[1].length, c: inline(m[2], st, 0, false), line: i + 1 });
+        blocks.push({ t: "h", level: m[1].length, c: inline(m[2].replace(/\s+#+\s*$/, "").trim(), st, 0, false), line: i + 1 });
         i++; continue;
       }
       if (RE_HR.test(line)) { blocks.push({ t: "hr", line: i + 1 }); i++; continue; }

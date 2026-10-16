@@ -94,7 +94,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         }
         return post(); // always resync so the UI reflects what is on disk
       case "readTask": {
-        const r = await readTaskBody(m.path);
+        const r = await readTaskBody(m.path, dir);
         return send({ type: "taskBody", path: m.path, ...r });
       }
       case "toggleSubtask": {

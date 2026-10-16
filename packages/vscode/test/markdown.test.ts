@@ -136,3 +136,13 @@ test("shipped page: markdown and detail are inlined into the single nonce'd scri
   assert.ok(!/\.innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(|new Function/.test(script));
   new Function(script.replace(/^<script[^>]*>/, "")); // parses
 });
+
+test("long whitespace or hash runs in a heading parse in linear time and closing hashes are dropped", () => {
+  const t0 = Date.now();
+  MD.parse("# a" + " ".repeat(200000) + "b");
+  MD.parse("## " + "a #".repeat(50000));
+  assert.ok(Date.now() - t0 < 1000, `took ${Date.now() - t0} ms`);
+  const [h] = MD.parse("## Title ##");
+  assert.equal(h.t, "h");
+  assert.equal(h.c.map((n: any) => n.v ?? "").join(""), "Title");
+});
