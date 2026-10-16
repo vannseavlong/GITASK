@@ -10,7 +10,7 @@ test("registry has the four tabs in order, board built, rest placeholders", () =
   assert.deepEqual(VIEWS.map((v) => v.id), ["board", "list", "timeline", "overview"]);
   assert.deepEqual(VIEWS.map((v) => v.label), ["Board", "List", "Timeline", "Overview"]);
   assert.ok(VIEWS[0].js);
-  for (const v of VIEWS.slice(1)) assert.equal(v.js, undefined);
+  for (const v of VIEWS.slice(1)) if (v.id !== "timeline") assert.equal(v.js, undefined);
   checkViews(VIEWS);
 });
 
