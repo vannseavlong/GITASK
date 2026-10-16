@@ -82,6 +82,8 @@ function renderView(id) {
   try {
     if (!mounted[id]) { impl.mount(pane, api); mounted[id] = true; }
     impl.render(board, api);
+    // A reloaded webview starts with an empty pane, so the scroll saved earlier could not apply yet.
+    if (!pane.hidden) pane.scrollTop = viewState(id).scroll || 0;
   } catch (e) {
     errEl.textContent = "View " + def.label + " failed: " + (e && e.message ? e.message : String(e));
   }
@@ -108,6 +110,14 @@ for (const d of defs) {
   const tab = el("button", "tab", d.label);
   tab.setAttribute("role", "tab");
   tab.addEventListener("click", () => show(d.id, true));
+  tab.addEventListener("keydown", (ev) => {
+    const step = ev.key === "ArrowRight" ? 1 : ev.key === "ArrowLeft" ? -1 : 0;
+    if (!step) return;
+    ev.preventDefault();
+    const next = defs[(defs.findIndex((x) => x.id === d.id) + step + defs.length) % defs.length];
+    show(next.id, true);
+    tabs[next.id].focus();
+  });
   tabs[d.id] = tab;
   tabsEl.append(tab);
   const pane = el("div", "view view-" + d.id);

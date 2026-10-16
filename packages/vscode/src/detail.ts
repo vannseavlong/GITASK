@@ -123,7 +123,7 @@ export const DETAIL_JS = String.raw`
         box.setAttribute("aria-label", st.text);
         box.addEventListener("change", () => {
           box.checked = st.checked; // stay on the true state until the refreshed board arrives
-          post({ type: "toggleSubtask", path: task.path, index: idx });
+          post({ type: "toggleSubtask", path: task.path, index: idx, line: st.line });
         });
         return box;
       },

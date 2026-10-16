@@ -9,7 +9,7 @@ export type WebviewMessage =
   | { type: "open"; path: string }
   | { type: "new"; column?: string }
   | { type: "move"; path: string; to: string }
-  | { type: "toggleSubtask"; path: string; index: number }
+  | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "readTask"; path: string }
   | { type: "view"; id: string };
 
@@ -82,7 +82,9 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (!path) return fail("path is not a task file in the Tasks dir");
       const i = raw.index;
       if (typeof i !== "number" || !Number.isInteger(i) || i < 0 || i > MAX_INDEX) return fail("bad sub-task index");
-      return { ok: true, message: { type: "toggleSubtask", path, index: i } };
+      const line = raw.line;
+      if (typeof line !== "number" || !Number.isInteger(line) || line < 1 || line > MAX_INDEX) return fail("bad sub-task line");
+      return { ok: true, message: { type: "toggleSubtask", path, index: i, line } };
     }
     case "readTask": {
       const path = taskPathInside(raw.path, ctx);

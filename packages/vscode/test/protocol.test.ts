@@ -13,7 +13,7 @@ test("accepts well-formed messages", () => {
   assert.deepEqual(validateMessage({ type: "new" }, ctx), { ok: true, message: { type: "new" } });
   assert.deepEqual(validateMessage({ type: "new", column: "1-backlog" }, ctx), { ok: true, message: { type: "new", column: "1-backlog" } });
   assert.deepEqual(validateMessage({ type: "move", path: ok, to: "3-in-progress" }, ctx), { ok: true, message: { type: "move", path: ok, to: "3-in-progress" } });
-  assert.deepEqual(validateMessage({ type: "toggleSubtask", path: ok, index: 3 }, ctx), { ok: true, message: { type: "toggleSubtask", path: ok, index: 3 } });
+  assert.deepEqual(validateMessage({ type: "toggleSubtask", path: ok, index: 3, line: 7 }, ctx), { ok: true, message: { type: "toggleSubtask", path: ok, index: 3, line: 7 } });
   assert.deepEqual(validateMessage({ type: "view", id: "list" }, ctx), { ok: true, message: { type: "view", id: "list" } });
 });
 
@@ -69,7 +69,10 @@ test("rejects unknown columns", () => {
 
 test("rejects bad sub-task indexes and views", () => {
   for (const index of [-1, 1.5, NaN, Infinity, "1", null, undefined, 1e9]) {
-    assert.equal(validateMessage({ type: "toggleSubtask", path: ok, index }, ctx).ok, false, String(index));
+    assert.equal(validateMessage({ type: "toggleSubtask", path: ok, index, line: 1 }, ctx).ok, false, String(index));
+  }
+  for (const line of [0, -1, 1.5, "2", null, undefined]) {
+    assert.equal(validateMessage({ type: "toggleSubtask", path: ok, index: 0, line }, ctx).ok, false, String(line));
   }
   assert.equal(validateMessage({ type: "view", id: "nope" }, ctx).ok, false);
   assert.equal(validateMessage({ type: "view" }, ctx).ok, false);

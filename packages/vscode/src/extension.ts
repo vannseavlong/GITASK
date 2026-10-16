@@ -101,6 +101,8 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {
           if (!task) throw new Error("task not found");
+          // The webview's index refers to the board it saw; refuse if the file has shifted since.
+          if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
           await toggleSubtask(task, m.index, { commit: cfg.get<boolean>("autoCommit", true) });
         } catch (e) {
           vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);
