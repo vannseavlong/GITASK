@@ -1,4 +1,6 @@
 import { randomBytes } from "node:crypto";
+import { DETAIL_CSS, DETAIL_JS } from "./detail.ts";
+import { MARKDOWN_JS } from "./markdown.ts";
 import { DEFAULT_VIEW, checkViews, type ViewDef } from "./views/registry.ts";
 
 export interface HtmlOptions {
@@ -135,7 +137,8 @@ for (const d of defs) {
 window.addEventListener("message", (ev) => {
   const m = ev.data;
   if (!m || typeof m.type !== "string") return;
-  if (m.type === "board") { board = m.board; errEl.textContent = ""; renderView(current); }
+  if (m.type === "board") { board = m.board; errEl.textContent = ""; renderView(current); if (GITASK.onBoard) GITASK.onBoard(board); }
+  if (GITASK.onHost) GITASK.onHost(m);
   if (m.type === "error") errEl.textContent = String(m.message);
 });
 persist();
@@ -162,7 +165,7 @@ export function webviewHtml(views: readonly ViewDef[], opts: HtmlOptions = {}): 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
 <title>GITASK</title>
-<style nonce="${nonce}">${SHELL_CSS}${css}</style></head>
+<style nonce="${nonce}">${SHELL_CSS}${DETAIL_CSS}${css}</style></head>
 <body>
   <div id="tabs"></div>
   <div id="err" role="alert"></div>
@@ -171,6 +174,8 @@ export function webviewHtml(views: readonly ViewDef[], opts: HtmlOptions = {}): 
 window.__GITASK_VIEWS__ = ${jsonForScript(defs)};
 window.__GITASK_INITIAL__ = ${jsonForScript(initial)};
 ${SHELL_JS}
+${MARKDOWN_JS}
+${DETAIL_JS}
 ${viewJs}
 ${SHELL_START_JS}
 </script></body></html>`;

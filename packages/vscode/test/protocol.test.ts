@@ -74,3 +74,10 @@ test("rejects bad sub-task indexes and views", () => {
   assert.equal(validateMessage({ type: "view", id: "nope" }, ctx).ok, false);
   assert.equal(validateMessage({ type: "view" }, ctx).ok, false);
 });
+
+test("readTask validates the path like open", () => {
+  assert.deepEqual(validateMessage({ type: "readTask", path: ok, x: 1 }, ctx), { ok: true, message: { type: "readTask", path: ok } });
+  for (const bad of [undefined, "", "Tasks/2-todo/x.md", join(tasksDir, "..", "secret.md"), join(tasksDir, "9-nope", "x.md"), join(tasksDir, "2-todo", "x.txt"), join(tasksDir, "2-todo", "sub", "x.md"), ok + "\0"]) {
+    assert.equal(validateMessage({ type: "readTask", path: bad }, ctx).ok, false);
+  }
+});

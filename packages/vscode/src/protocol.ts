@@ -10,11 +10,13 @@ export type WebviewMessage =
   | { type: "new"; column?: string }
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number }
+  | { type: "readTask"; path: string }
   | { type: "view"; id: string };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
   | { type: "board"; board: unknown }
+  | { type: "taskBody"; path: string; text?: string; error?: string }
   | { type: "error"; message: string };
 
 export interface ValidationContext {
@@ -81,6 +83,10 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       const i = raw.index;
       if (typeof i !== "number" || !Number.isInteger(i) || i < 0 || i > MAX_INDEX) return fail("bad sub-task index");
       return { ok: true, message: { type: "toggleSubtask", path, index: i } };
+    }
+    case "readTask": {
+      const path = taskPathInside(raw.path, ctx);
+      return path ? { ok: true, message: { type: "readTask", path } } : fail("path is not a task file in the Tasks dir");
     }
     case "view": {
       if (typeof raw.id !== "string" || !ctx.views.includes(raw.id)) return fail("unknown view");
