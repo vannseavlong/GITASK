@@ -6,11 +6,12 @@ import { VIEWS, checkViews, placeholder, type ViewDef } from "../src/views/regis
 const NONCE = "TESTNONCE123";
 const html = webviewHtml(VIEWS, { nonce: NONCE });
 
-test("registry has the four tabs in order, board built, rest placeholders", () => {
+test("registry has the four tabs in order, board and list built, rest placeholders", () => {
   assert.deepEqual(VIEWS.map((v) => v.id), ["board", "list", "timeline", "overview"]);
   assert.deepEqual(VIEWS.map((v) => v.label), ["Board", "List", "Timeline", "Overview"]);
   assert.ok(VIEWS[0].js);
-  for (const v of VIEWS.slice(1)) assert.equal(v.js, undefined);
+  assert.ok(VIEWS[1].js);
+  for (const v of VIEWS.slice(2)) assert.equal(v.js, undefined);
   checkViews(VIEWS);
 });
 
