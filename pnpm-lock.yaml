@@ -20,6 +20,9 @@ importers:
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12
+      gitask-core:
+        specifier: workspace:*
+        version: link:../core
 
   packages/core: {}
 
@@ -34,6 +37,9 @@ importers:
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12
+      gitask-core:
+        specifier: workspace:*
+        version: link:../core
 
 packages:
 
