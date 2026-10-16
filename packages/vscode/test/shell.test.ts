@@ -9,7 +9,7 @@ const html = webviewHtml(VIEWS, { nonce: NONCE });
 test("registry has the four tabs in order, with a view built for each", () => {
   assert.deepEqual(VIEWS.map((v) => v.id), ["board", "list", "timeline", "overview"]);
   assert.deepEqual(VIEWS.map((v) => v.label), ["Board", "List", "Timeline", "Overview"]);
-  for (const v of VIEWS.filter((x) => x.id !== "timeline")) assert.ok(v.js, v.id);
+  for (const v of VIEWS) assert.ok(v.js, v.id);
   checkViews(VIEWS);
 });
 

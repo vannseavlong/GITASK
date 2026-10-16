@@ -3,6 +3,7 @@
 import board from "./board.ts";
 import overview from "./overview.ts";
 import list from "./list.ts";
+import timeline from "./timeline.ts";
 
 /**
  * A view runs in the webview. `js` is client-side source (a string) that must call
@@ -29,7 +30,7 @@ export function placeholder(id: string, label: string): ViewDef {
 export const VIEWS: readonly ViewDef[] = [
   board,
   list,
-  placeholder("timeline", "Timeline"),
+  timeline,
   overview,
 ];
 
