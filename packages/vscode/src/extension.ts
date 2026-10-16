@@ -3,6 +3,7 @@ import { basename, join } from "node:path";
 import { createTask, loadBoard, moveTask, toggleSubtask } from "gitask-core";
 import { webviewHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
+import { readTaskBody } from "./taskfile.ts";
 import { DEFAULT_VIEW, VIEWS } from "./views/registry.ts";
 
 const VIEW_KEY = "gitask.lastView";
@@ -92,6 +93,10 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not move ${basename(m.path)}: ${(e as Error).message}`);
         }
         return post(); // always resync so the UI reflects what is on disk
+      case "readTask": {
+        const r = await readTaskBody(m.path);
+        return send({ type: "taskBody", path: m.path, ...r });
+      }
       case "toggleSubtask": {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {

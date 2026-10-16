@@ -37,6 +37,9 @@ GITASK.register({
       for (const t of tasks) {
         const card = GITASK.el("div", "card");
         card.draggable = true;
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        const openIt = () => { if (GITASK.openDetail) GITASK.openDetail(t.path); else api.post({ type: "open", path: t.path }); };
         card.append(GITASK.el("div", "title", t.title));
         const meta = GITASK.el("div", "meta");
         if (t.prefix) meta.append(GITASK.el("span", "tag", t.prefix));
@@ -54,7 +57,9 @@ GITASK.register({
           p.append(track, GITASK.el("span", "count", t.progress.done + "/" + t.progress.total));
           card.append(p);
         }
-        card.addEventListener("click", () => api.post({ type: "open", path: t.path }));
+        // A drag does not fire click, so click-to-open and drag-to-move do not collide.
+        card.addEventListener("click", openIt);
+        card.addEventListener("keydown", (ev) => { if (ev.target === card && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openIt(); } });
         card.addEventListener("dragstart", (ev) => { dragging = t; card.classList.add("dragging"); ev.dataTransfer.effectAllowed = "move"; });
         card.addEventListener("dragend", () => { dragging = null; card.classList.remove("dragging"); });
         c.append(card);
