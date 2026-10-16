@@ -66,6 +66,12 @@ test("Depends on: existing ids only, no self, no duplicates", () => {
   assert.deepEqual(parse(TASK, new Set()).dependsOn, []);
 });
 
+test("Depends on accepts .md names; a fence is closed only by its own marker", () => {
+  assert.deepEqual(parse(TASK.replace("Core-base,", "Core-base.md,")).dependsOn, ["Core-base", "Core-other"]);
+  const t = parse("# A\n\n## Done when\n```\n~~~\n- [ ] hidden\n```\n- [ ] shown\n");
+  assert.deepEqual(t.subtasks.map((x) => x.text), ["shown"]);
+});
+
 test("loadBoard resolves dependsOn across columns", async () => {
   const tasks = join(mkdtempSync(join(tmpdir(), "gitask-m-")), "Tasks");
   mkdirSync(join(tasks, "2-todo"), { recursive: true });
