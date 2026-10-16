@@ -1,20 +1,45 @@
 {
   "name": "gitask-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Git-backed Kanban for a Tasks/ folder: board, move, new, changelog.",
-  "keywords": ["kanban", "tasks", "git", "markdown", "cli"],
+  "keywords": [
+    "kanban",
+    "tasks",
+    "git",
+    "markdown",
+    "cli"
+  ],
   "type": "module",
-  "bin": { "gitask": "dist/gitask.js" },
-  "files": ["dist", "README.md", "LICENSE"],
-  "engines": { "node": ">=20" },
+  "bin": {
+    "gitask": "dist/gitask.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/vannseavlong/GITASK.git", "directory": "packages/cli" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vannseavlong/GITASK.git",
+    "directory": "packages/cli"
+  },
   "homepage": "https://github.com/vannseavlong/GITASK#readme",
-  "bugs": { "url": "https://github.com/vannseavlong/GITASK/issues" },
-  "publishConfig": { "access": "public" },
+  "bugs": {
+    "url": "https://github.com/vannseavlong/GITASK/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/gitask.js --banner:js=\"#!/usr/bin/env node\"",
     "prepack": "pnpm run build"
   },
-  "devDependencies": { "gitask-core": "workspace:*", "esbuild": "^0.25.0" }
+  "devDependencies": {
+    "gitask-core": "workspace:*",
+    "esbuild": "^0.25.0"
+  }
 }

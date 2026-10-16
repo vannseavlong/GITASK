@@ -2,24 +2,48 @@
   "name": "gitask-vscode",
   "displayName": "GITASK",
   "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "vannseavlong",
   "license": "MIT",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other"],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
   "main": "./dist/extension.js",
-  "activationEvents": ["workspaceContains:**/Tasks/1-backlog"],
+  "activationEvents": [
+    "workspaceContains:**/Tasks/1-backlog"
+  ],
   "contributes": {
     "commands": [
-      { "command": "gitask.openBoard", "title": "GITASK: Open Board" },
-      { "command": "gitask.newTask", "title": "GITASK: New Task" }
+      {
+        "command": "gitask.openBoard",
+        "title": "GITASK: Open Board"
+      },
+      {
+        "command": "gitask.newTask",
+        "title": "GITASK: New Task"
+      }
     ],
     "configuration": {
       "title": "GITASK",
       "properties": {
-        "gitask.tasksDir": { "type": "string", "default": "Tasks", "description": "Tasks folder, relative to the workspace root." },
-        "gitask.autoCommit": { "type": "boolean", "default": true, "description": "Commit the task file when a card is moved. Never pushes." },
-        "gitask.commitMessage": { "type": "string", "default": "task({id}): {from} → {to}", "description": "Commit message. {id}, {from}, {to} are replaced." }
+        "gitask.tasksDir": {
+          "type": "string",
+          "default": "Tasks",
+          "description": "Tasks folder, relative to the workspace root."
+        },
+        "gitask.autoCommit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Commit the task file when a card is moved. Never pushes."
+        },
+        "gitask.commitMessage": {
+          "type": "string",
+          "default": "task({id}): {from} → {to}",
+          "description": "Commit message. {id}, {from}, {to} are replaced."
+        }
       }
     }
   },
@@ -27,6 +51,15 @@
     "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
     "package": "pnpm run build && vsce package --no-dependencies"
   },
-  "devDependencies": { "gitask-core": "workspace:*", "@types/vscode": "^1.85.0", "@vscode/vsce": "^3.0.0", "esbuild": "^0.25.0" },
-  "repository": { "type": "git", "url": "https://github.com/vannseavlong/GITASK.git", "directory": "packages/vscode" }
+  "devDependencies": {
+    "gitask-core": "workspace:*",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vannseavlong/GITASK.git",
+    "directory": "packages/vscode"
+  }
 }
