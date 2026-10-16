@@ -19,12 +19,7 @@ tag vX.Y.Z → verify (tag == package versions, typecheck, test)
 - `gitask-core` is bundled into both outputs by esbuild and is never published.
 
 ## One-time setup (owner)
-| What | Where |
-|---|---|
-| `NPM_TOKEN` | npmjs.com → Access Tokens → Granular, read+write on `gitask-cli`, bypass 2FA. Repo → Settings → Secrets → Actions |
-| `VSCE_PAT` | Azure DevOps PAT, scope Marketplace → Manage, org "all accessible". Publisher id must equal `publisher` in `packages/vscode/package.json` (create at marketplace.visualstudio.com/manage) |
-| `OVSX_PAT` | open-vsx.org → sign in with GitHub, sign the publisher agreement, create the namespace (`npx ovsx create-namespace <publisher> -p <token>`), create a token |
-| Environment `release` | Repo → Settings → Environments (optional approval gate) |
+Tokens, publisher, namespace and the `release` environment: [setupguide.md](setupguide.md).
 
 ## Develop
 pnpm 11 (pinned by `packageManager`), Node 24. `pnpm install`, `pnpm test`, `pnpm typecheck`, `pnpm build`, `pnpm package`.
