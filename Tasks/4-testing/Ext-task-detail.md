@@ -15,7 +15,7 @@ Open a task from a card or row into a detail panel: title, header fields, each s
 
 ## Gates (T2)
 - [x] G1 scope  - [x] G2 static  - [x] G3 tests  - [ ] G4 run it (F5: not possible from the agent, human must F5)
-- [ ] G5 code review  - [~] G6 security (self-checked with hostile-input tests; needs a separate reviewer) (strict: Markdown is untrusted, no raw HTML, links limited to http, https and workspace files)  - [x] G7 docs sync (no user docs changed)
+- [x] G5 code review (fresh agent, 2026-10-17; findings fixed in ce65a89 and the follow-up)  - [~] G6 security (self-checked with hostile-input tests; needs a separate reviewer) (strict: Markdown is untrusted, no raw HTML, links limited to http, https and workspace files)  - [x] G7 docs sync (no user docs changed)
 - [ ] G8 PR message  - [ ] G9 human review (optional at T2)  - [ ] G11 changelog
 
 ## Done when

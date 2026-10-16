@@ -15,7 +15,7 @@ Split the one-page board into a view shell: a tab bar (Board, List, Timeline, Ov
 
 ## Gates (T2)
 - [x] G1 scope  - [x] G2 static  - [x] G3 tests  - [ ] G4 run it (PARTIAL: no F5 in a real VS Code window was possible from the agent; generated HTML is checked by tests, human must F5; this also closes the open G4 on `Ext-webview-board`)
-- [ ] G5 code review  - [x] G6 security (CSP nonce, message validation, textContent only; self-checked, no separate reviewer)  - [x] G7 docs sync (no user-facing doc changes needed)
+- [x] G5 code review (fresh agent, 2026-10-17; findings fixed in ce65a89 and the follow-up)  - [x] G6 security (CSP nonce, message validation, textContent only; self-checked, no separate reviewer)  - [x] G7 docs sync (no user-facing doc changes needed)
 - [ ] G8 PR message  - [ ] G9 human review (optional at T2)  - [ ] G11 changelog (integrator adds)
 
 ## Done when
