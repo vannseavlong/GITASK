@@ -1,0 +1,79 @@
+/* Brand tokens: portfolio palette (VANN_Seavlong/tailwind.config.js). One file, change here only. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --brand-primary: #3b82f6;
+  --brand-secondary: #1e40af;
+  --brand-accent: #f59e0b;
+  --brand-dark: #1f2937;
+  --brand-light: #f9fafb;
+
+  --ifm-font-family-base: 'Inter', system-ui, sans-serif;
+  --ifm-color-primary: var(--brand-secondary);
+  --ifm-color-primary-dark: #1b3a99;
+  --ifm-color-primary-darker: #1a3791;
+  --ifm-color-primary-darkest: #152d77;
+  --ifm-color-primary-light: #2347b5;
+  --ifm-color-primary-lighter: #254cbd;
+  --ifm-color-primary-lightest: #2f5cd8;
+  --ifm-global-radius: 0.5rem;
+  --ifm-code-font-size: 95%;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: var(--brand-primary);
+  --ifm-color-primary-dark: #2b78f2;
+  --ifm-color-primary-darker: #2072f1;
+  --ifm-color-primary-darkest: #0c5cd8;
+  --ifm-color-primary-light: #5593f6;
+  --ifm-color-primary-lighter: #6099f6;
+  --ifm-color-primary-lightest: #8cb4f9;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.btn-primary,
+.btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  text-decoration: none !important;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-primary {
+  background: var(--brand-secondary);
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  background: var(--brand-dark);
+}
+
+.btn-secondary {
+  border: 2px solid var(--brand-secondary);
+  color: var(--brand-secondary) !important;
+}
+
+.btn-secondary:hover {
+  background: var(--brand-secondary);
+  color: #fff !important;
+}
+
+[data-theme='dark'] .btn-primary {
+  background: var(--brand-primary);
+  color: #0b1220 !important;
+}
+
+[data-theme='dark'] .btn-secondary {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary) !important;
+}
+
+[data-theme='dark'] .btn-secondary:hover {
+  background: var(--brand-primary);
+  color: #0b1220 !important;
+}
