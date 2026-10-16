@@ -5,7 +5,7 @@
 - **Tier:** T1 · appends to CHANGELOG.md
 - **Claimed by:** none
 - **Worktree:** n/a (solo bootstrap, built on main) · **Branch:** main
-- **Started / updated:** 2026-10-17 / 2026-10-17
+- **Started / updated:** 2026-10-17 / 2026-10-16
 - **Docs:** Tasks/_plans/Core-gitask-mvp.md
 - **Depends on:** Core-parse-board
 - **Touches:** packages/core/src/changelog.ts
