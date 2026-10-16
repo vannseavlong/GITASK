@@ -1,0 +1,31 @@
+{
+  "name": "gitask-vscode",
+  "displayName": "GITASK",
+  "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed.",
+  "version": "0.1.0",
+  "publisher": "gitask",
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "main": "./dist/extension.js",
+  "activationEvents": ["workspaceContains:**/Tasks/1-backlog"],
+  "contributes": {
+    "commands": [
+      { "command": "gitask.openBoard", "title": "GITASK: Open Board" },
+      { "command": "gitask.newTask", "title": "GITASK: New Task" }
+    ],
+    "configuration": {
+      "title": "GITASK",
+      "properties": {
+        "gitask.tasksDir": { "type": "string", "default": "Tasks", "description": "Tasks folder, relative to the workspace root." },
+        "gitask.autoCommit": { "type": "boolean", "default": true, "description": "Commit the task file when a card is moved. Never pushes." },
+        "gitask.commitMessage": { "type": "string", "default": "task({id}): {from} → {to}", "description": "Commit message. {id}, {from}, {to} are replaced." }
+      }
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
+    "package": "npm run build && vsce package --no-dependencies"
+  },
+  "repository": { "type": "git", "url": "https://github.com/SNLRLONG/GITASK" }
+}

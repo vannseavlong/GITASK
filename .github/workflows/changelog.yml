@@ -1,0 +1,25 @@
+# Adds a CHANGELOG.md entry when a task file lands in Tasks/5-done/.
+name: changelog
+on:
+  push:
+    branches: [main]
+    paths: ["Tasks/5-done/*.md"]
+jobs:
+  entry:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 2 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm ci && npm run build -w gitask-cli
+      - name: Add entries for newly added done tasks
+        run: |
+          for f in $(git diff --name-only --diff-filter=AR HEAD~1 HEAD -- 'Tasks/5-done/*.md'); do
+            node packages/cli/dist/gitask.js changelog "$(basename "$f" .md)"
+          done
+          if ! git diff --quiet CHANGELOG.md; then
+            git config user.name "gitask[bot]" && git config user.email "gitask@users.noreply.github.com"
+            git add CHANGELOG.md && git commit -m "docs(changelog): update from done tasks" && git push
+          fi

@@ -1,0 +1,11 @@
+{
+  "name": "gitask-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "gitask": "dist/gitask.js" },
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/gitask.js --banner:js=\"#!/usr/bin/env node\""
+  }
+}
