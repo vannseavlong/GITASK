@@ -3,7 +3,7 @@
 - **Repo:** <repo>
 - **Owner:** SNLRLONG
 - **Tier:** T1
-- **Claimed by:** Claude (agent)
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-frontmatter/` · **Branch:** `feat/frontmatter`
 - **Started / updated:** 2026-10-17 / 2026-10-17
 - **Docs:** <links>

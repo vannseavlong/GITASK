@@ -3,7 +3,7 @@
 - **Repo:** GITASK (root)
 - **Owner:** SNLRLONG
 - **Tier:** T1 · only dependency overrides + docs, no source logic (auto picker)
-- **Claimed by:** Claude agent (Sonnet 5.5)
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-npm-audit/` · **Branch:** `feat/npm-audit`
 - **Started / updated:** 2026-10-17 / 2026-10-17
 - **Docs:** `Docs/architecture/release.md` (Dependency audit)
