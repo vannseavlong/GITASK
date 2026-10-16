@@ -8,13 +8,15 @@ const FENCE = /^\s*(```|~~~)/;
 export function parseSubtasks(content: string): Subtask[] {
   const out: Subtask[] = [];
   let section = "";
-  let fenced = false;
+  let fence = ""; // marker that opened the current code fence, "" outside one
   content.split(/\r?\n/).forEach((line, i) => {
-    if (FENCE.test(line)) {
-      fenced = !fenced;
+    const f = FENCE.exec(line)?.[1];
+    if (f) {
+      if (!fence) fence = f;
+      else if (f === fence) fence = "";
       return;
     }
-    if (fenced) return;
+    if (fence) return;
     const h = /^##\s+(.*?)\s*#*\s*$/.exec(line);
     if (h) {
       section = h[1];
@@ -54,7 +56,7 @@ export function parseDue(text: string | undefined): string | undefined {
 export function parseDependsOn(text: string | undefined, known: ReadonlySet<string>, self: string): string[] {
   const ids = (text ?? "")
     .split(/[^A-Za-z0-9._-]+/)
-    .map((t) => t.replace(/^[._-]+|[._-]+$/g, ""))
+    .map((t) => t.replace(/\.md$/, "").replace(/^[._-]+|[._-]+$/g, ""))
     .filter((t) => t !== self && known.has(t));
   return [...new Set(ids)];
 }
