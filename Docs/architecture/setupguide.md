@@ -6,7 +6,7 @@ One-time setup so that pushing a `vX.Y.Z` tag publishes everything ([how the pip
 
 | You need | For | Secret name |
 |---|---|---|
-| npm access token | `gitask-cli` on npmjs.com | `NPM_TOKEN` |
+| Security key / passkey on the npm account + trusted publisher | `gitask-cli` on npmjs.com | none (OIDC) |
 | Azure DevOps token + Marketplace publisher | extension on VS Code Marketplace | `VSCE_PAT` |
 | Open VSX token + namespace | extension on Open VSX (VSCodium, Cursor, Gitpod) | `OVSX_PAT` |
 
@@ -19,7 +19,7 @@ Names to use: npm package `gitask-cli`, publisher/namespace `vannseavlong`, exte
 Repo: `vannseavlong/GITASK`.
 
 1. **Environment.** Settings → Environments → New environment → name it exactly `release`. Under *Required reviewers* add yourself, so every npm/Marketplace publish waits for your click. (Required reviewers on a private repo needs a paid GitHub plan; skip it there and the jobs just run.)
-2. **Secrets.** Settings → Secrets and variables → Actions → *New repository secret*. Add `NPM_TOKEN`, `VSCE_PAT`, `OVSX_PAT` once you have them (parts 2 to 4). A missing `VSCE_PAT` or `OVSX_PAT` skips that step; a missing `NPM_TOKEN` fails the npm job.
+2. **Secrets.** Settings → Secrets and variables → Actions → *New repository secret*. Add `VSCE_PAT` and `OVSX_PAT` once you have them (parts 3 and 4). A missing one skips that store's step. npm needs no secret (part 2).
 3. **Workflow permissions.** Settings → Actions → General → Workflow permissions → *Read and write permissions* (the changelog and release jobs push or create a release). Save.
 4. **Branch protection (if you enable it on `main`).** The changelog bot pushes to `main`; allow it to bypass, or the changelog job fails.
 
@@ -29,29 +29,31 @@ Check: Actions tab shows `ci` green on the PR.
 
 ## 2. npmjs.com
 
-You already have an account. Package name `gitask-cli` was free on 2026-10-17.
+Package name `gitask-cli` was free on 2026-10-17. The first publish is manual; every later one is CI with no token.
 
-1. **Turn on 2FA** for the account (Account → Two-Factor Authentication) if it is not already; npm requires it to publish.
-2. **First publish, by hand (recommended).** A token can only be limited to a package that already exists, so claim the name once yourself, then lock the token down:
+npm no longer lets you add an authenticator-app (TOTP) code to an account, and tokens that bypass 2FA lose direct publishing in January 2027. So: security key for you, trusted publishing for CI.
+
+1. **Add a security key.** <https://www.npmjs.com/settings/YOUR-USER/tfa> → add a security key or passkey (Touch ID, phone, 1Password, YubiKey). Keep 2FA mode on *Authorization and publishing*. Check: `npm profile get` shows two-factor auth enabled.
+2. **Publish `0.1.0` once by hand.** Trusted publishing can only be set on a package that exists.
    ```bash
-   pnpm install && pnpm --filter gitask-cli run build
-   cd packages/cli
    npm login
-   npm publish --access public      # prompts for your OTP
+   cd packages/cli
+   npm publish --access public      # approve in the browser with your passkey
    ```
-   If you do this, bump nothing: CI later publishes the *next* version, so tag `v0.1.1` (or higher) for your first CI release, with both package versions bumped to match. Skip this step if you would rather let the first tag publish it; then use an "All packages" token in step 3 and narrow it afterwards.
-3. **Create the token.** npmjs.com → profile picture → *Access Tokens* → *Generate New Token* → *Granular Access Token*.
-   - Name: `gitask-github-actions`
-   - Expiration: the longest allowed (npm caps write tokens at 90 days; set a reminder to rotate it)
-   - Packages and scopes: *Read and write*, select `gitask-cli`
-   - Tick *Bypass two-factor authentication* (CI cannot type an OTP)
-4. Copy the token (shown once) → GitHub secret `NPM_TOKEN`.
+   Check: `npm view gitask-cli version`.
+3. **Add the trusted publisher.** npmjs.com → package `gitask-cli` → *Settings* → *Trusted Publisher* → GitHub Actions:
+   - Organization or user: `vannseavlong`
+   - Repository: `GITASK`
+   - Workflow filename: `release.yml`
+   - Environment: `release`
+   - Allowed actions: tick **Allow `npm publish`**. Without it the workflow can only stage a publish, which waits for your 2FA approval and blocks automation. Leave `dist-tag` unticked.
 
-Check: after a release, `npm view gitask-cli version` shows the new version.
+   The values must match exactly (case-sensitive). Also confirm `repository.url` in `packages/cli/package.json` points to this repo (it does).
+4. **Optional hardening.** Same page: set publishing access to *Require two-factor authentication and disallow tokens*, so only the trusted workflow can publish.
 
-**Optional, better later: trusted publishing.** On the package's npmjs.com *Settings → Trusted Publisher*, add GitHub Actions with repo `vannseavlong/GITASK`, workflow `release.yml`, environment `release`. Then the token and its 90-day rotation go away, but `release.yml` must be changed to publish with OIDC (needs `id-token: write` and a recent npm CLI). Not done yet; ask for it when you want it.
+No token is stored in GitHub. `release.yml` publishes with `npm publish` (npm >= 11.5.1) and `id-token: write`; npm also attaches provenance on a public repo.
 
----
+Because `0.1.0` is already on npm, the first CI release must be `0.1.1` or higher.
 
 ## 3. VS Code Marketplace
 
@@ -96,7 +98,7 @@ Check: <https://open-vsx.org/extension/vannseavlong/gitask-vscode> loads after t
 
 ## 5. First release
 
-1. Make sure parts 1 to 4 are done (at least 1 and 2 for an npm-only release).
+1. Make sure parts 1 and 2 are done (3 and 4 only if you publish the extension; those steps are skipped without their secret).
 2. Bump `version` in **both** `packages/cli/package.json` and `packages/vscode/package.json` to the same number (e.g. `0.1.1`). Commit and merge to `main`.
 3. Tag and push:
    ```bash
@@ -113,8 +115,11 @@ Pre-release: tag `v0.2.0-beta.1` (versions set to `0.2.0-beta.1`). It goes to th
 |---|---|
 | `check-release` says "package.json is X, tag is Y" | Versions in the two package.json files do not match the tag. Fix, move the tag. |
 | npm `E403 ... cannot publish over the previously published version` | That version is already on npm. Bump and tag again. |
-| npm `E404` on publish, or `ENEEDAUTH` | Token missing, expired, or scoped to a package that did not exist yet. Re-create it (part 2). |
-| npm `EOTP` | Token lacks *Bypass two-factor authentication*. |
+| npm `E404` / `ENEEDAUTH` in CI | Trusted publisher missing or does not match repo, workflow filename or environment exactly (part 2, step 3). The job needs `id-token: write`. |
+| npm `E403` "two-factor authentication ... is required" (local) | Account has no security key yet (part 2, step 1). |
+| npm "Adding a new TOTP 2FA is no longer supported" | Expected. Use a security key / passkey. |
+| npm publish from CI is refused or stays "staged" | *Allow `npm publish`* was not ticked on the trusted publisher (part 2, step 3). |
+| npm `E422` provenance / repository mismatch in CI | `repository.url` in `packages/cli/package.json` must match the GitHub repo. |
 | vsce `401` / `403` | PAT organization not "All accessible organizations", wrong scope, or expired. |
 | vsce "publisher not found" | `publisher` in `packages/vscode/package.json` differs from the Marketplace publisher ID. |
 | ovsx "not authorized to publish" | Publisher Agreement not signed, or namespace not created. |

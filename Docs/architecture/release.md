@@ -6,7 +6,7 @@ Tag-driven. `release.yml` runs on `git push origin vX.Y.Z`.
 
 ```
 tag vX.Y.Z → verify (tag == package versions, typecheck, test)
-           ├─ npm        → gitask-cli          (NPM_TOKEN)
+           ├─ npm        → gitask-cli          (trusted publishing, no token)
            └─ extension  → VS Code Marketplace (VSCE_PAT)
                          → Open VSX            (OVSX_PAT)
                          → GitHub Release with the .vsix

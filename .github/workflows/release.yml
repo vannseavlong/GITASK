@@ -1,7 +1,7 @@
 # Release on a version tag: git tag v0.1.0 && git push origin v0.1.0
 # Publishes gitask-cli to npm, the extension to VS Code Marketplace and Open VSX,
 # and attaches the .vsix to a GitHub Release. Marketplace steps are skipped until
-# their token secret exists. Secrets: NPM_TOKEN, VSCE_PAT, OVSX_PAT.
+# their token secret exists. npm uses trusted publishing (no secret). Secrets: VSCE_PAT, OVSX_PAT.
 name: release
 on:
   push:
@@ -17,7 +17,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm }
       - id: guard
-        run: echo "channel=$(node scripts/check-release.mjs "$GITHUB_REF")" >> "$GITHUB_OUTPUT"
+        run: |
+          CHANNEL=$(node scripts/check-release.mjs "$GITHUB_REF")
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
       - run: git config --global user.email ci@example.com && git config --global user.name ci
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
@@ -27,19 +29,20 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     environment: release
-    permissions: { contents: read }
+    # Trusted publishing: npm trusts this workflow via OIDC, so no NPM_TOKEN.
+    permissions: { contents: read, id-token: write }
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm, registry-url: "https://registry.npmjs.org" }
+      - run: npm install -g npm@^11.5.1   # trusted publishing needs npm >= 11.5.1
       - run: pnpm install --frozen-lockfile
       - name: Publish gitask-cli
+        working-directory: packages/cli
         run: |
           TAG=latest; [ "${{ needs.verify.outputs.channel }}" = "prerelease" ] && TAG=next
-          pnpm --filter gitask-cli publish --no-git-checks --tag "$TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --tag "$TAG"
 
   extension:
     needs: verify
