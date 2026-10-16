@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-16 · [Ops] feat: Ops-github-remote
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ops-github-remote.md
+- Branch/PR: `feat/<short-name>`
+- What changed: Create the GitHub repo and push, then confirm ci.yml and changelog.yml run green. Ask the owner before creating or pushing.
+
 ## 2026-10-17 · [Ops] feat: Ops-ci-release
 - Owner: SNLRLONG
 - Task: Tasks/6-deploy/Ops-ci-release.md
