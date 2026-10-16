@@ -6,3 +6,5 @@ out/
 .claude/*
 !.claude/skills/
 /GITASK-*/
+build/
+.docusaurus/

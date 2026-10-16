@@ -8,7 +8,8 @@
     "test": "node --test packages/core/test/*.test.ts",
     "build": "pnpm --filter gitask-cli --filter gitask-vscode run build",
     "package": "pnpm --filter gitask-vscode run package",
-    "bump": "node scripts/bump.mjs"
+    "bump": "node scripts/bump.mjs",
+    "deploy:pro": "pnpm --filter gitask-web run deploy"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
