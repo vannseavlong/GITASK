@@ -1,9 +1,44 @@
 # GITASK
 
-A Kanban board for a `Tasks/` folder. One Markdown file per task, the folder is the status. Drag a card and the file is moved with `git mv`, its `Started / updated` date is bumped, and that one file is committed.
+A Kanban board for a plain-Markdown `Tasks/` folder, inside VS Code. One Markdown file per task; **the folder is the status**. Drag a card and GITASK moves the file with `git mv`, bumps its `Started / updated` date and commits that one file. No accounts, no server: git is the identity and the history.
 
-Works with workspaces set up by [My-Agent-SetUp](https://github.com/vannseavlong/Agent-SetUp).
+Built for workspaces where humans and coding agents share one board ([My-Agent-SetUp](https://github.com/vannseavlong/Agent-SetUp)).
 
-- **GITASK: Open Board**: show the board.
-- **GITASK: New Task**: create a task from `Tasks/_TEMPLATE.md`.
-- Settings: `gitask.tasksDir`, `gitask.autoCommit`, `gitask.commitMessage`. GITASK never pushes.
+## Use it
+
+Open a workspace that has `Tasks/1-backlog/` (or any numbered folders under `Tasks/`). The extension activates by itself.
+
+- **GITASK: Open Board** shows the board. Drag a card to another column to move it.
+- **GITASK: New Task** creates a task from `Tasks/_TEMPLATE.md`.
+
+```
+Tasks/
+  1-backlog/ 2-todo/ 3-in-progress/ 4-testing/ 5-done/ 6-deploy/   ← columns
+  _inbox/ _plans/ _TEMPLATE.md                                      ← ignored by the board
+```
+
+A task is a Markdown file. The `#` heading is the title and the `- **Key:** value` lines above the first `##` are its fields:
+
+```markdown
+# Web-login-page
+
+- **Owner:** Sam
+- **Tier:** T2 · new screen
+- **Started / updated:** 2026-10-01 / 2026-10-17
+```
+
+## Settings
+
+| Setting | Default | What it does |
+|---|---|---|
+| `gitask.tasksDir` | `Tasks` | Tasks folder, relative to the workspace root |
+| `gitask.autoCommit` | `true` | Commit the task file when a card is moved |
+| `gitask.commitMessage` | `task({id}): {from} → {to}` | Commit message; `{id}`, `{from}`, `{to}` are replaced |
+
+## Good to know
+
+- A move commits only that task's file; other staged or dirty files are not touched.
+- GITASK **never pushes**.
+- Same engine as the command line: `npx gitask-cli board`.
+
+[Source and issues](https://github.com/vannseavlong/GITASK) · MIT

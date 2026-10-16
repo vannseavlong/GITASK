@@ -57,6 +57,8 @@ Because `0.1.0` is already on npm, the first CI release must be `0.1.1` or highe
 
 ## 3. VS Code Marketplace
 
+> **Needs an Azure subscription (2026).** Azure DevOps will not create the organization without one, so the token cannot be made on a plain Microsoft account. Global PATs also retire on 2026-12-01. If you do not want an Azure account, skip this part and ship to Open VSX (part 4) and the GitHub Release `.vsix` only; the workflow skips the Marketplace step while `VSCE_PAT` is missing.
+
 Two accounts are involved: a Microsoft account for the publisher, and an Azure DevOps organization for the token.
 
 1. **Azure DevOps organization.** Sign in at <https://dev.azure.com> with your Microsoft account and create an organization if you have none (any name).

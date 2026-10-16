@@ -18,6 +18,29 @@ tag vX.Y.Z → verify (tag == package versions, typecheck, test)
 - Jobs `npm` and `extension` use the GitHub environment `release`; add required reviewers there to get a manual approval before anything goes live.
 - `gitask-core` is bundled into both outputs by esbuild and is never published.
 
+## Release workflow (every change, every release)
+
+Day to day, nothing publishes: only a pushed tag does.
+
+1. **Work in the task's worktree** on its own branch (`feat/<name>`), per `Tasks/README.md`.
+2. **Commit and open a PR to `main`.** `ci.yml` runs typecheck, tests and `pnpm package`. Merge only when it is green.
+3. **If the PR is a release,** run `pnpm bump X.Y.Z` in the PR. It sets `packages/cli` and `packages/vscode` to the same version (one line each). Do not use `npm version`.
+4. **After the merge,** update local `main`: `git checkout main && git pull origin main`.
+5. **Check before tagging:** `git log -1 --oneline` is the merge you expect, and `node scripts/check-release.mjs vX.Y.Z` prints `stable` (or `prerelease`).
+6. **Tag the merged commit and push only the tag:**
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+7. **Approve** the `release` environment in Actions, then **check**: `npm view gitask-cli version`, the GitHub Release has `gitask-vscode-X.Y.Z.vsix`, and the Marketplace / Open VSX pages show the version (a new version can take a few minutes to verify).
+8. **Close out the task:** `CHANGELOG.md` entry, task file to `5-done/`, remove the worktree and branch.
+
+Rules:
+- Not every merge is a release. No tag, no publish.
+- Never tag before the version bump is on `main`; the tag must point at a commit where every package has that version.
+- A published version is final (npm never reuses one). Fix forward with the next number. A tag whose run failed before publishing can be deleted and re-pushed: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`.
+- Agents prepare the PR and the bump; the human commits, merges, tags and approves.
+
 ## One-time setup (owner)
 Tokens, publisher, namespace and the `release` environment: [setupguide.md](setupguide.md).
 

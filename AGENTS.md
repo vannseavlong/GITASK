@@ -22,6 +22,8 @@ Rules for any coding agent (Claude, Codex, sub-agents) working in the `GITASK/` 
 
 Every task has a tier (T0 to T3). The tier decides the gates it passes; see `Tasks/PIPELINE.md`. Do not run gates the tier does not ask for, and do not skip gates it does. Skipping or adding a gate needs one line of reason in the task file. The user can override a tier; the agent does not ask for one.
 
+**Releases:** a tag publishes. Follow "Release workflow" in `Docs/architecture/release.md`: bump versions with `pnpm bump` inside the PR, never `npm version`, and leave committing, tagging and approving to the human.
+
 ## Docs (keep in sync)
 
 `Docs/README.md` is the index. One fact lives in one place; update it there and link, never copy.

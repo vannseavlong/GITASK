@@ -5,6 +5,11 @@
   "version": "0.1.1",
   "publisher": "vannseavlong",
   "license": "MIT",
+  "icon": "media/icon.png",
+  "homepage": "https://github.com/vannseavlong/GITASK#readme",
+  "bugs": { "url": "https://github.com/vannseavlong/GITASK/issues" },
+  "keywords": ["kanban", "tasks", "git", "markdown", "board", "agents"],
+  "galleryBanner": { "color": "#1e293b", "theme": "dark" },
   "engines": {
     "vscode": "^1.85.0"
   },
