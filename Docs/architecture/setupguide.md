@@ -99,7 +99,7 @@ Check: <https://open-vsx.org/extension/vannseavlong/gitask-vscode> loads after t
 ## 5. First release
 
 1. Make sure parts 1 and 2 are done (3 and 4 only if you publish the extension; those steps are skipped without their secret).
-2. Bump `version` in **both** `packages/cli/package.json` and `packages/vscode/package.json` to the same number (e.g. `0.1.1`). Commit and merge to `main`.
+2. In the PR, run `pnpm bump 0.1.2` (sets both packages to the same version, one line each; do not use `npm version`). Merge to `main`, then `git pull`.
 3. Tag and push:
    ```bash
    git tag v0.1.1

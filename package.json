@@ -7,7 +7,8 @@
     "typecheck": "tsc -p packages/core && tsc -p packages/cli && tsc -p packages/vscode",
     "test": "node --test packages/core/test/*.test.ts",
     "build": "pnpm --filter gitask-cli --filter gitask-vscode run build",
-    "package": "pnpm --filter gitask-vscode run package"
+    "package": "pnpm --filter gitask-vscode run package",
+    "bump": "node scripts/bump.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

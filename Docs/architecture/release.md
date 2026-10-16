@@ -12,7 +12,7 @@ tag vX.Y.Z → verify (tag == package versions, typecheck, test)
                          → GitHub Release with the .vsix
 ```
 
-- One version for both packages. Bump `packages/cli/package.json` and `packages/vscode/package.json` together, commit, then tag. `scripts/check-release.mjs` fails the run if they differ from the tag.
+- One version for both packages. `pnpm bump X.Y.Z` sets both (`scripts/bump.mjs`); commit it in the PR, merge, pull `main`, then tag the merged commit. Never use `npm version`: it tags immediately and reformats `package.json`. `scripts/check-release.mjs` fails the run if they differ from the tag.
 - `vX.Y.Z-beta.1` publishes to the npm `next` tag and the Marketplace/Open VSX pre-release channel.
 - A marketplace step is skipped (not failed) while its secret is missing.
 - Jobs `npm` and `extension` use the GitHub environment `release`; add required reviewers there to get a manual approval before anything goes live.
