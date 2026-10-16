@@ -1,6 +1,6 @@
 # Ops-github-remote
 
-- **Repo:** <repo>
+- **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · outward-facing
 - **Claimed by:** none
@@ -14,11 +14,14 @@
 Create the GitHub repo and push, then confirm ci.yml and changelog.yml run green. Ask the owner before creating or pushing.
 
 ## Gates (copy the rows your tier needs; write `Skipped Gn: reason` if you skip one)
-- [ ] G1 scope  - [ ] G2 static  - [ ] G3 tests  - [ ] G4 run it
+- [x] G1 scope  - [x] G2 static  - [x] G3 tests  - [x] G4 run it (GitHub Actions API, 2026-10-17: latest `ci` runs on main and feat/web-scaffold = success; `changelog` on main = success)
 - [ ] G5 code review  - [ ] G6 security  - [ ] G7 docs sync
 - [ ] G8 PR message  - [ ] G9 human review  - [ ] G10 release plan  - [ ] G11 changelog
 
 ## Done when
-- [ ] Owner approves repo name and visibility
-- [ ] CI green
-- [ ] changelog workflow tested by moving a task to 5-done
+- [x] Owner approves repo name and visibility
+- [x] CI green
+- [x] changelog workflow tested by moving a task to 5-done
+
+## Notes (2026-10-17)
+- Repo `vannseavlong/GITASK` exists and is pushed; `origin/main` is current. Closed by the owner pushing and merging PRs; nothing left to build.
