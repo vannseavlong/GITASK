@@ -14,7 +14,7 @@
 Kanban webview with drag-and-drop, open file, new task, file watcher, settings.
 
 ## Done when
-- [ ] Tests for new logic pass
+- [x] Tests for new logic pass
 - [ ] Root CHANGELOG.md entry added
 
 ## Gate notes
