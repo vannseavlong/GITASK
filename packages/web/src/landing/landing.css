@@ -1598,3 +1598,30 @@ a,
   }
 }
 }
+
+/* Tablet widths: keep the navbar on one line (the full link row only fits from ~1000px). */
+.landing .nav-links a {
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) and (max-width: 1000px) {
+  .landing .brand small {
+    display: none;
+  }
+
+  .landing .nav-inner {
+    gap: 14px;
+  }
+
+  .landing .nav-links {
+    gap: 0;
+  }
+
+  .landing .nav-links a {
+    padding: 6px 7px;
+  }
+
+  .landing .menu-button {
+    display: none;
+  }
+}
