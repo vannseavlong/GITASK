@@ -30,7 +30,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    colorMode: {respectPrefersColorScheme: true},
+    colorMode: {defaultMode: 'dark', respectPrefersColorScheme: false},
     navbar: {
       title: 'GITASK',
       logo: {alt: 'GITASK logo', src: 'img/icon.png'},

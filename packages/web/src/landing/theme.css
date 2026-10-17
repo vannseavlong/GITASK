@@ -1,0 +1,78 @@
+/* Landing tokens: the only place colors, radii and fonts are defined. Docusaurus drives [data-theme]. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #030712;
+  --bg-nav: rgba(3, 7, 18, 0.8);
+  --surface: #111827;
+  --surface-2: #1f2937;
+  --border: #1f2937;
+  --border-strong: #374151;
+  --text: #ffffff;
+  --text-body: #d1d5db;
+  --text-muted: #9ca3af;
+  --accent: #60a5fa;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --accent-soft: rgba(59, 130, 246, 0.1);
+  --accent-soft-hover: rgba(59, 130, 246, 0.2);
+  --accent-border-hover: rgba(59, 130, 246, 0.5);
+  --success: #4ade80;
+  --warning: #f59e0b;
+  --danger: #f87171;
+  --shadow: rgba(0, 0, 0, 0.34);
+  --hero-wash: rgba(59, 130, 246, 0.1);
+  --terminal-bg: #090c12;
+  --terminal-bar: #151b26;
+  --board-column: rgba(31, 41, 55, 0.35);
+  --code-blue: #9cdcfe;
+  --code-green: #6a9955;
+  --code-yellow: #dcdcaa;
+  --code-purple: #c586c0;
+  --button-text: #ffffff;
+  --radius-card: 12px;
+  --radius-button: 8px;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --duration: 200ms;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-nav: rgba(255, 255, 255, 0.8);
+  --surface: #f9fafb;
+  --surface-2: #f3f4f6;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --text: #111827;
+  --text-body: #374151;
+  --text-muted: #6b7280;
+  --accent: #2563eb;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --accent-soft-hover: rgba(37, 99, 235, 0.14);
+  --accent-border-hover: rgba(37, 99, 235, 0.5);
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: rgba(15, 23, 42, 0.14);
+  --hero-wash: rgba(37, 99, 235, 0.09);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  background: var(--bg);
+}
+
+@keyframes float-card {
+  0%,
+  100% { transform: rotate(-2.5deg) translate(5px, -2px); }
+  50% { transform: rotate(-2.5deg) translate(5px, -6px); }
+}
+
+@keyframes skeleton {
+  to { background-position: -200% 0; }
+}
