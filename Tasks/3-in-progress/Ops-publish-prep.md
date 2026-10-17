@@ -25,4 +25,4 @@ CI/CD release on a `v*` tag (same pattern as longcelot-sheet-staging): test, the
 - [ ] Extension icon + screenshot/GIF in README (Marketplace listing)
 - [x] G5 code review and G6 security review by a fresh agent
 - [x] Release plan (G10) written
-- [ ] Owner approves publish
+- [x] Owner approves publish
