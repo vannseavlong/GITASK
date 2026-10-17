@@ -19,10 +19,10 @@ CI/CD release on a `v*` tag (same pattern as longcelot-sheet-staging): test, the
 - [ ] G8 PR message  - [ ] G9 human review  - [ ] G10 release plan  - [ ] G11 changelog
 
 ## Done when
-- [ ] Owner confirms publisher name
+- [x] Owner confirms publisher name
 - [x] package.json publisher and repository fixed (publisher assumed `vannseavlong`, owner to confirm)
 - [ ] Secrets set: NPM_TOKEN, VSCE_PAT, OVSX_PAT; environment `release` created
 - [ ] Extension icon + screenshot/GIF in README (Marketplace listing)
-- [ ] G5 code review and G6 security review by a fresh agent
-- [ ] Release plan (G10) written
-- [ ] Owner approves publish
+- [x] G5 code review and G6 security review by a fresh agent
+- [x] Release plan (G10) written
+- [x] Owner approves publish

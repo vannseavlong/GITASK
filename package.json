@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc -p packages/core && tsc -p packages/cli && tsc -p packages/vscode",
-    "test": "node --test packages/core/test/*.test.ts",
+    "test": "node --test packages/core/test/*.test.ts packages/vscode/test/*.test.ts",
     "build": "pnpm --filter gitask-cli --filter gitask-vscode run build",
     "package": "pnpm --filter gitask-vscode run package",
     "bump": "node scripts/bump.mjs",

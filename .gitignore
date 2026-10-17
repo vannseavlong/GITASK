@@ -8,3 +8,4 @@ out/
 /GITASK-*/
 build/
 .docusaurus/
+packages/web/.firebase/

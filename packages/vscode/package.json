@@ -2,7 +2,7 @@
   "name": "gitask-vscode",
   "displayName": "GITASK",
   "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "publisher": "vannseavlong",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -38,6 +38,12 @@
           "type": "string",
           "default": "Tasks",
           "description": "Tasks folder, relative to the workspace root."
+        },
+        "gitask.staleDays": {
+          "type": "number",
+          "default": 14,
+          "minimum": 1,
+          "description": "Overview: a task not updated for this many days is listed as stale."
         },
         "gitask.autoCommit": {
           "type": "boolean",
