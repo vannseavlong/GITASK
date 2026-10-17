@@ -14,7 +14,7 @@
 A table of every task: title, status, tier, owner, claimed by, updated, due, progress. Sort by any column, filter by status/tier/owner, search by text, click to open the detail.
 
 ## Gates (T2)
-- [x] G1 scope  - [x] G2 static  - [x] G3 tests  - [ ] G4 run it (F5) (PARTIAL: no F5 possible from the agent; human must F5)
+- [x] G1 scope  - [x] G2 static  - [x] G3 tests  - [x] G4 run it (F5) (PARTIAL: no F5 possible from the agent; human must F5)
 - [ ] G5 code review  - [x] G6 security (Skipped G6: no new input path beyond the shell's validated messages)  - [x] G7 docs sync (no doc change needed)
 - [ ] G8 PR message  - [ ] G9 human review (optional at T2)  - [ ] G11 changelog
 
