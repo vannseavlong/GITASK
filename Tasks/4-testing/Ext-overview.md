@@ -3,7 +3,7 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new screen
-- **Claimed by:** overview agent (Claude), 2026-10-17
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-overview/` · **Branch:** `feat/overview`
 - **Started / updated:** 2026-10-17 / 2026-10-17
 - **Docs:** `Docs/requirements/views.md`, `Tasks/_plans/Ext-views.md`

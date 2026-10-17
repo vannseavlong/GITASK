@@ -3,7 +3,7 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new screen, renders untrusted Markdown, writes via toggle
-- **Claimed by:** task-detail agent (Claude), 2026-10-17 (work done, released)
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-task-detail/` · **Branch:** `feat/task-detail`
 - **Started / updated:** 2026-10-17 / 2026-10-17
 - **Docs:** `Docs/requirements/views.md`, `Tasks/_plans/Ext-views.md`

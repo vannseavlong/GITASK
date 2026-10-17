@@ -3,7 +3,7 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · refactors the shared webview (`html.ts`) used by every view
-- **Claimed by:** view-shell agent (Claude), 2026-10-17
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-view-shell/` · **Branch:** `feat/view-shell`
 - **Started / updated:** 2026-10-17 / 2026-10-17
 - **Docs:** `Docs/requirements/views.md`, `Tasks/_plans/Ext-views.md`

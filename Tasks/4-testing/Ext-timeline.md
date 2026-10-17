@@ -3,7 +3,7 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new screen, date math
-- **Claimed by:** timeline agent (Claude), 2026-10-17
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-timeline/` · **Branch:** `feat/timeline`
 - **Started / updated:** none / 2026-10-17
 - **Docs:** `Docs/requirements/views.md`, `Tasks/_plans/Ext-views.md`
