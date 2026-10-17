@@ -15,7 +15,7 @@ Kanban webview with drag-and-drop, open file, new task, file watcher, settings.
 
 ## Done when
 - [x] Tests for new logic pass
-- [ ] Root CHANGELOG.md entry added
+- [x] Root CHANGELOG.md entry added
 
 ## Gate notes
 - G2 typecheck and G3 core tests pass; extension builds and packages to a .vsix.
