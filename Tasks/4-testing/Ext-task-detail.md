@@ -24,7 +24,7 @@ Open a task from a card or row into a detail panel: title, header fields, each s
 - [ ] A toggle that fails (file changed, git error) shows a message and leaves the UI in the true state
 - [x] Tables, code blocks, lists and links render (unit-tested on the shipped renderer with a fake DOM); images load only from the workspace
 - [x] "Open file" still opens the raw Markdown; a setting can restore click-opens-file
-- [ ] Works with an empty board, one column and 500 tasks
+- [x] Works with an empty board, one column and 500 tasks
 - [ ] Root `CHANGELOG.md` entry added
 - [ ] Worktree and branch removed after merge
 
