@@ -15,7 +15,7 @@ Extend the task model: parse sub-tasks (checkbox lines grouped by `##` section),
 
 ## Gates (T2)
 - [x] G1 scope  - [x] G2 static (typecheck + build)  - [x] G3 tests (21/21)  - [x] G4 run it (core tests on real temp git repos)
-- [ ] G5 code review  - [x] G6 security (toggle writes one character; test asserts byte-for-byte result and a staged unrelated file stays out of the commit)  - [x] G7 docs sync (`views.md` already specifies Due; user-facing task-format page belongs to `Ops-web-docs`)
+- [x] G5 code review  - [x] G6 security (toggle writes one character; test asserts byte-for-byte result and a staged unrelated file stays out of the commit)  - [x] G7 docs sync (`views.md` already specifies Due; user-facing task-format page belongs to `Ops-web-docs`)
 - [ ] G8 PR message  - [ ] G9 human review (optional at T2)  - [ ] G11 changelog
 
 ## Done when

@@ -39,6 +39,12 @@
           "default": "Tasks",
           "description": "Tasks folder, relative to the workspace root."
         },
+        "gitask.staleDays": {
+          "type": "number",
+          "default": 14,
+          "minimum": 1,
+          "description": "Overview: a task not updated for this many days is listed as stale."
+        },
         "gitask.autoCommit": {
           "type": "boolean",
           "default": true,

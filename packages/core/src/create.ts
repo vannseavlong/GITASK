@@ -9,6 +9,7 @@ const FALLBACK = (title: string, owner: string, date: string) => `# ${title}
 - **Tier:** T1 · <signals>
 - **Claimed by:** none
 - **Started / updated:** ${date} / ${date}
+- **Due:** none
 - **Depends on:** none
 - **Touches:** <main files/areas>
 

@@ -6,6 +6,7 @@
 - **Claimed by:** none
 - **Worktree:** `GITASK/<repo>-<short-name>/` · **Branch:** `feat/<short-name>`
 - **Started / updated:** <date> / <date>
+- **Due:** <YYYY-MM-DD, optional>
 - **Docs:** <links>
 - **Depends on:** <request item, other task, or none>
 - **Touches:** <main files/areas, to spot overlap with other worktrees>

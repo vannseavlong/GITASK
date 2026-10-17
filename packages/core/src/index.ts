@@ -6,3 +6,6 @@ export type { MoveOptions, MoveResult } from "./move.ts";
 export { createTask } from "./create.ts";
 export { appendChangelog, changelogEntry } from "./changelog.ts";
 export { repoRoot } from "./git.ts";
+export { toggleSubtask, TOGGLE_MESSAGE } from "./toggle.ts";
+export type { ToggleOptions, ToggleResult } from "./toggle.ts";
+export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf } from "./parse.ts";

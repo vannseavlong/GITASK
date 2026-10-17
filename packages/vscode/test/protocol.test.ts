@@ -1,0 +1,86 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { join } from "node:path";
+import { validateMessage, taskPathInside, type ValidationContext } from "../src/protocol.ts";
+
+const tasksDir = join("/", "ws", "Tasks");
+const ctx: ValidationContext = { tasksDir, columns: ["1-backlog", "2-todo", "3-in-progress"], views: ["board", "list"] };
+const ok = join(tasksDir, "2-todo", "Ext-x.md");
+
+test("accepts well-formed messages", () => {
+  assert.deepEqual(validateMessage({ type: "ready" }, ctx), { ok: true, message: { type: "ready" } });
+  assert.deepEqual(validateMessage({ type: "open", path: ok }, ctx), { ok: true, message: { type: "open", path: ok } });
+  assert.deepEqual(validateMessage({ type: "new" }, ctx), { ok: true, message: { type: "new" } });
+  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog" }, ctx), { ok: true, message: { type: "new", column: "1-backlog" } });
+  assert.deepEqual(validateMessage({ type: "move", path: ok, to: "3-in-progress" }, ctx), { ok: true, message: { type: "move", path: ok, to: "3-in-progress" } });
+  assert.deepEqual(validateMessage({ type: "toggleSubtask", path: ok, index: 3, line: 7 }, ctx), { ok: true, message: { type: "toggleSubtask", path: ok, index: 3, line: 7 } });
+  assert.deepEqual(validateMessage({ type: "view", id: "list" }, ctx), { ok: true, message: { type: "view", id: "list" } });
+});
+
+test("drops extra fields", () => {
+  const r = validateMessage({ type: "open", path: ok, cmd: "rm -rf /" }, ctx);
+  assert.deepEqual(r, { ok: true, message: { type: "open", path: ok } });
+});
+
+test("rejects non-objects and unknown types", () => {
+  for (const bad of [null, undefined, 5, "open", [], {}, { type: 1 }, { type: "exec" }, { type: "__proto__" }]) {
+    assert.equal(validateMessage(bad, ctx).ok, false);
+  }
+});
+
+test("rejects paths outside the Tasks dir", () => {
+  const bad = [
+    join("/", "etc", "passwd"),
+    join(tasksDir, "..", "secret.md"),
+    join(tasksDir, "2-todo", "..", "..", "x.md"),
+    join(tasksDir, "2-todo", "..", "..", "..", "etc", "x.md"),
+    tasksDir + "-evil/2-todo/x.md",
+    "2-todo/Ext-x.md",
+    "",
+    join(tasksDir, "2-todo", "Ext-x.txt"),
+    join(tasksDir, "2-todo", ".md"),
+    join(tasksDir, "9-nope", "Ext-x.md"),
+    join(tasksDir, "2-todo", "sub", "Ext-x.md"),
+    join(tasksDir, "Ext-x.md"),
+    ok + "\0.md",
+    42,
+    { toString: () => ok },
+  ];
+  for (const path of bad) {
+    assert.equal(taskPathInside(path, ctx), undefined, String(path));
+    assert.equal(validateMessage({ type: "open", path }, ctx).ok, false);
+    assert.equal(validateMessage({ type: "move", path, to: "2-todo" }, ctx).ok, false);
+    assert.equal(validateMessage({ type: "toggleSubtask", path, index: 0 }, ctx).ok, false);
+  }
+});
+
+test("normalises a path that stays inside", () => {
+  const sneaky = join(tasksDir, "1-backlog", "..", "2-todo", "Ext-x.md");
+  assert.equal(taskPathInside(sneaky, ctx), ok);
+});
+
+test("rejects unknown columns", () => {
+  assert.equal(validateMessage({ type: "move", path: ok, to: "9-nope" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "move", path: ok, to: "../etc" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "move", path: ok }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "x" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: 3 }, ctx).ok, false);
+});
+
+test("rejects bad sub-task indexes and views", () => {
+  for (const index of [-1, 1.5, NaN, Infinity, "1", null, undefined, 1e9]) {
+    assert.equal(validateMessage({ type: "toggleSubtask", path: ok, index, line: 1 }, ctx).ok, false, String(index));
+  }
+  for (const line of [0, -1, 1.5, "2", null, undefined]) {
+    assert.equal(validateMessage({ type: "toggleSubtask", path: ok, index: 0, line }, ctx).ok, false, String(line));
+  }
+  assert.equal(validateMessage({ type: "view", id: "nope" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "view" }, ctx).ok, false);
+});
+
+test("readTask validates the path like open", () => {
+  assert.deepEqual(validateMessage({ type: "readTask", path: ok, x: 1 }, ctx), { ok: true, message: { type: "readTask", path: ok } });
+  for (const bad of [undefined, "", "Tasks/2-todo/x.md", join(tasksDir, "..", "secret.md"), join(tasksDir, "9-nope", "x.md"), join(tasksDir, "2-todo", "x.txt"), join(tasksDir, "2-todo", "sub", "x.md"), ok + "\0"]) {
+    assert.equal(validateMessage({ type: "readTask", path: bad }, ctx).ok, false);
+  }
+});
