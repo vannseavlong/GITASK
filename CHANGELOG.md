@@ -2,6 +2,13 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-18 · [Ext] fix: Ext-marketplace-metadata
+- Owner: SNLRLONG
+- Task: Tasks/3-in-progress/Ext-marketplace-metadata.md
+- Branch/PR: `fix/marketplace-metadata`
+- What changed: The VS Code Marketplace rejected 0.3.0 with "suspicious content". Manual upload tests showed the code and README are fine and a keyword was flagged, so the `agents` keyword is removed. Version bumped to 0.3.1 (CLI and extension).
+- Needs: manual upload of the `.vsix` on the Marketplace manage page (no `VSCE_PAT` secret yet)
+
 ## 2026-10-18 · [Ext] feat: Ext-init-tasks-folder
 - Owner: SNLRLONG
 - Task: Tasks/3-in-progress/Ext-init-tasks-folder.md
