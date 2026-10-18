@@ -2,6 +2,13 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-18 · [Ext] feat: Ext-init-tasks-folder
+- Owner: SNLRLONG
+- Task: Tasks/3-in-progress/Ext-init-tasks-folder.md
+- Branch/PR: `feat/init-tasks-folder`
+- What changed: New command **GITASK: Initialize Tasks Folder** creates the six status folders and a `_TEMPLATE.md` in a project with no `Tasks/`, then opens the board. Core gains `initTasks`. Version bumped to 0.3.0.
+- Needs: none
+
 ## 2026-10-18 · [Ops] feat: Ops-web-redesign
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ops-web-redesign.md
