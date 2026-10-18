@@ -12,8 +12,8 @@
   --text-body: #d1d5db;
   --text-muted: #9ca3af;
   --accent: #60a5fa;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
   --accent-soft: rgba(59, 130, 246, 0.1);
   --accent-soft-hover: rgba(59, 130, 246, 0.2);
   --accent-border-hover: rgba(59, 130, 246, 0.5);
@@ -30,6 +30,23 @@
   --code-yellow: #dcdcaa;
   --code-purple: #c586c0;
   --button-text: #ffffff;
+  /* Type scale (rem on a 16px root). Real UI text never goes below --fs-xs. */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-body-sm: 0.9375rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-h2: clamp(1.875rem, 1.4rem + 1.6vw, 2.75rem);
+  --fs-display: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);
+  /* Drawn product preview only: aria-hidden miniature, not readable copy. */
+  --fs-mock-xs: 0.5rem;
+  --fs-mock-sm: 0.625rem;
+  --fs-mock-md: 0.75rem;
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-body: 1.65;
+  --lh-relaxed: 1.7;
   --radius-card: 12px;
   --radius-button: 8px;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -46,19 +63,23 @@
   --border: #e5e7eb;
   --border-strong: #d1d5db;
   --text: #111827;
-  --text-body: #374151;
-  --text-muted: #6b7280;
-  --accent: #2563eb;
+  --text-body: #1f2937;
+  --text-muted: #4b5563;
+  --accent: #1d4ed8;
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
   --accent-soft: rgba(37, 99, 235, 0.08);
   --accent-soft-hover: rgba(37, 99, 235, 0.14);
   --accent-border-hover: rgba(37, 99, 235, 0.5);
-  --success: #16a34a;
-  --warning: #d97706;
+  --success: #15803d;
+  --warning: #b45309;
   --danger: #dc2626;
   --shadow: rgba(15, 23, 42, 0.14);
   --hero-wash: rgba(37, 99, 235, 0.09);
+  --code-blue: #0b5cad;
+  --code-green: #1f7a3a;
+  --code-yellow: #8a5a00;
+  --code-purple: #8e3a96;
 }
 
 html {
@@ -75,4 +96,28 @@ html {
 
 @keyframes skeleton {
   to { background-position: -200% 0; }
+}
+
+/* Always-dark panels (editor preview, terminals, git log): keep the dark palette in both themes. */
+.landing .editor-window,
+.landing .terminal,
+.landing .git-log {
+  --bg: #030712;
+  --surface: #111827;
+  --surface-2: #1f2937;
+  --border: #1f2937;
+  --border-strong: #374151;
+  --text: #ffffff;
+  --text-body: #d1d5db;
+  --text-muted: #9ca3af;
+  --accent: #60a5fa;
+  --primary: #3b82f6;
+  --accent-soft: rgba(59, 130, 246, 0.1);
+  --accent-border-hover: rgba(59, 130, 246, 0.5);
+  --success: #4ade80;
+  --shadow: rgba(0, 0, 0, 0.34);
+  --code-blue: #9cdcfe;
+  --code-green: #6a9955;
+  --code-yellow: #dcdcaa;
+  --code-purple: #c586c0;
 }

@@ -22,12 +22,12 @@ export default function Views() {
         <SectionHeading
           eyebrow="Views"
           title="Every way to see your work"
-          text="Start with the live board today. The remaining views are clearly mapped, not passed off as finished features."
+          text="Board, task detail, list, timeline and overview ship in the VS Code extension today."
         />
         <div className="views-grid">
           {views.map((view) => (
             <article
-              className={`view-card ${view.status === "Live" ? "is-live" : ""}`}
+              className="view-card"
               key={view.title}
             >
               <Thumbnail type={view.type} />

@@ -14,7 +14,6 @@ export default function HowItWorks() {
           <article className="step">
             <span className="step-number">01</span>
             <h3>Keep tasks as files</h3>
-            <code className="inline-code">Tasks/2-todo/Web-login-page.md</code>
             <p>
               Each Markdown file represents a task. Its numbered folder
               determines its status.

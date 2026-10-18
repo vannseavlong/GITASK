@@ -11,9 +11,15 @@
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
   text-rendering: optimizeLegibility;
+}
+
+code {
+  border: 0;
+  background: var(--surface-2);
+  color: inherit;
 }
 
 button,
@@ -71,7 +77,7 @@ a,
   display: inline-flex;
   margin-bottom: 12px;
   color: var(--accent);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -92,7 +98,7 @@ a,
 .final-cta h2 {
   margin: 0;
   color: var(--text);
-  font-size: clamp(30px, 3vw, 36px);
+  font-size: var(--fs-h2);
   font-weight: 650;
   letter-spacing: -0.035em;
   line-height: 1.15;
@@ -114,7 +120,7 @@ a,
   border: 1px solid transparent;
   border-radius: var(--radius-button);
   padding: 9px 16px;
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   font-weight: 650;
   line-height: 1;
   cursor: pointer;
@@ -184,7 +190,7 @@ a,
   gap: 6px;
   padding: 0 8px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 
 .icon-button:hover {
@@ -196,8 +202,12 @@ a,
   display: none;
 }
 
-/* Navigation */
+/* Navigation. Docusaurus (Infima) also styles .navbar and .hero, so reset what it adds. */
 .navbar {
+  display: block;
+  height: auto;
+  padding: 0;
+  box-shadow: none;
   position: sticky;
   z-index: 50;
   top: 0;
@@ -219,7 +229,7 @@ a,
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-size: 15px;
+  font-size: var(--fs-base);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -234,7 +244,7 @@ a,
   padding-left: 9px;
   border-left: 1px solid var(--border-strong);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   letter-spacing: 0;
 }
@@ -249,7 +259,7 @@ a,
   border-radius: 6px;
   padding: 6px 10px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
 }
 
@@ -271,6 +281,8 @@ a,
 
 /* Hero */
 .hero {
+  display: block;
+  background: transparent;
   position: relative;
   overflow: hidden;
   padding: 96px 0 108px;
@@ -308,7 +320,7 @@ a,
   border-radius: 999px;
   padding: 5px 10px;
   color: var(--text-body);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
 }
 
@@ -321,7 +333,7 @@ a,
 .hero h1 {
   margin: 0;
   color: var(--text);
-  font-size: clamp(40px, 5vw, 64px);
+  font-size: var(--fs-display);
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 1.02;
@@ -338,7 +350,7 @@ a,
   max-width: 540px;
   margin: 24px 0 28px;
   color: var(--text-body);
-  font-size: 17px;
+  font-size: var(--fs-md);
   line-height: 1.7;
 }
 
@@ -346,7 +358,7 @@ a,
   display: block;
   margin-top: 18px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .editor-window {
@@ -377,7 +389,7 @@ a,
   right: 10px;
   bottom: -28px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-mock-sm);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -391,7 +403,7 @@ a,
   border-radius: 14px 14px 0 0;
   background: var(--terminal-bar);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-mock-sm);
 }
 
 .traffic {
@@ -434,13 +446,13 @@ a,
   padding: 13px 9px;
   background: var(--terminal-bar);
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--fs-mock-sm);
 }
 
 .file-sidebar strong {
   display: block;
   margin-bottom: 10px;
-  font-size: 8px;
+  font-size: var(--fs-mock-xs);
   letter-spacing: 0.08em;
 }
 
@@ -466,14 +478,14 @@ a,
   justify-content: space-between;
   margin: 2px 2px 13px;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-mock-md);
   font-weight: 600;
 }
 
 .board-toolbar small {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-mock-sm);
   font-weight: 400;
 }
 
@@ -498,7 +510,7 @@ a,
   justify-content: space-between;
   margin-bottom: 8px;
   color: var(--text-body);
-  font-size: 9px;
+  font-size: var(--fs-mock-sm);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -511,7 +523,7 @@ a,
   border-radius: 50%;
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--fs-mock-xs);
 }
 
 .task-card {
@@ -540,7 +552,7 @@ a,
   overflow: hidden;
   color: var(--text-body);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: var(--fs-mock-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -562,7 +574,7 @@ a,
   padding: 1px 5px;
   background: var(--accent-soft-hover);
   color: var(--accent);
-  font-size: 7px;
+  font-size: var(--fs-mock-xs);
   font-weight: 700;
 }
 
@@ -574,7 +586,7 @@ a,
   border: 1px solid var(--border-strong);
   border-radius: 50%;
   color: var(--text-muted);
-  font-size: 6px;
+  font-size: var(--fs-mock-xs);
   font-weight: 700;
 }
 
@@ -619,9 +631,9 @@ a,
   position: absolute;
   top: 26px;
   right: 22px;
-  color: var(--border-strong);
+  color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 
 .icon-tile,
@@ -642,7 +654,7 @@ a,
 .download-card h3 {
   margin: 20px 0 8px;
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 650;
   line-height: 1.35;
 }
@@ -653,78 +665,64 @@ a,
 .download-card p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-body-sm);
   line-height: 1.7;
 }
 
 /* Process */
 .steps {
-  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.steps::before {
-  position: absolute;
-  top: 17px;
-  right: 16.7%;
-  left: 16.7%;
-  height: 1px;
-  background: var(--border-strong);
-  content: "";
+  gap: 20px;
 }
 
 .step {
   position: relative;
-  padding-top: 52px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  background: var(--bg);
+}
+
+.step:hover {
+  border-color: var(--accent-border-hover);
 }
 
 .step-number {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  left: 0;
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   place-items: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 50%;
-  background: var(--surface);
+  border: 1px solid var(--accent-border-hover);
+  border-radius: 8px;
+  background: var(--accent-soft);
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 700;
 }
 
 .step h3 {
-  margin-top: 0;
-  font-size: 18px;
+  margin: 20px 0 8px;
+  font-size: var(--fs-lg);
 }
 
-.inline-code {
-  display: inline-block;
-  max-width: 100%;
-  margin: 2px 0 11px;
-  overflow: hidden;
-  color: var(--code-blue);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.step p {
+  font-size: var(--fs-body-sm);
 }
 
 .mini-visual {
-  min-height: 126px;
-  margin-top: 22px;
+  min-height: 132px;
+  margin-top: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  padding: 17px;
-  background: var(--bg);
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--surface);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-sm);
 }
 
 .file-tree div {
@@ -775,11 +773,11 @@ a,
 
 .git-log code {
   display: block;
-  overflow: hidden;
+  margin-top: 4px;
   color: var(--code-blue);
-  font-size: 9px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
 }
 
 .git-log b {
@@ -802,12 +800,7 @@ a,
   background: var(--surface);
 }
 
-.view-card.is-live {
-  grid-column: span 3;
-  border-color: var(--accent-border-hover);
-  box-shadow: 0 14px 34px var(--shadow);
-}
-
+.view-card:nth-child(1),
 .view-card:nth-child(2) {
   grid-column: span 3;
 }
@@ -841,7 +834,7 @@ a,
   border-radius: 999px;
   padding: 2px 7px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 600;
 }
 
@@ -952,7 +945,7 @@ a,
   align-items: center;
   gap: 10px;
   color: var(--text-body);
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 
 .benefit-list svg {
@@ -964,7 +957,7 @@ a,
   border-left: 2px solid var(--warning);
   padding: 3px 0 3px 13px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .availability-note strong {
@@ -989,7 +982,7 @@ a,
   padding: 0 14px;
   background: var(--terminal-bar);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-xs);
 }
 
 .terminal-bar > span {
@@ -1010,7 +1003,7 @@ a,
 .terminal-line code {
   color: var(--code-blue);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .terminal-line code b {
@@ -1022,7 +1015,7 @@ a,
   margin: 7px 0 0 16px;
   color: var(--code-green);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   line-height: 1.8;
 }
 
@@ -1041,14 +1034,14 @@ a,
 }
 
 .terminal-install span {
-  font-size: 9px;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
 }
 
 .terminal-install code {
   color: var(--code-yellow);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-sm);
 }
 
 /* Downloads */
@@ -1081,12 +1074,12 @@ a,
 
 .install-cta strong {
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 
 .install-cta small {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--fs-xs);
 }
 
 .release-error,
@@ -1099,7 +1092,7 @@ a,
   border-radius: 8px;
   padding: 10px 12px;
   color: var(--text-body);
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .release-error svg {
@@ -1145,13 +1138,13 @@ a,
 
 .download-title h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 
 .download-title small {
   display: block;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-xs);
 }
 
 .install-code {
@@ -1171,14 +1164,14 @@ a,
   overflow: hidden;
   color: var(--text-body);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .download-card p {
   margin-top: 13px;
-  font-size: 11px;
+  font-size: var(--fs-sm);
 }
 
 .download-card p strong {
@@ -1192,7 +1185,7 @@ a,
   margin-top: auto;
   padding-top: 13px;
   color: var(--accent);
-  font-size: 11px;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 
@@ -1236,7 +1229,6 @@ a,
 
 .final-cta h2 {
   max-width: 650px;
-  font-size: clamp(28px, 3vw, 38px);
 }
 
 .final-cta .button-row {
@@ -1259,12 +1251,12 @@ a,
   max-width: 280px;
   margin: 16px 0 6px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 
 .footer-brand > span {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--fs-xs);
 }
 
 .footer-grid > div:not(.footer-brand) {
@@ -1277,7 +1269,7 @@ a,
 .footer h3 {
   margin: 0 0 7px;
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 
 .footer-grid a,
@@ -1286,7 +1278,7 @@ a,
   align-items: center;
   gap: 5px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .footer-grid a:hover {
@@ -1304,7 +1296,7 @@ a,
   border-top: 1px solid var(--border);
   padding: 18px 0 24px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-xs);
 }
 
 
@@ -1436,27 +1428,10 @@ a,
 
   .steps {
     grid-template-columns: 1fr;
-    gap: 34px;
-  }
-
-  .steps::before {
-    top: 18px;
-    bottom: 18px;
-    left: 17px;
-    width: 1px;
-    height: auto;
-  }
-
-  .step {
-    padding: 3px 0 0 52px;
-  }
-
-  .step-number {
-    background: var(--surface);
   }
 
   .mini-visual {
-    margin-top: 16px;
+    margin-top: 20px;
   }
 
   .views-grid {
@@ -1464,7 +1439,7 @@ a,
   }
 
   .view-card,
-  .view-card.is-live,
+  .view-card:nth-child(1),
   .view-card:nth-child(2) {
     grid-column: auto;
   }
@@ -1515,7 +1490,7 @@ a,
   }
 
   .hero-copy > p {
-    font-size: 16px;
+    font-size: var(--fs-base);
   }
 
   .button-row .button {
@@ -1546,11 +1521,11 @@ a,
   }
 
   .column-title {
-    font-size: 7px;
+    font-size: var(--fs-mock-xs);
   }
 
   .task-file {
-    font-size: 6.5px;
+    font-size: var(--fs-mock-xs);
   }
 
   .download-grid {
@@ -1570,7 +1545,7 @@ a,
   }
 
   .terminal-line code {
-    font-size: 9px;
+    font-size: var(--fs-xs);
   }
 
   .terminal-install {
