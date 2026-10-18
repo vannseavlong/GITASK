@@ -5,7 +5,7 @@
 - **Tier:** T2 · replaces the landing page UI in `packages/web`, new dependency (`lucide-react`)
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-web-redesign/` · **Branch:** `feat/web-redesign`
-- **Started / updated:** 2026-10-17 / 2026-10-17
+- **Started / updated:** 2026-10-17 / 2026-10-18
 - **Docs:** `Docs/requirements/web-redesign-brief.md`
 - **Depends on:** none
 - **Touches:** `packages/web/src/landing/**`, `packages/web/src/pages/index.tsx`, `packages/web/docusaurus.config.ts` (colorMode), `packages/web/package.json`
