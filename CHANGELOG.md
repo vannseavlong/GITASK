@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-18 · [Ops] feat: Ops-web-redesign
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ops-web-redesign.md
+- Branch/PR: `feat/web-redesign`
+- What changed: Port the Figma Make landing page (`~/Downloads/Redesign GITASK Landing Page`) into Docusaurus. Docs keep the Docusaurus navbar/footer.
+
 ## 2026-10-17 · [Ops] feat: Ops-publish-prep
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ops-publish-prep.md
