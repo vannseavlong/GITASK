@@ -10,6 +10,7 @@ Open a workspace that has `Tasks/1-backlog/` (or any numbered folders under `Tas
 
 - **GITASK: Open Board** shows the board. Drag a card to another column to move it.
 - **GITASK: New Task** creates a task from `Tasks/_TEMPLATE.md`.
+- **GITASK: Initialize Tasks Folder** sets up a new project: it creates `Tasks/1-backlog` to `6-deploy` and a `_TEMPLATE.md`, then opens the board. Safe to run again; it never overwrites.
 
 ```
 Tasks/

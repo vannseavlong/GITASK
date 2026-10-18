@@ -2,7 +2,7 @@
   "name": "gitask-vscode",
   "displayName": "GITASK",
   "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "vannseavlong",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -29,6 +29,10 @@
       {
         "command": "gitask.newTask",
         "title": "GITASK: New Task"
+      },
+      {
+        "command": "gitask.initTasks",
+        "title": "GITASK: Initialize Tasks Folder"
       }
     ],
     "configuration": {

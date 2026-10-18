@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { createTask, loadBoard, moveTask, toggleSubtask } from "gitask-core";
+import { createTask, initTasks, loadBoard, moveTask, toggleSubtask } from "gitask-core";
 import { webviewHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
@@ -48,6 +48,20 @@ async function newTask(column?: string): Promise<void> {
   } catch (e) {
     vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
   }
+  await post();
+}
+
+async function initTasksFolder(ctx: vscode.ExtensionContext): Promise<void> {
+  const dir = tasksDir();
+  if (!dir) return void vscode.window.showErrorMessage("GITASK: open a folder first.");
+  try {
+    const { created } = await initTasks(dir);
+    if (!created.length) vscode.window.showInformationMessage("GITASK: the Tasks folder is already set up.");
+    else vscode.window.showInformationMessage(`GITASK: created ${created.length} item(s) in ${basename(dir)}/. Add a task with "GITASK: New Task".`);
+  } catch (e) {
+    return void vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
+  }
+  openBoard(ctx);
   await post();
 }
 
@@ -129,6 +143,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
   ctx.subscriptions.push(
     vscode.commands.registerCommand("gitask.openBoard", () => openBoard(ctx)),
     vscode.commands.registerCommand("gitask.newTask", () => newTask()),
+    vscode.commands.registerCommand("gitask.initTasks", () => initTasksFolder(ctx)),
   );
 }
 
