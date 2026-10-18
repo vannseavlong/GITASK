@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-18 · [Ext] feat: Ext-marketplace-metadata
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-marketplace-metadata.md
+- Branch/PR: `fix/marketplace-metadata`
+- What changed: The VS Code Marketplace rejects the 0.3.0 `.vsix` ("Your extension has suspicious content. Please fix your extension metadata"), so 0.3.0 is only on npm, Open VSX and GitHub, and VS Code users cannot auto-update. Find which metadata is flagged and ship 0.3.1 that the Marketplace accepts.
+
 ## 2026-10-18 · [Ext] fix: Ext-marketplace-metadata
 - Owner: SNLRLONG
 - Task: Tasks/3-in-progress/Ext-marketplace-metadata.md
