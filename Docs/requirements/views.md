@@ -29,6 +29,9 @@ Optional `Tasks/gitask.json`: `{ "columns": { "<folder>": { "color": "#rrggbb" }
 ## Show or hide statuses
 A bar under the tabs lists every status as a chip with its task count. Clicking a chip hides or shows that status in all four views at once (Board columns, List rows, Timeline bars, Overview counts and charts); "Show all" resets. The bar says how many statuses are shown and how many tasks are hidden, and an "all statuses hidden" message replaces the view when none is left. The hidden set is one list in webview state (per user, never committed); unknown or deleted statuses are ignored. Logic: `packages/vscode/src/status-visibility.ts`.
 
+## Date range filter
+One bar under the tabs filters Board, List, Timeline and Overview alike: `From`, `To` (both optional, inclusive, `YYYY-MM-DD`) and which date, `Due` or `Updated`. Counts, bars and totals use only the tasks in range. While a range is active, tasks without a usable date are hidden. "No tasks in range." shows when nothing matches. The range is remembered per view (webview state, not committed). It combines with the Board and List text filters.
+
 ## Rules
 - Task text is untrusted: render it without raw HTML.
 - Every view works with an empty board, one column, and 500 tasks.
