@@ -4,7 +4,8 @@ import { promisify } from "node:util";
 const run = promisify(execFile);
 
 async function git(cwd: string, args: string[]): Promise<string> {
-  const { stdout } = await run("git", args, { cwd });
+  // Literal pathspecs: a file named `a[12].md` or `Fix *.md` must match only itself.
+  const { stdout } = await run("git", args, { cwd, env: { ...process.env, GIT_LITERAL_PATHSPECS: "1" } });
   return stdout.trim();
 }
 
@@ -32,3 +33,15 @@ export const gitAdd = (cwd: string, ...paths: string[]) => git(cwd, ["add", "--"
 /** Commit only the given paths. Never `git add -A`, so other staged or dirty files stay untouched. */
 export const gitCommitPaths = (cwd: string, message: string, ...paths: string[]) =>
   git(cwd, ["commit", "-m", message, "--", ...paths]);
+
+/** Remove a file from the index and the working tree, even with local edits (the caller has confirmed). */
+export const gitRm = (cwd: string, file: string) => git(cwd, ["rm", "-q", "-f", "--", file]);
+
+/** True when the file has uncommitted changes (modified, staged or untracked). */
+export async function hasLocalChanges(cwd: string, file: string): Promise<boolean> {
+  try {
+    return (await git(cwd, ["status", "--porcelain", "--", file])).length > 0;
+  } catch {
+    return false;
+  }
+}

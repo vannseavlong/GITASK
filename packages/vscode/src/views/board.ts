@@ -83,7 +83,7 @@ GITASK.register({
     let dragging = null;
     let focusBtn = null;
     for (const col of board.columns) {
-      const tasks = col.tasks.filter((t) => !q || (t.title + " " + t.id + " " + (t.owner || "") + " " + (t.claimedBy || "")).toLowerCase().includes(q));
+      const tasks = col.tasks.filter((t) => !q || (t.title + " " + t.id + " " + (t.displayId || "") + " " + (t.owner || "") + " " + (t.claimedBy || "")).toLowerCase().includes(q));
       const c = GITASK.el("div", "col");
       const h = GITASK.el("h3");
       h.append(GITASK.el("span", "", col.label), GITASK.el("span", "", String(tasks.length)));
@@ -99,6 +99,12 @@ GITASK.register({
       if (this.refocus === col.id) focusBtn = sw;
       c.append(h);
       if (!tasks.length) c.append(GITASK.el("div", "empty", "empty"));
+      if (!col.tasks.length) {
+        const dc = GITASK.el("button", "del-col", "Delete status");
+        dc.type = "button";
+        dc.addEventListener("click", () => api.post({ type: "deleteColumn", column: col.id }));
+        c.append(dc);
+      }
       for (const t of tasks) {
         const card = GITASK.el("div", "card");
         if (col.color) card.style.setProperty("--st-color", col.color);
@@ -106,6 +112,17 @@ GITASK.register({
         card.tabIndex = 0;
         card.setAttribute("role", "button");
         const openIt = () => { if (GITASK.openDetail) GITASK.openDetail(t.path); else api.post({ type: "open", path: t.path }); };
+        const head = GITASK.el("div", "card-head");
+        if (t.displayId) head.append(GITASK.el("span", "did", t.displayId));
+        const del = GITASK.el("button", "del", "\u00d7");
+        del.type = "button";
+        del.title = "Delete task";
+        del.setAttribute("aria-label", "Delete task " + t.id);
+        del.addEventListener("click", (ev) => { ev.stopPropagation(); api.post({ type: "deleteTask", path: t.path }); });
+        del.addEventListener("keydown", (ev) => ev.stopPropagation());
+        del.draggable = false;
+        head.append(del);
+        card.append(head);
         card.append(GITASK.el("div", "title", t.title));
         const meta = GITASK.el("div", "meta");
         if (t.prefix) meta.append(GITASK.el("span", "tag", t.prefix));
@@ -164,6 +181,11 @@ const css = `
 .view-board .hex-input { width: 72px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); padding: 2px 4px; }
 .view-board .hex-err { color: var(--vscode-errorForeground); font-size: 11px; }
 .view-board .card.dragging { opacity: .4; }
+.view-board .card-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 2px; }
+.view-board .did { font-size: 11px; opacity: .7; font-family: var(--vscode-editor-font-family, monospace); }
+.view-board .del { margin-left: auto; background: transparent; color: var(--vscode-foreground); border: 0; padding: 0 4px; opacity: .5; cursor: pointer; font-size: 14px; line-height: 1; }
+.view-board .del:hover, .view-board .del:focus-visible { opacity: 1; color: var(--vscode-errorForeground); }
+.view-board .del-col { margin-top: 6px; font-size: 11px; padding: 2px 8px; }
 .view-board .title { font-size: 13px; word-break: break-word; }
 .view-board .meta { margin-top: 6px; font-size: 11px; opacity: .85; display: flex; flex-wrap: wrap; gap: 4px; }
 .view-board .tag { padding: 0 6px; border-radius: 8px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }

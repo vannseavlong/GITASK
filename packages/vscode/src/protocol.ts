@@ -12,7 +12,9 @@ export type WebviewMessage =
   | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "readTask"; path: string }
   | { type: "view"; id: string }
-  | { type: "setColumnColor"; column: string; color: string | null };
+  | { type: "setColumnColor"; column: string; color: string | null }
+  | { type: "deleteTask"; path: string }
+  | { type: "deleteColumn"; column: string };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -100,6 +102,14 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (raw.color === null) return { ok: true, message: { type: "setColumnColor", column: raw.column, color: null } };
       if (typeof raw.color !== "string" || !/^#[0-9a-fA-F]{6}$/.test(raw.color)) return fail("colour must be #rrggbb");
       return { ok: true, message: { type: "setColumnColor", column: raw.column, color: raw.color } };
+    }
+    case "deleteTask": {
+      const path = taskPathInside(raw.path, ctx);
+      return path ? { ok: true, message: { type: "deleteTask", path } } : fail("path is not a task file in the Tasks dir");
+    }
+    case "deleteColumn": {
+      if (typeof raw.column !== "string" || !ctx.columns.includes(raw.column)) return fail("unknown column");
+      return { ok: true, message: { type: "deleteColumn", column: raw.column } };
     }
     default:
       return fail(`unknown message type`);

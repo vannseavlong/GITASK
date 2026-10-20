@@ -108,7 +108,7 @@ test("createTask fills the real template", async () => {
   const { tasks } = workspace(false);
   writeFileSync(join(tasks, "_TEMPLATE.md"), "# <Task title>\n\n- **Owner:** {{OWNER}}\n- **Started / updated:** <date> / <date>\n");
   const body = readFileSync(await createTask(tasks, "2-todo", "Core-x", { owner: "Kim", today: "2026-05-05" }), "utf8");
-  assert.equal(body, "# Core-x\n\n- **Owner:** Kim\n- **Started / updated:** 2026-05-05 / 2026-05-05\n");
+  assert.equal(body, "# Core-x\n\n- **ID:** T-0001\n- **Owner:** Kim\n- **Started / updated:** 2026-05-05 / 2026-05-05\n");
 });
 
 test("appendChangelog is idempotent and inserts above older entries", async () => {

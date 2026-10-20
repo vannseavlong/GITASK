@@ -58,11 +58,14 @@ export const DETAIL_JS = String.raw`
   }
 
   function renderHeader(task) {
-    titleEl.textContent = task.title;
+    titleEl.textContent = (task.displayId ? task.displayId + "  " : "") + task.title;
     bar.replaceChildren();
     const openBtn = el("button", "", "Open file");
     openBtn.addEventListener("click", () => post({ type: "open", path: task.path }));
     bar.append(openBtn);
+    const delBtn = el("button", "", "Delete");
+    delBtn.addEventListener("click", () => post({ type: "deleteTask", path: task.path }));
+    bar.append(delBtn);
     const total = task.progress && task.progress.total > 0 ? task.progress : null;
     if (total) {
       const p = el("div", "detail-progress");

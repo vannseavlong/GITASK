@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { createTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
+import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
 import { webviewHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
@@ -10,6 +10,7 @@ const VIEW_KEY = "gitask.lastView";
 let log: vscode.OutputChannel | undefined;
 
 let panel: vscode.WebviewPanel | undefined;
+let idsAssigned = false;
 
 function tasksDir(): string | undefined {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -69,6 +70,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
   if (panel) return panel.reveal();
   panel = vscode.window.createWebviewPanel("gitask", "GITASK", vscode.ViewColumn.Active, { enableScripts: true });
   panel.webview.html = webviewHtml(VIEWS, { initialView: ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW) });
+  idsAssigned = false;
   panel.onDidDispose(() => (panel = undefined), undefined, ctx.subscriptions);
 
   panel.webview.onDidReceiveMessage(async (raw: unknown) => {
@@ -90,6 +92,14 @@ function openBoard(ctx: vscode.ExtensionContext): void {
     const cfg = vscode.workspace.getConfiguration("gitask");
     switch (m.type) {
       case "ready":
+        if (!idsAssigned) {
+          idsAssigned = true; // backfill task IDs once per opened board
+          try {
+            await assignIds(dir, { commit: cfg.get<boolean>("autoCommit", true) });
+          } catch (e) {
+            log?.appendLine(`Could not assign task IDs: ${(e as Error).message}`);
+          }
+        }
         return post();
       case "view":
         return void ctx.workspaceState.update(VIEW_KEY, m.id);
@@ -107,6 +117,34 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not move ${basename(m.path)}: ${(e as Error).message}`);
         }
         return post(); // always resync so the UI reflects what is on disk
+      case "deleteTask": {
+        const name = basename(m.path, ".md");
+        const commit = cfg.get<boolean>("autoCommit", true);
+        const impact = await deleteImpact(m.path, { commit });
+        const detail = impact === "recoverable" ? "The file is removed and the removal is committed, so it can be restored from git history."
+          : impact === "loses-local-edits" ? "This file has uncommitted edits. They will be lost; only the last committed version stays in git history."
+          : "This file is not committed (untracked, or auto-commit is off). It will be permanently removed and cannot be restored.";
+        const ok = await vscode.window.showWarningMessage(`Delete task "${name}"?`, { modal: true, detail }, "Delete");
+        if (ok !== "Delete") return;
+        try {
+          await deleteTask(dir, m.path, { commit });
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not delete ${name}: ${(e as Error).message}`);
+        }
+        return post();
+      }
+      case "deleteColumn": {
+        const col = board.columns.find((c) => c.id === m.column);
+        if (col?.tasks.length) return void vscode.window.showErrorMessage(`GITASK: cannot delete status "${col.label}": it still has ${col.tasks.length} task(s). Move or delete them first.`);
+        const ok = await vscode.window.showWarningMessage(`Delete the empty status "${col?.label ?? m.column}"?`, { modal: true, detail: `The folder ${m.column}/ is removed.` }, "Delete");
+        if (ok !== "Delete") return;
+        try {
+          await deleteColumn(dir, m.column, { commit: cfg.get<boolean>("autoCommit", true) });
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
+        }
+        return post();
+      }
       case "readTask": {
         const r = await readTaskBody(m.path, dir);
         return send({ type: "taskBody", path: m.path, ...r });
