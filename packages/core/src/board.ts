@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { colorOf, readColors } from "./config.ts";
 import { parseTask } from "./parse.ts";
 import type { Board, Column } from "./types.ts";
 
@@ -23,6 +24,7 @@ export async function loadBoard(dir: string): Promise<Board> {
   );
   const known = new Set(listed.flatMap((c) => c.files.map((f) => f.replace(/\.md$/, ""))));
 
+  const colors = await readColors(dir);
   const columns: Column[] = [];
   for (const { id, files } of listed) {
     const tasks = await Promise.all(
@@ -31,7 +33,8 @@ export async function loadBoard(dir: string): Promise<Board> {
         return parseTask(path, id, await readFile(path, "utf8"), known);
       }),
     );
-    columns.push({ id, label: columnLabel(id), tasks });
+    const color = colorOf(colors, id);
+    columns.push({ id, label: columnLabel(id), ...(color ? { color } : {}), tasks });
   }
   return { dir, columns };
 }

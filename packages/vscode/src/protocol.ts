@@ -11,7 +11,8 @@ export type WebviewMessage =
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "readTask"; path: string }
-  | { type: "view"; id: string };
+  | { type: "view"; id: string }
+  | { type: "setColumnColor"; column: string; color: string | null };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -93,6 +94,12 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
     case "view": {
       if (typeof raw.id !== "string" || !ctx.views.includes(raw.id)) return fail("unknown view");
       return { ok: true, message: { type: "view", id: raw.id } };
+    }
+    case "setColumnColor": {
+      if (typeof raw.column !== "string" || !ctx.columns.includes(raw.column)) return fail("unknown column");
+      if (raw.color === null) return { ok: true, message: { type: "setColumnColor", column: raw.column, color: null } };
+      if (typeof raw.color !== "string" || !/^#[0-9a-fA-F]{6}$/.test(raw.color)) return fail("colour must be #rrggbb");
+      return { ok: true, message: { type: "setColumnColor", column: raw.column, color: raw.color } };
     }
     default:
       return fail(`unknown message type`);

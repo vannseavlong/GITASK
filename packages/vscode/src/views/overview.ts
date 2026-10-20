@@ -33,7 +33,7 @@ GITASK.register({
     tile(o.claimed.length, "claimed", false);
     box.append(tiles);
 
-    const bars = (title, rows, key, label) => {
+    const bars = (title, rows, key, label, colorOf) => {
       const sec = GITASK.el("section", "ov-sec");
       sec.append(GITASK.el("h3", "", title));
       const max = Math.max(1, ...rows.map((r) => r.count));
@@ -43,6 +43,8 @@ GITASK.register({
         const track = GITASK.el("span", "ov-track");
         const fill = GITASK.el("span", "ov-fill");
         fill.style.width = Math.round((100 * r.count) / max) + "%";
+        const clr = colorOf ? colorOf(r) : "";
+        if (clr) fill.style.background = clr;
         track.append(fill);
         row.append(track, GITASK.el("span", "ov-count", String(r.count)));
         sec.append(row);
@@ -51,7 +53,7 @@ GITASK.register({
     };
     const grid = GITASK.el("div", "ov-grid");
     grid.append(
-      bars("By status", o.byStatus, "id", (r) => r.label),
+      bars("By status", o.byStatus, "id", (r) => r.label, (r) => { const c = board.columns.find((x) => x.id === r.id); return c && c.color ? c.color : ""; }),
       bars("By tier", o.byTier, "key", (r) => (r.key === "none" ? "no tier" : r.key)),
       bars("By owner", o.byOwner, "key", (r) => r.key),
     );

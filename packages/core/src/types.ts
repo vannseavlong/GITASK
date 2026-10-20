@@ -44,6 +44,8 @@ export interface Column {
   id: string;
   /** Display name, e.g. `todo`. */
   label: string;
+  /** `#rrggbb` from `gitask.json`; undefined when not set. */
+  color?: string;
   tasks: Task[];
 }
 

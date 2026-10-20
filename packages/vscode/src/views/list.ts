@@ -81,10 +81,16 @@ GITASK.register({
     this.tbody.replaceChildren();
     this.table.hidden = shown.length === 0;
     this.empty.textContent = !all.length ? "No tasks yet." : shown.length ? "" : "No tasks match the current filters.";
+    const statusColor = {};
+    for (const c of board.columns) if (c.color) statusColor[c.label] = c.color;
     for (const r of shown) {
       const tr = GITASK.el("tr", "list-row");
       tr.tabIndex = 0;
-      tr.append(GITASK.el("td", "c-title", r.title), GITASK.el("td", "", r.status), GITASK.el("td", "", r.tier),
+      const stTd = GITASK.el("td");
+      const chip = GITASK.el("span", "st-chip", r.status);
+      if (statusColor[r.status]) { chip.classList.add("colored"); chip.style.setProperty("--st-color", statusColor[r.status]); }
+      stTd.append(chip);
+      tr.append(GITASK.el("td", "c-title", r.title), stTd, GITASK.el("td", "", r.tier),
         GITASK.el("td", "", r.owner), GITASK.el("td", "", r.claimedBy), GITASK.el("td", "", r.updated), GITASK.el("td", "", r.due));
       const p = GITASK.el("td", "c-progress");
       if (r.total) {
@@ -140,6 +146,8 @@ const css = `
 .view-list .c-progress .track { display: inline-block; width: 60px; height: 4px; border-radius: 2px; background: var(--vscode-panel-border); overflow: hidden; vertical-align: middle; margin-right: 6px; }
 .view-list .c-progress .fill { display: block; height: 100%; background: var(--vscode-progressBar-background); }
 .view-list .c-progress .count { font-size: 11px; }
+.view-list .st-chip { display: inline-block; padding: 0 8px; border-radius: 8px; border: 1px solid transparent; }
+.view-list .st-chip.colored { border-color: var(--st-color); box-shadow: inset 4px 0 0 var(--st-color); padding-left: 12px; }
 .view-list .list-open { padding: 2px 8px; font-size: 11px; }
 .view-list .list-empty { opacity: .7; padding: 24px 4px; }
 .view-list .list-empty:empty { display: none; }
