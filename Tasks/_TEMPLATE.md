@@ -1,5 +1,6 @@
 # <Task title>
 
+- **ID:** <T-0001, assigned by GITASK when created>
 - **Repo:** <repo>
 - **Owner:** SNLRLONG
 - **Tier:** T0 | T1 | T2 | T3 · <signals> (auto picker, see `PIPELINE.md`)
