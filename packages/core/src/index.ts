@@ -13,5 +13,5 @@ export type { ToggleOptions, ToggleResult } from "./toggle.ts";
 export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf } from "./parse.ts";
 export { assignIds, setIdField, nextDisplayId, formatDisplayId, DISPLAY_ID, ASSIGN_IDS_MESSAGE } from "./ids.ts";
 export type { AssignIdsOptions, AssignIdsResult } from "./ids.ts";
-export { deleteTask, deleteColumn, DELETE_TASK_MESSAGE, DELETE_COLUMN_MESSAGE } from "./delete.ts";
-export type { DeleteOptions, DeleteResult } from "./delete.ts";
+export { deleteTask, deleteColumn, deleteImpact, DELETE_TASK_MESSAGE, DELETE_COLUMN_MESSAGE } from "./delete.ts";
+export type { DeleteOptions, DeleteResult, DeleteImpact } from "./delete.ts";

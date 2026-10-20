@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assignIds, createTask, deleteColumn, deleteTask, loadBoard, parseTask, setIdField } from "../src/index.ts";
+import { deleteImpact, moveTask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, parseTask, setIdField } from "../src/index.ts";
 
 const body = (title: string, id?: string) =>
   `# ${title}\n\n${id ? `- **ID:** ${id}\n` : ""}- **Owner:** Sam\n- **Started / updated:** 2026-01-01 / 2026-01-01\n\n## Goal\nx\n\n## Done when\n- [ ] a\n`;
@@ -156,4 +156,90 @@ test("deleteColumn removes a tracked .gitkeep with a commit; refuses other files
   await assert.rejects(deleteColumn(tasks, "4-x"), /contains notes.txt/);
   await assert.rejects(deleteColumn(tasks, "../x"));
   await assert.rejects(deleteColumn(tasks, "_inbox"));
+});
+
+function globRepo() {
+  const { root, tasks, g } = ws(false);
+  for (const n of ["Fix *.md", "Fix a.md", "Fix b.md", "a[12].md", "a1.md", "a2.md"]) writeFileSync(join(tasks, "2-todo", n), body(n.replace(".md", ""), undefined));
+  g("init", "-q", "-b", "main"); g("config", "user.email", "t@t.t"); g("config", "user.name", "T");
+  g("add", "-A"); g("commit", "-q", "-m", "init");
+  return { root, tasks, g };
+}
+
+test("deleteTask with glob characters in the name deletes only that file", async () => {
+  const { tasks, g } = globRepo();
+  await deleteTask(tasks, join(tasks, "2-todo", "Fix *.md"));
+  assert.ok(!existsSync(join(tasks, "2-todo", "Fix *.md")));
+  for (const n of ["Fix a.md", "Fix b.md", "a1.md"]) assert.ok(existsSync(join(tasks, "2-todo", n)), n);
+  assert.equal(g("show", "--name-status", "--format=", "HEAD"), "D\tTasks/2-todo/Fix *.md");
+  await deleteTask(tasks, join(tasks, "2-todo", "a[12].md"));
+  assert.ok(existsSync(join(tasks, "2-todo", "a1.md")) && existsSync(join(tasks, "2-todo", "a2.md")));
+  assert.equal(g("show", "--name-status", "--format=", "HEAD"), "D\tTasks/2-todo/a[12].md");
+});
+
+test("moveTask with glob characters moves and commits only that file", async () => {
+  const { tasks, g } = globRepo();
+  await moveTask(tasks, join(tasks, "2-todo", "Fix *.md"), "3-done");
+  assert.ok(existsSync(join(tasks, "3-done", "Fix *.md")));
+  assert.ok(existsSync(join(tasks, "2-todo", "Fix a.md")));
+  const files = g("show", "--name-status", "--format=", "HEAD").split("\n");
+  assert.equal(files.length, 1);
+  assert.match(files[0], /^R\d*\tTasks\/2-todo\/Fix \*\.md\tTasks\/3-done\/Fix \*\.md$/);
+});
+
+test("assignIds with glob-named files touches only those files", async () => {
+  const { tasks, g } = globRepo();
+  const r = await assignIds(tasks);
+  assert.equal(r.assigned.length, 8); // 3 from ws (one already has an id) + 6 glob files
+  assert.equal(g("status", "--porcelain"), "");
+  assert.equal(g("log", "--format=%s", "-1"), "chore(tasks): assign task IDs");
+});
+
+test("assignIds skips tracked files with uncommitted edits", async () => {
+  const { tasks, g } = ws(true);
+  const wip = join(tasks, "1-backlog", "A-one.md");
+  writeFileSync(wip, body("A-one") + "\nWIP\n");
+  const r = await assignIds(tasks);
+  assert.deepEqual(r.assigned.map((a) => a.path), [join(tasks, "2-todo", "A-three.md")]);
+  assert.ok(!readFileSync(wip, "utf8").includes("**ID:**"));
+  assert.match(g("status", "--porcelain"), /^M Tasks\/1-backlog\/A-one\.md$/);
+  g("commit", "-q", "-am", "wip");
+  assert.equal((await assignIds(tasks)).assigned.length, 1);
+});
+
+test("setIdField leaves a non-T- user ID alone; assignIds does not renumber it", async () => {
+  const src = body("a", "JIRA-123");
+  assert.equal(setIdField(src, "T-0001"), src);
+  const { tasks } = ws(false);
+  const f = join(tasks, "1-backlog", "A-one.md");
+  writeFileSync(f, src);
+  await assignIds(tasks);
+  assert.match(readFileSync(f, "utf8"), /ID:\*\* JIRA-123/);
+});
+
+test("deleteImpact: recoverable, loses-local-edits, permanent", async () => {
+  const { tasks } = ws(true);
+  const f = join(tasks, "2-todo", "A-two.md");
+  assert.equal(await deleteImpact(f), "recoverable");
+  assert.equal(await deleteImpact(f, { commit: false }), "permanent");
+  writeFileSync(f, body("A-two", "T-0007") + "edit\n");
+  assert.equal(await deleteImpact(f), "loses-local-edits");
+  const u = join(tasks, "2-todo", "Untracked.md");
+  writeFileSync(u, body("U"));
+  assert.equal(await deleteImpact(u), "permanent");
+  assert.equal(await deleteImpact(join(ws(false).tasks, "1-backlog", "A-one.md")), "permanent");
+});
+
+test("deleteTask commit message with $ and {id} is templated literally", async () => {
+  const { tasks, g } = ws(true);
+  await deleteTask(tasks, join(tasks, "2-todo", "A-two.md"), { message: "rm {id} $& $1" });
+  assert.equal(g("log", "--format=%s", "-1"), "rm A-two $& $1");
+});
+
+test("deleteColumn ignores .DS_Store", async () => {
+  const { tasks } = ws(false);
+  mkdirSync(join(tasks, "4-x"));
+  writeFileSync(join(tasks, "4-x", ".DS_Store"), "");
+  await deleteColumn(tasks, "4-x");
+  assert.ok(!existsSync(join(tasks, "4-x")));
 });

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { loadBoard } from "./board.ts";
-import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
 import type { Board } from "./types.ts";
 
 /** A display id: `T-` plus digits. Anything else in the `ID` field is treated as missing. */
@@ -38,6 +38,7 @@ export function setIdField(content: string, id: string): string {
   const stop = headerEnd < 0 ? lines.length : headerEnd;
   const existing = lines.findIndex((l, n) => n >= i && n < stop && ID_LINE.test(l));
   if (existing >= 0) {
+    if (!/\*\*ID:\*\*\s*T-\d+\s*$/i.test(lines[existing]) && /\*\*ID:\*\*\s*[^\s<]/.test(lines[existing])) return content; // user's own ID (e.g. JIRA-123)
     lines[existing] = lines[existing].replace(ID_LINE, `$1 ${id}`);
     return lines.join(eol);
   }
@@ -81,9 +82,15 @@ export async function assignIds(tasksDir: string, opts: AssignIdsOptions = {}): 
       seen.add(t.displayId);
       continue;
     }
-    const id = formatDisplayId(next++);
+    const cwd = dirname(t.path);
+    // Tracked file with uncommitted edits: leave it, so WIP is never swept into the commit.
+    if ((await isTracked(cwd, t.path)) && (await hasLocalChanges(cwd, t.path))) continue;
     const raw = await readFile(t.path, "utf8");
-    await writeFile(t.path, setIdField(raw, id));
+    const id = formatDisplayId(next);
+    const out = setIdField(raw, id);
+    if (out === raw) continue; // a user-set non-T- ID (e.g. JIRA-123) is left alone
+    next++;
+    await writeFile(t.path, out);
     assigned.push({ path: t.path, displayId: id });
   }
 

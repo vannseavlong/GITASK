@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { assignIds, createTask, deleteColumn, deleteTask, initTasks, loadBoard, moveTask, toggleSubtask } from "gitask-core";
+import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, toggleSubtask } from "gitask-core";
 import { webviewHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
@@ -119,10 +119,15 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         return post(); // always resync so the UI reflects what is on disk
       case "deleteTask": {
         const name = basename(m.path, ".md");
-        const ok = await vscode.window.showWarningMessage(`Delete task "${name}"?`, { modal: true, detail: "The file is removed and the removal is committed, so it can be restored from git history." }, "Delete");
+        const commit = cfg.get<boolean>("autoCommit", true);
+        const impact = await deleteImpact(m.path, { commit });
+        const detail = impact === "recoverable" ? "The file is removed and the removal is committed, so it can be restored from git history."
+          : impact === "loses-local-edits" ? "This file has uncommitted edits. They will be lost; only the last committed version stays in git history."
+          : "This file is not committed (untracked, or auto-commit is off). It will be permanently removed and cannot be restored.";
+        const ok = await vscode.window.showWarningMessage(`Delete task "${name}"?`, { modal: true, detail }, "Delete");
         if (ok !== "Delete") return;
         try {
-          await deleteTask(dir, m.path, { commit: cfg.get<boolean>("autoCommit", true) });
+          await deleteTask(dir, m.path, { commit });
         } catch (e) {
           vscode.window.showErrorMessage(`GITASK: could not delete ${name}: ${(e as Error).message}`);
         }
