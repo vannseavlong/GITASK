@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { readColors } from "./config.ts";
+import { colorOf, readColors } from "./config.ts";
 import { parseTask } from "./parse.ts";
 import type { Board, Column } from "./types.ts";
 
@@ -33,7 +33,8 @@ export async function loadBoard(dir: string): Promise<Board> {
         return parseTask(path, id, await readFile(path, "utf8"), known);
       }),
     );
-    columns.push({ id, label: columnLabel(id), ...(colors[id] ? { color: colors[id] } : {}), tasks });
+    const color = colorOf(colors, id);
+    columns.push({ id, label: columnLabel(id), ...(color ? { color } : {}), tasks });
   }
   return { dir, columns };
 }

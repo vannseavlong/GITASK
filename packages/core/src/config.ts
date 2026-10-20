@@ -10,21 +10,29 @@ export const isColor = (v: unknown): v is string => typeof v === "string" && COL
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
+/** Own-property lookup: a folder named `constructor` or `toString` never yields an inherited value. */
+export function colorOf(colors: Record<string, string>, id: string): string | undefined {
+  if (!Object.hasOwn(colors, id)) return undefined;
+  const v = colors[id];
+  return isColor(v) ? v : undefined;
+}
+
 /** Parse the text of `Tasks/gitask.json` into `{ column folder: colour }`. Bad input yields no colours, never throws. */
 export function parseColors(text: string): Record<string, string> {
-  const out: Record<string, string> = {};
+  const out = new Map<string, string>();
   let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
-    return out;
+    return {};
   }
   const columns = isRecord(json) ? json.columns : undefined;
-  if (!isRecord(columns)) return out;
+  if (!isRecord(columns)) return {};
   for (const [id, v] of Object.entries(columns)) {
-    if (isRecord(v) && isColor(v.color)) out[id] = v.color.toLowerCase();
+    if (isRecord(v) && isColor(v.color)) out.set(id, v.color.toLowerCase());
   }
-  return out;
+  // fromEntries defines own properties, so a folder named `__proto__` stays plain data. Read with colorOf().
+  return Object.fromEntries(out);
 }
 
 /** Column colours from `<dir>/gitask.json`; `{}` when the file is missing or malformed. */
@@ -56,13 +64,14 @@ export async function setColumnColor(dir: string, column: string, color: string 
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw new Error(`Cannot update ${CONFIG_FILE}: ${(e as Error).message}`);
   }
-  const columns: Record<string, unknown> = isRecord(json.columns) ? { ...json.columns } : {};
-  const entry: Record<string, unknown> = isRecord(columns[column]) ? { ...(columns[column] as Record<string, unknown>) } : {};
+  const columns = new Map<string, unknown>(isRecord(json.columns) ? Object.entries(json.columns) : []);
+  const prev = columns.get(column);
+  const entry: Record<string, unknown> = isRecord(prev) ? { ...prev } : {};
   if (color === null) delete entry.color;
   else entry.color = color.toLowerCase();
-  if (Object.keys(entry).length) columns[column] = entry;
-  else delete columns[column];
-  json.columns = columns;
+  if (Object.keys(entry).length) columns.set(column, entry);
+  else columns.delete(column);
+  json.columns = Object.fromEntries(columns);
   await writeFile(file, JSON.stringify(json, null, 2) + "\n");
 
   const root = await repoRoot(dir);

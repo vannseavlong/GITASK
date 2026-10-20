@@ -29,7 +29,7 @@ GITASK.register({
     if (open) return;
     c.querySelector(".col-color").setAttribute("aria-expanded", "true");
     const box = GITASK.el("div", "col-picker");
-    const send = (color) => api.post({ type: "setColumnColor", column: col.id, color: color });
+    const send = (color) => { this.refocus = col.id; api.post({ type: "setColumnColor", column: col.id, color: color }); };
     const presets = ["#3794ff", "#b180d7", "#cca700", "#d18616", "#89d185", "#e5534b", "#2aa198", "#8b949e"];
     const row = GITASK.el("div", "swatches");
     for (const hex of presets) {
@@ -50,6 +50,7 @@ GITASK.register({
     const apply = GITASK.el("button", "", "Set");
     apply.type = "button";
     const msg = GITASK.el("span", "hex-err");
+    msg.setAttribute("role", "status");
     const submit = () => {
       if (!/^#[0-9a-fA-F]{6}$/.test(hexIn.value.trim())) { msg.textContent = "Use #rrggbb"; return; }
       send(hexIn.value.trim());
@@ -62,6 +63,15 @@ GITASK.register({
     const line = GITASK.el("div", "hex-row");
     line.append(hexIn, apply, reset, msg);
     box.append(row, line);
+    box.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Escape") return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      const btn = c.querySelector(".col-color");
+      box.remove();
+      btn.setAttribute("aria-expanded", "false");
+      btn.focus();
+    });
     c.querySelector("h3").after(box);
     hexIn.focus();
   },
@@ -71,6 +81,7 @@ GITASK.register({
     if (!board) return;
     const q = (api.state.filter || "").toLowerCase();
     let dragging = null;
+    let focusBtn = null;
     for (const col of board.columns) {
       const tasks = col.tasks.filter((t) => !q || (t.title + " " + t.id + " " + (t.owner || "") + " " + (t.claimedBy || "")).toLowerCase().includes(q));
       const c = GITASK.el("div", "col");
@@ -85,6 +96,7 @@ GITASK.register({
       if (col.color) sw.style.setProperty("--st-color", col.color);
       sw.addEventListener("click", (ev) => { ev.stopPropagation(); this.togglePicker(c, col, api); });
       h.insertBefore(sw, h.lastChild);
+      if (this.refocus === col.id) focusBtn = sw;
       c.append(h);
       if (!tasks.length) c.append(GITASK.el("div", "empty", "empty"));
       for (const t of tasks) {
@@ -126,6 +138,8 @@ GITASK.register({
       });
       cols.append(c);
     }
+    if (focusBtn) focusBtn.focus();
+    this.refocus = null;
   },
 });
 `;

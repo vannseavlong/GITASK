@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadBoard, parseColors, setColumnColor } from "../src/index.ts";
+import { loadBoard, parseColors, colorOf, setColumnColor } from "../src/index.ts";
 
 function tasksDir(git = false) {
   const root = mkdtempSync(join(tmpdir(), "gitask-cfg-"));
@@ -80,4 +80,29 @@ test("setColumnColor commits the tracked file only", async () => {
   assert.equal(files.trim(), "Tasks/gitask.json");
   const none = await setColumnColor(tasks, "2-todo", "#654321", { commit: false });
   assert.equal(none.committed, false);
+});
+
+test("colours: prototype-named status folders never get an inherited value", async () => {
+  const { tasks } = tasksDir();
+  for (const name of ["3-constructor", "4-toString", "5-__proto__"]) mkdirSync(join(tasks, name));
+  writeFileSync(join(tasks, "gitask.json"), '{"columns":{"__proto__":{"color":"#112233"},"2-todo":{"color":"#aabbcc"}}}');
+  const board = await loadBoard(tasks);
+  const by = Object.fromEntries(board.columns.map((c) => [c.id, c.color]));
+  assert.equal(by["2-todo"], "#aabbcc");
+  assert.equal(by["3-constructor"], undefined);
+  for (const c of board.columns) assert.ok(c.color === undefined || /^#[0-9a-f]{6}$/.test(c.color));
+  // Bare names, as a hand-edited config or a looser folder rule could produce them.
+  const colors = parseColors('{"columns":{"__proto__":{"color":"#112233"}}}');
+  for (const id of ["constructor", "toString", "hasOwnProperty", "valueOf"]) assert.equal(colorOf(colors, id), undefined);
+  assert.equal(colorOf(colors, "__proto__"), "#112233");
+  assert.equal(colorOf({}, "__proto__"), undefined);
+});
+
+test("setColumnColor: a column named __proto__ is stored as plain data", async () => {
+  const { tasks } = tasksDir();
+  await setColumnColor(tasks, "__proto__", "#112233", { commit: false });
+  const text = readFileSync(join(tasks, "gitask.json"), "utf8");
+  assert.deepEqual(Object.keys(JSON.parse(text).columns), ["__proto__"]);
+  assert.equal(Object.getPrototypeOf(JSON.parse(text).columns), Object.prototype);
+  assert.equal(parseColors(text)["2-todo"], undefined);
 });

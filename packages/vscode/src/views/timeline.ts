@@ -134,7 +134,7 @@ function renderCalendar(board, tasks, st, today) {
         chip.title = t.title + " (" + status + ", due " + cell.iso + (sp && sp.overdue ? ", overdue" : "") + ")";
         chip.setAttribute("aria-label", t.title + ", " + status + ", due " + cell.iso + (sp && sp.overdue ? ", overdue" : ""));
         const chipCol = board.columns[columnIndex(board, t.column)];
-        if (chipCol && chipCol.color) chip.style.setProperty("border-left", "4px solid " + chipCol.color);
+        if (chipCol && chipCol.color) { chip.classList.add("colored"); chip.style.setProperty("--st-color", chipCol.color); }
         activate(chip, t.path);
         c.append(chip);
       }
@@ -245,6 +245,7 @@ const css = `
 .view-timeline .tl-cell.today .tl-daynum { font-weight: 700; opacity: 1; }
 .view-timeline .tl-chip { text-align: left; font-size: 11px; padding: 1px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); border-radius: 3px; }
 .view-timeline .tl-chip.done { text-decoration: line-through; opacity: .7; }
+.view-timeline .tl-chip.colored { border-left: 4px solid var(--st-color); }
 .view-timeline .tl-chip.overdue { background: var(--vscode-inputValidation-errorBackground, var(--vscode-errorForeground)); color: var(--vscode-foreground); border: 1px solid var(--vscode-errorForeground); }
 .view-timeline .tl-chip.overdue::before { content: "! "; font-weight: 700; }
 .view-timeline .tl-scroll { overflow: auto; max-height: calc(100vh - 150px); border: 1px solid var(--tl-line); border-radius: 4px; }
