@@ -59,3 +59,21 @@ test("shipped source is self-contained and embedded in the page", () => {
   assert.ok(html.includes("const SV = ("));
   assert.ok(html.includes("status-bar"));
 });
+
+test("a transient board with no columns or no columns field does not lose the stored set", () => {
+  const sv = statusVisibility();
+  const stored = ["2-todo"];
+  assert.equal(sv.apply({ columns: [] }, stored)?.columns.length, 0);
+  assert.deepEqual(sv.chips({ columns: [] }, stored), []);
+  assert.equal(sv.summary({} as never, stored).total, 0);
+  assert.deepEqual(sv.chips(null, stored), []);
+  assert.deepEqual(stored, ["2-todo"]);
+  // The set still applies when the real board returns.
+  assert.deepEqual(sv.chips(board, stored).filter((c) => c.hidden).map((c) => c.id), ["2-todo"]);
+});
+
+test("shell no longer writes the sanitized set back and guards missing columns", () => {
+  assert.ok(!STATUS_VISIBILITY_SRC.includes("stored.hiddenStatuses ="));
+  const html = webviewHtml.toString();
+  assert.ok(!html.includes("stored.hiddenStatuses = SV.sanitize"));
+});

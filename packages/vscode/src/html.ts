@@ -74,12 +74,12 @@ const statusBarEl = document.getElementById("status-bar");
 const statusEmptyEl = document.getElementById("status-empty");
 // One hidden-status set for all four views. Views only ever see the board without those columns.
 function applyStatusVisibility() {
-  stored.hiddenStatuses = SV.sanitize(stored.hiddenStatuses, rawBoard);
+  // The stored set is never rewritten here: a transient board (no columns) must not wipe it. apply/chips sanitize on read.
   board = SV.apply(rawBoard, stored.hiddenStatuses);
   statusBarEl.replaceChildren();
   statusEmptyEl.hidden = true;
   viewsEl.hidden = false;
-  if (!rawBoard || !rawBoard.columns.length) return;
+  if (!rawBoard || !Array.isArray(rawBoard.columns) || !rawBoard.columns.length) return;
   const sum = SV.summary(rawBoard, stored.hiddenStatuses);
   statusBarEl.append(el("span", "sb-label", "Statuses:"));
   for (const c of SV.chips(rawBoard, stored.hiddenStatuses)) {
