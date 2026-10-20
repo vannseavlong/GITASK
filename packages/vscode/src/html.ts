@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { DETAIL_CSS, DETAIL_JS } from "./detail.ts";
 import { MARKDOWN_JS } from "./markdown.ts";
+import { FILTER_SRC } from "./filter-logic.ts";
 import { DEFAULT_VIEW, checkViews, type ViewDef } from "./views/registry.ts";
 
 export interface HtmlOptions {
@@ -30,6 +31,12 @@ const SHELL_CSS = `
   #views { flex: 1; min-height: 0; position: relative; }
   .view { position: absolute; inset: 0; overflow: auto; padding: 12px; box-sizing: border-box; }
   .view[hidden] { display: none; }
+  #rangebar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--vscode-panel-border); flex: none; font-size: 12px; }
+  #rangebar label { display: inline-flex; gap: 4px; align-items: center; }
+  #rangebar input, #rangebar select { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); padding: 2px 4px; border-radius: 2px; font-family: inherit; }
+  #rangebar .range-count { opacity: .8; }
+  #range-empty { padding: 12px; opacity: .8; flex: none; }
+  #range-empty[hidden] { display: none; }
   .placeholder { opacity: .75; padding: 24px 4px; }
   .placeholder h2 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
 `;
@@ -67,7 +74,7 @@ window.GITASK = {
 function apiFor(id) {
   return {
     post,
-    get board() { return board; },
+    get board() { return filterBoard(board, viewState(id).range); },
     state: viewState(id),
     save: persist,
   };
@@ -81,7 +88,8 @@ function renderView(id) {
   const api = apiFor(id);
   try {
     if (!mounted[id]) { impl.mount(pane, api); mounted[id] = true; }
-    impl.render(board, api);
+    impl.render(api.board, api);
+    if (id === current) syncRange();
     // A reloaded webview starts with an empty pane, so the scroll saved earlier could not apply yet.
     if (!pane.hidden) pane.scrollTop = viewState(id).scroll || 0;
   } catch (e) {
@@ -128,6 +136,55 @@ for (const d of defs) {
   viewsEl.append(pane);
 }
 tabsEl.setAttribute("role", "tablist");
+
+// Shared date-range filter bar: one set of inputs, the range is kept in each view's own state.
+const rangeBar = el("div");
+rangeBar.id = "rangebar";
+rangeBar.setAttribute("role", "group");
+rangeBar.setAttribute("aria-label", "Date range filter");
+const rangeEmpty = el("div", "", "No tasks in range.");
+rangeEmpty.id = "range-empty";
+rangeEmpty.hidden = true;
+rangeEmpty.setAttribute("role", "status");
+const rField = el("select");
+rField.setAttribute("aria-label", "Filter by date");
+for (const f of [["due", "Due"], ["updated", "Updated"]]) { const o = el("option", "", f[1]); o.value = f[0]; rField.append(o); }
+function dateInput(label) {
+  const wrap = el("label", "", label);
+  const inp = el("input");
+  inp.type = "date";
+  wrap.append(inp);
+  rangeBar.append(wrap);
+  return inp;
+}
+rangeBar.append(el("span", "", "Date:"), rField);
+const rFrom = dateInput("From");
+const rTo = dateInput("To");
+const rClear = el("button", "", "Clear dates");
+rClear.type = "button";
+const rCount = el("span", "range-count");
+rCount.setAttribute("aria-live", "polite");
+rangeBar.append(rClear, rCount);
+document.body.insertBefore(rangeBar, errEl);
+document.body.insertBefore(rangeEmpty, viewsEl);
+function syncRange() {
+  const r = rangeNorm(viewState(current).range);
+  rField.value = r.field; rFrom.value = r.from; rTo.value = r.to;
+  rClear.disabled = !rangeActive(r);
+  const total = countTasks(board), shown = countTasks(filterBoard(board, r));
+  rCount.textContent = rangeActive(r) && board ? shown + " of " + total + " in range" : "";
+  rangeEmpty.hidden = !(rangeActive(r) && board && total > 0 && shown === 0);
+}
+function setRange() {
+  const st = viewState(current);
+  st.range = rangeNorm({ from: rFrom.value, to: rTo.value, field: rField.value });
+  persist();
+  renderView(current);
+}
+rField.addEventListener("change", setRange);
+rFrom.addEventListener("change", setRange);
+rTo.addEventListener("change", setRange);
+rClear.addEventListener("click", () => { const st = viewState(current); st.range = rangeNorm({ field: rField.value }); persist(); renderView(current); });
 `;
 
 const SHELL_START_JS = String.raw`
@@ -183,6 +240,7 @@ export function webviewHtml(views: readonly ViewDef[], opts: HtmlOptions = {}): 
 <script nonce="${nonce}">
 window.__GITASK_VIEWS__ = ${jsonForScript(defs)};
 window.__GITASK_INITIAL__ = ${jsonForScript(initial)};
+${FILTER_SRC}
 ${SHELL_JS}
 ${MARKDOWN_JS}
 ${DETAIL_JS}
