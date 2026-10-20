@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { DETAIL_CSS, DETAIL_JS } from "./detail.ts";
 import { MARKDOWN_JS } from "./markdown.ts";
+import { STATUS_VISIBILITY_SRC } from "./status-visibility.ts";
 import { DEFAULT_VIEW, checkViews, type ViewDef } from "./views/registry.ts";
 
 export interface HtmlOptions {
@@ -31,6 +32,15 @@ const SHELL_CSS = `
   .view { position: absolute; inset: 0; overflow: auto; padding: 12px; box-sizing: border-box; }
   .view[hidden] { display: none; }
   .placeholder { opacity: .75; padding: 24px 4px; }
+  #status-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--vscode-panel-border); flex: none; font-size: 12px; }
+  #status-bar:empty { display: none; }
+  #status-bar .sb-label { opacity: .8; }
+  #status-bar button.sb-chip { background: transparent; color: var(--vscode-foreground); border: 1px solid var(--vscode-panel-border); border-radius: 10px; padding: 1px 8px; font-size: 12px; }
+  #status-bar button.sb-chip[aria-pressed="false"] { opacity: .55; text-decoration: line-through; }
+  #status-bar button.sb-chip:hover { background: var(--vscode-toolbar-hoverBackground); }
+  #status-bar .sb-note { opacity: .8; margin-left: auto; }
+  #status-empty { padding: 24px 12px; opacity: .75; }
+  #status-empty[hidden] { display: none; }
   .placeholder h2 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
 `;
 
@@ -38,12 +48,13 @@ const SHELL_JS = String.raw`
 const vscodeApi = acquireVsCodeApi();
 const defs = window.__GITASK_VIEWS__;
 const saved = vscodeApi.getState() || {};
-const stored = { view: saved.view, views: saved.views || {} };
+const stored = { view: saved.view, views: saved.views || {}, hiddenStatuses: Array.isArray(saved.hiddenStatuses) ? saved.hiddenStatuses : [] };
 const impls = {};
 const mounted = {};
 const panes = {};
 const tabs = {};
 let board = null;
+let rawBoard = null;
 let current = null;
 
 function el(tag, cls, text) {
@@ -58,6 +69,45 @@ function viewState(id) { return stored.views[id] || (stored.views[id] = {}); }
 const errEl = document.getElementById("err");
 const tabsEl = document.getElementById("tabs");
 const viewsEl = document.getElementById("views");
+
+const statusBarEl = document.getElementById("status-bar");
+const statusEmptyEl = document.getElementById("status-empty");
+// One hidden-status set for all four views. Views only ever see the board without those columns.
+function applyStatusVisibility() {
+  stored.hiddenStatuses = SV.sanitize(stored.hiddenStatuses, rawBoard);
+  board = SV.apply(rawBoard, stored.hiddenStatuses);
+  statusBarEl.replaceChildren();
+  statusEmptyEl.hidden = true;
+  viewsEl.hidden = false;
+  if (!rawBoard || !rawBoard.columns.length) return;
+  const sum = SV.summary(rawBoard, stored.hiddenStatuses);
+  statusBarEl.append(el("span", "sb-label", "Statuses:"));
+  for (const c of SV.chips(rawBoard, stored.hiddenStatuses)) {
+    const b = el("button", "sb-chip", c.label + " " + c.count);
+    b.type = "button";
+    b.setAttribute("aria-pressed", c.hidden ? "false" : "true");
+    b.title = (c.hidden ? "Show " : "Hide ") + c.label;
+    b.addEventListener("click", () => {
+      stored.hiddenStatuses = SV.toggle(stored.hiddenStatuses, c.id, rawBoard);
+      persist();
+      applyStatusVisibility();
+      renderView(current);
+    });
+    statusBarEl.append(b);
+  }
+  if (sum.filtered) {
+    const all = el("button", "sb-chip", "Show all");
+    all.type = "button";
+    all.addEventListener("click", () => { stored.hiddenStatuses = []; persist(); applyStatusVisibility(); renderView(current); });
+    statusBarEl.append(all);
+    statusBarEl.append(el("span", "sb-note", "Filtered: " + sum.shown + " of " + sum.total + " statuses shown, " + sum.hiddenTasks + (sum.hiddenTasks === 1 ? " task" : " tasks") + " hidden"));
+  }
+  if (sum.allHidden) {
+    statusEmptyEl.textContent = "All statuses are hidden. Click a status above, or Show all.";
+    statusEmptyEl.hidden = false;
+    viewsEl.hidden = true;
+  }
+}
 
 window.GITASK = {
   el,
@@ -147,7 +197,7 @@ for (const d of defs) {
 window.addEventListener("message", (ev) => {
   const m = ev.data;
   if (!m || typeof m.type !== "string") return;
-  if (m.type === "board") { board = m.board; errEl.textContent = ""; renderView(current); if (GITASK.onBoard) GITASK.onBoard(board); }
+  if (m.type === "board") { rawBoard = m.board; applyStatusVisibility(); errEl.textContent = ""; renderView(current); if (GITASK.onBoard) GITASK.onBoard(rawBoard); }
   if (GITASK.onHost) GITASK.onHost(m);
   if (m.type === "error") errEl.textContent = String(m.message);
 });
@@ -179,12 +229,15 @@ export function webviewHtml(views: readonly ViewDef[], opts: HtmlOptions = {}): 
 <body>
   <div id="tabs"></div>
   <div id="err" role="alert"></div>
+  <div id="status-bar" role="group" aria-label="Show or hide statuses"></div>
+  <div id="status-empty" role="status" hidden></div>
   <div id="views"></div>
 <script nonce="${nonce}">
 window.__GITASK_VIEWS__ = ${jsonForScript(defs)};
 window.__GITASK_INITIAL__ = ${jsonForScript(initial)};
 ${SHELL_JS}
 ${MARKDOWN_JS}
+${STATUS_VISIBILITY_SRC}
 ${DETAIL_JS}
 ${viewJs}
 ${SHELL_START_JS}
