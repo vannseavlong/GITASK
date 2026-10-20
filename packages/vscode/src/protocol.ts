@@ -11,7 +11,9 @@ export type WebviewMessage =
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "readTask"; path: string }
-  | { type: "view"; id: string };
+  | { type: "view"; id: string }
+  | { type: "deleteTask"; path: string }
+  | { type: "deleteColumn"; column: string };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -93,6 +95,14 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
     case "view": {
       if (typeof raw.id !== "string" || !ctx.views.includes(raw.id)) return fail("unknown view");
       return { ok: true, message: { type: "view", id: raw.id } };
+    }
+    case "deleteTask": {
+      const path = taskPathInside(raw.path, ctx);
+      return path ? { ok: true, message: { type: "deleteTask", path } } : fail("path is not a task file in the Tasks dir");
+    }
+    case "deleteColumn": {
+      if (typeof raw.column !== "string" || !ctx.columns.includes(raw.column)) return fail("unknown column");
+      return { ok: true, message: { type: "deleteColumn", column: raw.column } };
     }
     default:
       return fail(`unknown message type`);

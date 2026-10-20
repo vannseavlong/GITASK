@@ -4,6 +4,7 @@
 
 export const LOGIC_SRC = String.raw`
 var LIST_COLUMNS = [
+  { key: "displayId", label: "ID", type: "text" },
   { key: "title", label: "Title", type: "text" },
   { key: "status", label: "Status", type: "text" },
   { key: "tier", label: "Tier", type: "text" },
@@ -46,7 +47,7 @@ function listRows(board) {
       var total = t.progress && t.progress.total > 0 ? t.progress.total : 0;
       var done = total ? t.progress.done : 0;
       rows.push({
-        task: t, path: t.path, id: t.id || "", title: t.title || t.id || "",
+        task: t, path: t.path, id: t.id || "", displayId: t.displayId || "", title: t.title || t.id || "",
         status: cols[c].label || "", tier: listClean(t.tier), owner: listClean(t.owner),
         claimedBy: listClean(t.claimedBy), updated: listUpdated(t), due: listDate(t.due),
         done: done, total: total, progress: total ? done / total : null,
@@ -80,7 +81,7 @@ function listFilter(rows, f) {
     if (f.status && r.status !== f.status) return false;
     if (f.tier && r.tier !== f.tier) return false;
     if (f.owner && r.owner !== f.owner) return false;
-    if (q && (r.title + " " + r.id + " " + r.owner).toLowerCase().indexOf(q) < 0) return false;
+    if (q && (r.title + " " + r.id + " " + r.displayId + " " + r.owner).toLowerCase().indexOf(q) < 0) return false;
     return true;
   });
 }
@@ -103,7 +104,7 @@ function listView(board, st) {
 
 export interface ListRow {
   task: { path: string; id: string };
-  path: string; id: string; title: string; status: string; tier: string; owner: string; claimedBy: string;
+  path: string; id: string; displayId: string; title: string; status: string; tier: string; owner: string; claimedBy: string;
   updated: string; due: string; done: number; total: number; progress: number | null; index: number;
 }
 export interface ListFilter { status?: string; tier?: string; owner?: string; q?: string }

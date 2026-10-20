@@ -126,6 +126,7 @@ export function parseTask(path: string, column: string, content: string, knownId
     path,
     column,
     fields,
+    displayId: /^T-\d+$/.test(fields["id"] ?? "") ? fields["id"] : undefined,
     prefix: id.includes("-") ? id.split("-")[0] : "",
     tier,
     owner: fields["owner"] || undefined,

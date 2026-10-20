@@ -84,3 +84,16 @@ test("readTask validates the path like open", () => {
     assert.equal(validateMessage({ type: "readTask", path: bad }, ctx).ok, false);
   }
 });
+
+test("deleteTask and deleteColumn validate path and column", () => {
+  const ok2 = join(tasksDir, "2-todo", "A.md");
+  assert.deepEqual(validateMessage({ type: "deleteTask", path: ok2 }, ctx), { ok: true, message: { type: "deleteTask", path: ok2 } });
+  assert.equal(validateMessage({ type: "deleteTask", path: "/etc/passwd.md" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "deleteTask", path: join(tasksDir, "2-todo", "..", "..", "x.md") }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "deleteTask", path: join(tasksDir, "_inbox", "x.md") }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "deleteTask" }, ctx).ok, false);
+  assert.deepEqual(validateMessage({ type: "deleteColumn", column: "2-todo" }, ctx), { ok: true, message: { type: "deleteColumn", column: "2-todo" } });
+  assert.equal(validateMessage({ type: "deleteColumn", column: "9-nope" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "deleteColumn", column: "../2-todo" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "deleteColumn", column: 5 }, ctx).ok, false);
+});

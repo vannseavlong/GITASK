@@ -84,7 +84,7 @@ GITASK.register({
     for (const r of shown) {
       const tr = GITASK.el("tr", "list-row");
       tr.tabIndex = 0;
-      tr.append(GITASK.el("td", "c-title", r.title), GITASK.el("td", "", r.status), GITASK.el("td", "", r.tier),
+      tr.append(GITASK.el("td", "c-id", r.displayId), GITASK.el("td", "c-title", r.title), GITASK.el("td", "", r.status), GITASK.el("td", "", r.tier),
         GITASK.el("td", "", r.owner), GITASK.el("td", "", r.claimedBy), GITASK.el("td", "", r.updated), GITASK.el("td", "", r.due));
       const p = GITASK.el("td", "c-progress");
       if (r.total) {
@@ -135,6 +135,7 @@ const css = `
 .view-list .list-row { cursor: pointer; }
 .view-list .list-row:hover { background: var(--vscode-list-hoverBackground); }
 .view-list .list-row:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
+.view-list .c-id { white-space: nowrap; opacity: .8; font-family: var(--vscode-editor-font-family, monospace); }
 .view-list .c-title { word-break: break-word; min-width: 160px; }
 .view-list .c-progress { white-space: nowrap; min-width: 110px; }
 .view-list .c-progress .track { display: inline-block; width: 60px; height: 4px; border-radius: 2px; background: var(--vscode-panel-border); overflow: hidden; vertical-align: middle; margin-right: 6px; }

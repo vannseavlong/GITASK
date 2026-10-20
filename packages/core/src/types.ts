@@ -26,6 +26,8 @@ export interface Task {
   /** Header fields from `- **Key:** value` lines, keys lower-cased. */
   fields: Record<string, string>;
   prefix: string;
+  /** Short visible id like `T-0001` from the `ID` header field; undefined when missing or malformed. */
+  displayId?: string;
   tier?: string;
   owner?: string;
   claimedBy?: string;

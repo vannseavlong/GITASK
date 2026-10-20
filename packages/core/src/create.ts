@@ -1,9 +1,12 @@
 import { localDate } from "./date.ts";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { loadBoard } from "./board.ts";
+import { nextDisplayId, setIdField } from "./ids.ts";
 
 const FALLBACK = (title: string, owner: string, date: string) => `# ${title}
 
+- **ID:** T-0000
 - **Repo:** <repo>
 - **Owner:** ${owner}
 - **Tier:** T1 · <signals>
@@ -49,6 +52,8 @@ export async function createTask(
   } catch {
     body = FALLBACK(id, owner, date);
   }
+  const displayId = nextDisplayId(await loadBoard(tasksDir).catch(() => ({ dir: tasksDir, columns: [] })));
+  body = setIdField(body, displayId);
   await mkdir(join(tasksDir, column), { recursive: true });
   await writeFile(dest, body);
   return dest;

@@ -32,3 +32,6 @@ export const gitAdd = (cwd: string, ...paths: string[]) => git(cwd, ["add", "--"
 /** Commit only the given paths. Never `git add -A`, so other staged or dirty files stay untouched. */
 export const gitCommitPaths = (cwd: string, message: string, ...paths: string[]) =>
   git(cwd, ["commit", "-m", message, "--", ...paths]);
+
+/** Remove a file from the index and the working tree, even with local edits (the caller has confirmed). */
+export const gitRm = (cwd: string, file: string) => git(cwd, ["rm", "-q", "-f", "--", file]);
