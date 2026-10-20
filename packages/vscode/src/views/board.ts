@@ -21,6 +21,50 @@ GITASK.register({
     newBtn.addEventListener("click", () => api.post({ type: "new" }));
     filter.addEventListener("input", () => { api.state.filter = filter.value; api.save(); this.render(api.board, api); });
   },
+  togglePicker(c, col, api) {
+    const old = c.querySelector(".col-picker");
+    const open = !!old;
+    for (const p of this.cols.querySelectorAll(".col-picker")) p.remove();
+    for (const b of this.cols.querySelectorAll(".col-color")) b.setAttribute("aria-expanded", "false");
+    if (open) return;
+    c.querySelector(".col-color").setAttribute("aria-expanded", "true");
+    const box = GITASK.el("div", "col-picker");
+    const send = (color) => api.post({ type: "setColumnColor", column: col.id, color: color });
+    const presets = ["#3794ff", "#b180d7", "#cca700", "#d18616", "#89d185", "#e5534b", "#2aa198", "#8b949e"];
+    const row = GITASK.el("div", "swatches");
+    for (const hex of presets) {
+      const b = GITASK.el("button", "swatch");
+      b.type = "button";
+      b.title = hex;
+      b.setAttribute("aria-label", "Use " + hex);
+      b.style.setProperty("--st-color", hex);
+      b.addEventListener("click", () => send(hex));
+      row.append(b);
+    }
+    const hexIn = GITASK.el("input", "hex-input");
+    hexIn.type = "text";
+    hexIn.maxLength = 7;
+    hexIn.placeholder = "#rrggbb";
+    hexIn.value = col.color || "";
+    hexIn.setAttribute("aria-label", "Hex colour for " + col.label);
+    const apply = GITASK.el("button", "", "Set");
+    apply.type = "button";
+    const msg = GITASK.el("span", "hex-err");
+    const submit = () => {
+      if (!/^#[0-9a-fA-F]{6}$/.test(hexIn.value.trim())) { msg.textContent = "Use #rrggbb"; return; }
+      send(hexIn.value.trim());
+    };
+    apply.addEventListener("click", submit);
+    hexIn.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); submit(); } });
+    const reset = GITASK.el("button", "", "Reset");
+    reset.type = "button";
+    reset.addEventListener("click", () => send(null));
+    const line = GITASK.el("div", "hex-row");
+    line.append(hexIn, apply, reset, msg);
+    box.append(row, line);
+    c.querySelector("h3").after(box);
+    hexIn.focus();
+  },
   render(board, api) {
     const cols = this.cols;
     cols.replaceChildren();
@@ -32,10 +76,20 @@ GITASK.register({
       const c = GITASK.el("div", "col");
       const h = GITASK.el("h3");
       h.append(GITASK.el("span", "", col.label), GITASK.el("span", "", String(tasks.length)));
+      if (col.color) { c.classList.add("colored"); c.style.setProperty("--st-color", col.color); }
+      const sw = GITASK.el("button", "col-color");
+      sw.type = "button";
+      sw.title = "Set colour for " + col.label;
+      sw.setAttribute("aria-label", "Set colour for " + col.label);
+      sw.setAttribute("aria-expanded", "false");
+      if (col.color) sw.style.setProperty("--st-color", col.color);
+      sw.addEventListener("click", (ev) => { ev.stopPropagation(); this.togglePicker(c, col, api); });
+      h.insertBefore(sw, h.lastChild);
       c.append(h);
       if (!tasks.length) c.append(GITASK.el("div", "empty", "empty"));
       for (const t of tasks) {
         const card = GITASK.el("div", "card");
+        if (col.color) card.style.setProperty("--st-color", col.color);
         card.draggable = true;
         card.tabIndex = 0;
         card.setAttribute("role", "button");
@@ -85,6 +139,16 @@ const css = `
 .view-board .col h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; opacity: .8; display: flex; justify-content: space-between; }
 .view-board .card { background: var(--vscode-editor-background); border: 1px solid var(--vscode-contrastBorder, var(--vscode-panel-border)); border-radius: 4px; padding: 8px; margin-bottom: 6px; cursor: grab; }
 .view-board .card:hover { border-color: var(--vscode-focusBorder); }
+.view-board .col.colored h3 { border-bottom: 3px solid var(--st-color); padding-bottom: 4px; }
+.view-board .col.colored h3 > span:first-child { border-left: 10px solid var(--st-color); padding-left: 6px; }
+.view-board .card { border-left: 4px solid var(--st-color, var(--vscode-contrastBorder, var(--vscode-panel-border))); }
+.view-board .col-color { width: 16px; height: 16px; padding: 0; margin-left: auto; margin-right: 8px; border-radius: 50%; border: 1px solid var(--vscode-foreground); background: var(--st-color, transparent); }
+.view-board .col-picker { margin: 0 0 8px; padding: 6px; border: 1px solid var(--vscode-panel-border); border-radius: 4px; background: var(--vscode-editor-background); }
+.view-board .swatches { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.view-board .swatch { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 1px solid var(--vscode-foreground); background: var(--st-color); }
+.view-board .hex-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.view-board .hex-input { width: 72px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); padding: 2px 4px; }
+.view-board .hex-err { color: var(--vscode-errorForeground); font-size: 11px; }
 .view-board .card.dragging { opacity: .4; }
 .view-board .title { font-size: 13px; word-break: break-word; }
 .view-board .meta { margin-top: 6px; font-size: 11px; opacity: .85; display: flex; flex-wrap: wrap; gap: 4px; }

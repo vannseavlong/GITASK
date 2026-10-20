@@ -133,6 +133,8 @@ function renderCalendar(board, tasks, st, today) {
         const status = statusOf(board, t.column);
         chip.title = t.title + " (" + status + ", due " + cell.iso + (sp && sp.overdue ? ", overdue" : "") + ")";
         chip.setAttribute("aria-label", t.title + ", " + status + ", due " + cell.iso + (sp && sp.overdue ? ", overdue" : ""));
+        const chipCol = board.columns[columnIndex(board, t.column)];
+        if (chipCol && chipCol.color) chip.style.setProperty("border-left", "4px solid " + chipCol.color);
         activate(chip, t.path);
         c.append(chip);
       }
@@ -201,7 +203,10 @@ function renderWaterfall(board, lay, today) {
     g.setAttribute("aria-label", desc);
     g.append(svg("title", null, desc));
     const cls = "tl-rect st-" + (columnIndex(board, b.column) % 6) + (sp.openEnded ? " open" : "") + (sp.overdue ? " overdue" : "") + (sp.dueBeforeStart ? " invalid" : "");
-    g.append(svg("rect", { x: b.x, y: y + 6, width: b.w, height: lay.rowH - 12, rx: 3, class: cls }));
+    const rect = svg("rect", { x: b.x, y: y + 6, width: b.w, height: lay.rowH - 12, rx: 3, class: cls });
+    const stCol = board.columns[columnIndex(board, b.column)];
+    if (stCol && stCol.color) rect.style.setProperty("fill", stCol.color);
+    g.append(rect);
     let text = status;
     if (sp.overdue) text += " - OVERDUE";
     if (sp.dueBeforeStart) text += " - due before start";

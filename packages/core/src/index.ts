@@ -11,3 +11,5 @@ export { repoRoot } from "./git.ts";
 export { toggleSubtask, TOGGLE_MESSAGE } from "./toggle.ts";
 export type { ToggleOptions, ToggleResult } from "./toggle.ts";
 export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf } from "./parse.ts";
+export { parseColors, readColors, setColumnColor, isColor, CONFIG_FILE } from "./config.ts";
+export type { ColorOptions } from "./config.ts";

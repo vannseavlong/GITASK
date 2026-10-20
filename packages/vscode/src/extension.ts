@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { createTask, initTasks, loadBoard, moveTask, toggleSubtask } from "gitask-core";
+import { createTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
 import { webviewHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
@@ -111,6 +111,13 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         const r = await readTaskBody(m.path, dir);
         return send({ type: "taskBody", path: m.path, ...r });
       }
+      case "setColumnColor":
+        try {
+          await setColumnColor(dir, m.column, m.color, { commit: cfg.get<boolean>("autoCommit", true) });
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not save the colour: ${(e as Error).message}`);
+        }
+        return post();
       case "toggleSubtask": {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {

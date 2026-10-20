@@ -84,3 +84,12 @@ test("readTask validates the path like open", () => {
     assert.equal(validateMessage({ type: "readTask", path: bad }, ctx).ok, false);
   }
 });
+
+test("setColumnColor: existing column and #rrggbb or null only", () => {
+  assert.deepEqual(validateMessage({ type: "setColumnColor", column: "2-todo", color: "#AaBb09" }, ctx), { ok: true, message: { type: "setColumnColor", column: "2-todo", color: "#AaBb09" } });
+  assert.deepEqual(validateMessage({ type: "setColumnColor", column: "2-todo", color: null }, ctx), { ok: true, message: { type: "setColumnColor", column: "2-todo", color: null } });
+  for (const color of ["red", "#abc", "#12345g", "#1234567", "url(x)", "#fff; x", 5, undefined]) {
+    assert.equal(validateMessage({ type: "setColumnColor", column: "2-todo", color }, ctx).ok, false, String(color));
+  }
+  for (const column of ["9-nope", "../x", 3, undefined]) assert.equal(validateMessage({ type: "setColumnColor", column, color: "#000000" }, ctx).ok, false);
+});
