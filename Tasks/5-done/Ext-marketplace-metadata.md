@@ -29,7 +29,7 @@ The VS Code Marketplace rejects the 0.3.0 `.vsix` ("Your extension has suspiciou
 - [ ] G8 PR message  - [ ] G9 human review  - [ ] G10 release plan  - [ ] G11 changelog
 
 ## Done when
-- [ ] Marketplace accepts the 0.3.1 `.vsix` and shows it as the latest version
+- [x] Marketplace accepts the 0.3.1 `.vsix` and shows it as the latest version
 - [ ] `node scripts/check-release.mjs v0.3.1` prints `stable`
 - [ ] Root `CHANGELOG.md` entry added
 - [ ] Test versions removed from the Marketplace
