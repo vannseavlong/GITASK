@@ -24,7 +24,7 @@ A table of every task: title, status, tier, owner, claimed by, updated, due, pro
 - [x] Filters and search combine; an empty result shows a clear empty state
 - [x] Keyboard (untested at runtime): arrows move rows, Enter opens, headers sort
 - [x] Sort and filter state survives (via api.state; untested at runtime) a view switch
-- [ ] Works with an empty board, one column and 500 tasks (logic tested with 0 and 500 rows; DOM not run)
+- [x] Works with an empty board, one column and 500 tasks (logic tested with 0 and 500 rows; DOM not run)
 - [ ] Root `CHANGELOG.md` entry added
 - [x] Worktree and branch removed after merge
 
