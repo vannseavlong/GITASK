@@ -6,7 +6,7 @@
 - **Tier:** T2 · shared types and parser in core, writes task files
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-task-model/` · **Branch:** `feat/task-model`
-- **Started / updated:** 2026-10-17 / 2026-10-17
+- **Started / updated:** 2026-10-17 / 2026-10-21
 - **Docs:** `Docs/requirements/views.md`, `Tasks/_plans/Ext-views.md`
 - **Depends on:** none
 - **Touches:** `packages/core/src/{types,parse,board,toggle}.ts`, `packages/core/test/**`, `Tasks/_TEMPLATE.md` (one optional `Due` line), `packages/core/src/create.ts`
