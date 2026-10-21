@@ -25,7 +25,7 @@ One date-range filter (from, to, and which date: due or updated) that applies th
 - [x] All four views filter with it; counts, timeline bars and overview totals reflect the filtered set; "no tasks in range" empty state
 - [x] Existing text filter on Board/List still works and combines with the range
 - [x] Range saved in `api.state` per view and survives reload
-- [ ] Verified in the running extension (G4) on this repo's `Tasks/`
+- [x] Verified in the running extension (G4) on this repo's `Tasks/`
 - [ ] Root `CHANGELOG.md` entry added
 - [ ] Worktree and branch removed after merge
 
