@@ -27,7 +27,7 @@ A new project has no `Tasks/` folder, so the board shows `ENOENT` and there is n
 - [x] G4 checked in a real VS Code window
 - [x] Root `CHANGELOG.md` entry added
 - [x] Worktree and branch removed after merge
-- [ ] Release 0.3.0 per `Docs/architecture/release.md` (bump is in the PR; tag by the owner)
+- [x] Release 0.3.0 per `Docs/architecture/release.md` (bump is in the PR; tag by the owner)
 
 ## Notes
 - Left to the owner: commit, PR, merge, tag.
