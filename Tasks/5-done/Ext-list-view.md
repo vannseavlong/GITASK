@@ -26,7 +26,7 @@ A table of every task: title, status, tier, owner, claimed by, updated, due, pro
 - [x] Sort and filter state survives (via api.state; untested at runtime) a view switch
 - [ ] Works with an empty board, one column and 500 tasks (logic tested with 0 and 500 rows; DOM not run)
 - [ ] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] Worktree and branch removed after merge
 
 ## Notes
 - Verified: `pnpm typecheck`, `pnpm test` (51 pass: 21 core + 30 vscode, 13 new in `list.test.ts`), `pnpm build`, `pnpm package`. Not verified: F5 in real VS Code (rendering, themes, keyboard, 500 rows in the DOM).
