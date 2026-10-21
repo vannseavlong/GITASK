@@ -6,7 +6,7 @@
 - **Tier:** T2 · edits shared webview shell and all four views, new feature (auto picker, see `PIPELINE.md`)
 - **Claimed by:** agent-date-filter, 2026-10-20
 - **Worktree:** `GITASK/GITASK-date-filter/` · **Branch:** `feat/date-filter`
-- **Started / updated:** 2026-10-20 / 2026-10-20
+- **Started / updated:** 2026-10-20 / 2026-10-21
 - **Docs:** `Tasks/_plans/Ext-board-manage.md`, `Docs/requirements/views.md`
 - **Depends on:** none
 - **Touches:** new `packages/vscode/src/filter-logic.ts` (+test), `packages/vscode/src/html.ts` (shared filter bar), `packages/vscode/src/views/{board,list,timeline,overview}.ts` and their `*-logic.ts`. Shares `board.ts`, `list.ts` with Ext-task-id-delete and Ext-status-color: additive edits only.
