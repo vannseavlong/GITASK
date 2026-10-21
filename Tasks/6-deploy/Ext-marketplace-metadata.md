@@ -6,7 +6,7 @@
 - **Tier:** T3 · release: ships 0.3.1 (version bump, manifest and README that the Marketplace scans); no code logic change
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-marketplace-fix/` · **Branch:** `fix/marketplace-metadata`
-- **Started / updated:** 2026-10-18 / 2026-10-18
+- **Started / updated:** 2026-10-18 / 2026-10-21
 - **Due:** none
 - **Docs:** `Docs/architecture/release.md`, `Docs/architecture/setupguide.md`
 - **Depends on:** none
