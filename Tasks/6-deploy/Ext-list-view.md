@@ -6,7 +6,7 @@
 - **Tier:** T2 · new screen
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-list-view/` · **Branch:** `feat/list-view`
-- **Started / updated:** none / 2026-10-17
+- **Started / updated:** none / 2026-10-21
 - **Docs:** `Docs/requirements/views.md`, `Tasks/_plans/Ext-views.md`
 - **Depends on:** Ext-view-shell
 - **Touches:** `packages/vscode/src/views/{list,list-logic}.ts`, `packages/vscode/src/views/registry.ts` (one line), `packages/vscode/test/{list,shell}.test.ts`
