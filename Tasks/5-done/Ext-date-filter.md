@@ -27,7 +27,7 @@ One date-range filter (from, to, and which date: due or updated) that applies th
 - [x] Range saved in `api.state` per view and survives reload
 - [x] Verified in the running extension (G4) on this repo's `Tasks/`
 - [ ] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] Worktree and branch removed after merge
 
 ## Notes
 - Design: `filter-logic.ts` exports `FILTER_SRC` (tested string, embedded in the shell by `html.ts`). The shell draws the one filter bar and hands every view a pre-filtered board through `api.board` (so no view file was edited). Range lives in each view's `api.state.range`, persisted by `setState`.
