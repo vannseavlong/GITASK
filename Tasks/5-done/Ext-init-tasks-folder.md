@@ -24,7 +24,7 @@ A new project has no `Tasks/` folder, so the board shows `ENOENT` and there is n
 ## Done when
 - [x] Command appears in the Command Palette and creates `1-backlog` … `6-deploy` + `_TEMPLATE.md`
 - [x] Running it twice changes nothing
-- [ ] G4 checked in a real VS Code window
+- [x] G4 checked in a real VS Code window
 - [x] Root `CHANGELOG.md` entry added
 - [ ] Worktree and branch removed after merge
 - [ ] Release 0.3.0 per `Docs/architecture/release.md` (bump is in the PR; tag by the owner)
