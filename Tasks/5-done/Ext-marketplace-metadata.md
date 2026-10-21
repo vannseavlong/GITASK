@@ -33,7 +33,7 @@ The VS Code Marketplace rejects the 0.3.0 `.vsix` ("Your extension has suspiciou
 - [x] `node scripts/check-release.mjs v0.3.1` prints `stable`
 - [ ] Root `CHANGELOG.md` entry added
 - [x] Test versions removed from the Marketplace
-- [ ] Worktree and branch removed after merge
+- [x] Worktree and branch removed after merge
 
 ## Release plan (G10)
 - Rollback: none needed for the code; a bad metadata change is fixed forward with 0.3.2 (published versions are final).
