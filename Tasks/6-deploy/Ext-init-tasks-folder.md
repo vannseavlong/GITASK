@@ -6,7 +6,7 @@
 - **Tier:** T2 · new feature (new command, new core export `initTasks`); not auth, data or release files
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-init-tasks/` · **Branch:** `feat/init-tasks-folder`
-- **Started / updated:** 2026-10-18 / 2026-10-18
+- **Started / updated:** 2026-10-18 / 2026-10-21
 - **Due:** none
 - **Docs:** `packages/vscode/README.md`
 - **Depends on:** none
