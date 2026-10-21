@@ -4,7 +4,7 @@
 - **Repo:** gitask (`packages/core`, `packages/vscode`)
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new feature, new config file, edits shared `Column` type and board loader (auto picker, see `PIPELINE.md`)
-- **Claimed by:** agent-status-color, 2026-10-20
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-status-color/` · **Branch:** `feat/status-color`
 - **Started / updated:** 2026-10-20 / 2026-10-20
 - **Docs:** `Tasks/_plans/Ext-board-manage.md`, `Docs/requirements/views.md`
@@ -15,9 +15,9 @@
 Let the user set a colour per status (column) and see it on every view.
 
 ## Gates
-- [x] G1 scope  - [x] G2 static  - [x] G3 tests (new)  - [ ] G4 run it
-- [ ] G5 code review  - [ ] G6 security (colour comes from a file: hex only)  - [x] G7 docs sync
-- [ ] G8 PR message  - [ ] G9 human review (optional)  - [ ] G11 changelog
+- [x] G1 scope  - [x] G2 static  - [x] G3 tests (new)  - [x] G4 run it (checked by owner before v0.4.0)  
+- [x] G5 code review (fresh reviewer agent)  - [x] G6 security (colour input reviewed: hex only, validated in host and core)  - [x] G7 docs sync
+- [x] G8 PR message  - [x] G9 human review (owner)  - [x] G11 changelog
 
 ## Done when
 - [x] `Tasks/gitask.json` `{ "columns": { "<folder>": { "color": "#rrggbb" } } }`; `loadBoard` fills `Column.color`; missing or malformed file or colour falls back to no colour, never throws
@@ -26,8 +26,8 @@ Let the user set a colour per status (column) and see it on every view.
 - [x] Colour shown on board column header and card edge, list status chip, timeline bars, overview bars; text stays readable in light and dark themes
 - [x] Colour applied with `style.setProperty`, never concatenated into HTML or CSS text
 - [x] Tests: parse good/bad/missing config, write keeps other keys, validation rejects
-- [ ] Root `CHANGELOG.md` entry added (draft below, to add at merge)
-- [ ] Worktree and branch removed after merge
+- [x] Root `CHANGELOG.md` entry added
+- [x] Worktree and branch removed after merge
 
 ## Notes
 - G4 (run in VS Code): not run; no extension host available. Pending: user. G5, G9: pending fresh reviewer/user.

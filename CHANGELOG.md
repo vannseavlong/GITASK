@@ -2,6 +2,34 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-21 · [Ext] feat(board): task ID, delete task or empty status
+- Owner: SNLRLONG
+- Task: Tasks/6-deploy/Ext-task-id-delete.md
+- Branch/PR: feat/task-id-delete (released in v0.4.0)
+- What changed: every task gets a short ID (`T-0001`, `- **ID:**` line), backfilled once for old tasks; shown on cards, list and detail and searchable. Delete a task (confirm, committed by pathspec) or an empty status from the board. Git calls now use literal pathspecs.
+- Needs: none
+
+## 2026-10-21 · [Ext] feat(views): show or hide statuses
+- Owner: SNLRLONG
+- Task: Tasks/6-deploy/Ext-status-show-hide.md
+- Branch/PR: feat/status-show-hide (released in v0.4.0)
+- What changed: chip bar to show or hide any status in Board, List, Timeline and Overview at once; kept per user in the webview, never committed.
+- Needs: none
+
+## 2026-10-21 · [Ext] feat(board): colour per status
+- Owner: SNLRLONG
+- Task: Tasks/6-deploy/Ext-status-color.md
+- Branch/PR: feat/status-color (released in v0.4.0)
+- What changed: set a colour per status from the board column header (stored in `Tasks/gitask.json`); shown on board, list, timeline and overview.
+- Needs: none
+
+## 2026-10-21 · [Ext] feat(views): date range filter
+- Owner: SNLRLONG
+- Task: Tasks/6-deploy/Ext-date-filter.md
+- Branch/PR: feat/date-filter (released in v0.4.0)
+- What changed: one From/To date filter (Due or Updated) on Board, List, Timeline and Overview, remembered per view; "No tasks in range." empty state.
+- Needs: none
+
 ## 2026-10-18 · [Ext] feat: Ext-marketplace-metadata
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ext-marketplace-metadata.md
