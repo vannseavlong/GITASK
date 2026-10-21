@@ -6,7 +6,7 @@
 - **Tier:** T1
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-frontmatter/` · **Branch:** `feat/frontmatter`
-- **Started / updated:** 2026-10-17 / 2026-10-17
+- **Started / updated:** 2026-10-17 / 2026-10-21
 - **Docs:** <links>
 - **Depends on:** <request item, other task, or none>
 - **Touches:** packages/core/src/parse.ts, index.ts, test/frontmatter.test.ts
