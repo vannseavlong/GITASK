@@ -1,6 +1,6 @@
 {
   "name": "gitask-cli",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Git-backed Kanban for a Tasks/ folder: board, move, new, changelog.",
   "keywords": [
     "kanban",
