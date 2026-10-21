@@ -1,5 +1,6 @@
 # WEB-SEO
 
+- **ID:** T-0004
 - **Repo:** <repo>
 - **Owner:** Owner
 - **Tier:** T0 | T1 | T2 | T3 · <signals> (auto picker, see `PIPELINE.md`)

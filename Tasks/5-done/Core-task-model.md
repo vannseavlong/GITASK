@@ -1,5 +1,6 @@
 # Core-task-model
 
+- **ID:** T-0016
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · shared types and parser in core, writes task files

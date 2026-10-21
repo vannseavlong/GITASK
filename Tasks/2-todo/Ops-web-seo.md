@@ -1,5 +1,6 @@
 # Ops-web-seo
 
+- **ID:** T-0009
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · metadata and static assets, no logic

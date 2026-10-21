@@ -1,5 +1,6 @@
 # Ext-verify-in-vscode
 
+- **ID:** T-0005
 - **Repo:** <repo>
 - **Owner:** SNLRLONG
 - **Tier:** T1 · manual check

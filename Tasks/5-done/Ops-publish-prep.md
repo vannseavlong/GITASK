@@ -1,5 +1,6 @@
 # Ops-publish-prep
 
+- **ID:** T-0027
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · release/deploy files (.github/workflows), publish tokens, package manager switch

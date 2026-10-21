@@ -1,5 +1,6 @@
 # Ext-status-color
 
+- **ID:** T-0011
 - **Repo:** gitask (`packages/core`, `packages/vscode`)
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new feature, new config file, edits shared `Column` type and board loader (auto picker, see `PIPELINE.md`)

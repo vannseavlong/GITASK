@@ -1,5 +1,6 @@
 # CLI-gitask
 
+- **ID:** T-0029
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · thin wrapper over core

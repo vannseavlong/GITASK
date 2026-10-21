@@ -1,5 +1,6 @@
 # Ops-web-redesign
 
+- **ID:** T-0028
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · replaces the landing page UI in `packages/web`, new dependency (`lucide-react`)

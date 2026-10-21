@@ -1,5 +1,6 @@
 # Core-parse-board
 
+- **ID:** T-0032
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · new module, no shared code

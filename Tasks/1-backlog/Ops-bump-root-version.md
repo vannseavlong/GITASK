@@ -1,5 +1,6 @@
 # Ops-bump-root-version
 
+- **ID:** T-0002
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · edits release scripts (`scripts/bump.mjs`, `scripts/check-release.mjs`); pick again before starting

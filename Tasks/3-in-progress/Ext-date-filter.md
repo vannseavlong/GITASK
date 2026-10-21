@@ -1,5 +1,6 @@
 # Ext-date-filter
 
+- **ID:** T-0010
 - **Repo:** gitask (`packages/vscode`)
 - **Owner:** SNLRLONG
 - **Tier:** T2 · edits shared webview shell and all four views, new feature (auto picker, see `PIPELINE.md`)

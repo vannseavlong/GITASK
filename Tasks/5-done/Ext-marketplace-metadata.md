@@ -1,5 +1,6 @@
 # Ext-marketplace-metadata
 
+- **ID:** T-0019
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · release: ships 0.3.1 (version bump, manifest and README that the Marketplace scans); no code logic change

@@ -1,5 +1,6 @@
 # Ext-task-detail
 
+- **ID:** T-0021
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new screen, renders untrusted Markdown, writes via toggle

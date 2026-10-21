@@ -1,5 +1,6 @@
 # Ops-web-deploy
 
+- **ID:** T-0006
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · deploy files (`.github/workflows`), hosting release, public site

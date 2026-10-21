@@ -1,5 +1,6 @@
 # Ext-task-id-delete
 
+- **ID:** T-0013
 - **Repo:** gitask (`packages/core`, `packages/vscode`)
 - **Owner:** SNLRLONG
 - **Tier:** T3 · deletes user files, rewrites existing task files (ID backfill), new core API + protocol messages (auto picker, see `PIPELINE.md`)

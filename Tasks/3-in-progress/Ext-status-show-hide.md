@@ -1,5 +1,6 @@
 # Ext-status-show-hide
 
+- **ID:** T-0012
 - **Repo:** gitask (`packages/vscode`)
 - **Owner:** SNLRLONG
 - **Tier:** T2 · edits shared webview shell and all four views, new feature (auto picker, see `PIPELINE.md`)

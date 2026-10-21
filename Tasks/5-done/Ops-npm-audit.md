@@ -1,5 +1,6 @@
 # Ops-npm-audit
 
+- **ID:** T-0026
 - **Repo:** GITASK (root)
 - **Owner:** SNLRLONG
 - **Tier:** T1 · only dependency overrides + docs, no source logic (auto picker)
