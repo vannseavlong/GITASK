@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Host } from "@/host/index.ts";
+import { ActionMenu } from "@/components/action-menu.tsx";
+import { requestDelete } from "@/lib/delete-flow.ts";
+import { requestEdit } from "@/lib/edit-flow.ts";
 
 export { isSubSection };
 const NONE = "__none";
@@ -58,7 +61,7 @@ export function SubtaskAssignee({ value, people, onChange, label }: { value?: st
   );
 }
 
-function SubtaskLane({ value, onChange, label }: { value?: string; onChange: (lane: string | null) => void; label: string }) {
+export function SubtaskLane({ value, onChange, label }: { value?: string; onChange: (lane: string | null) => void; label: string }) {
   const lanes = Object.keys(LANE_LABEL);
   if (value && !lanes.includes(value.toLowerCase())) lanes.push(value);
   return (
@@ -94,6 +97,7 @@ export function SubtaskRows({ task, host, people }: { task: Task; host: Host; pe
           <span className={cn("min-w-0 flex-1 break-words", sub.checked && "line-through opacity-60")}>{sub.text}</span>
           {sub.assignee && <PersonAvatar id={sub.assignee} people={people} />}
           <LaneBadge lane={sub.lane} />
+          <ActionMenu label={sub.text} className="size-5" onEdit={() => requestEdit(host, { kind: "subtask", path: task.path, index, line: sub.line })} onDelete={() => requestDelete(host, { kind: "subtask", path: task.path, index, line: sub.line, label: sub.text })} />
         </li>
       ))}
     </ul>
@@ -134,6 +138,7 @@ export function SubtasksSection({ task, host, people }: { task: Task; host: Host
             <span className={cn("min-w-32 flex-1 break-words", sub.checked && "line-through opacity-60")}>{sub.text}</span>
             <SubtaskAssignee value={sub.assignee} people={people} label={`Assignee of ${sub.text}`} onChange={(assignee) => host.send({ type: "setSubtaskAssignee", path: task.path, index, line: sub.line, assignee })} />
             <SubtaskLane value={sub.lane} label={`Lane of ${sub.text}`} onChange={(lane) => host.send({ type: "setSubtaskLane", path: task.path, index, line: sub.line, lane })} />
+            <ActionMenu label={sub.text} onEdit={() => requestEdit(host, { kind: "subtask", path: task.path, index, line: sub.line })} onDelete={() => requestDelete(host, { kind: "subtask", path: task.path, index, line: sub.line, label: sub.text })} />
           </li>
         ))}
       </ul>

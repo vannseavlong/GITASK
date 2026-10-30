@@ -19,8 +19,10 @@ export { deleteTask, deleteColumn, deleteImpact, describeDeleteImpact, DELETE_TA
 export type { DeleteOptions, DeleteResult, DeleteImpact } from "./delete.ts";
 export { addPerson, listPeople, readPeople, parsePeople, syncPeople, setOwner, setOwnerField, personId, PEOPLE_MESSAGE, OWNER_MESSAGE } from "./people.ts";
 export type { Person, PeopleOptions, OwnerResult } from "./people.ts";
-export { addSubtask, setSubtaskAssignee, setSubtaskLane, SUBTASK_MESSAGE } from "./subtasks.ts";
+export { addSubtask, editSubtask, deleteSubtask, setSubtaskAssignee, setSubtaskLane, SUBTASK_MESSAGE } from "./subtasks.ts";
 export type { SubtaskOptions, SubtaskResult } from "./subtasks.ts";
+export { updateTask, editTaskText, isRealDay, EDIT_TASK_MESSAGE, MAX_TITLE, MAX_CLAIMED, TIERS } from "./taskedit.ts";
+export type { TaskPatch, TaskEditOptions, TaskEditResult } from "./taskedit.ts";
 export { buildReport, reportDate, inReportRange, UNASSIGNED_KEY, UNASSIGNED_NAME } from "./report.ts";
 export type { Report, ReportOptions, ReportTask, ReportSubtask, ReportSummary, PersonRow, ReportDateField, DateSource, Timeliness } from "./report.ts";
 export { renderHtml, renderMarkdown, renderCsv, escapeHtml, escapeMd, csvCell, CSV_HEADER } from "./report-render.ts";

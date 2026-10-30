@@ -13,6 +13,9 @@ import { cn } from "@/lib/utils";
 import type { ViewProps } from "./registry.tsx";
 import type { BoardData, Host } from "@/host/index.ts";
 import { collapseAll, expandAll, listSubtasks, toggleExpanded } from "@host-src/subtask-logic.ts";
+import { ActionMenu } from "@/components/action-menu.tsx";
+import { requestDelete } from "@/lib/delete-flow.ts";
+import { requestEdit } from "@/lib/edit-flow.ts";
 import { SubtaskRows } from "@/components/subtasks.tsx";
 
 const ALL = "__all";
@@ -195,6 +198,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
                       >
                         Open file
                       </Button>
+                      <ActionMenu label={r.title} className="ml-1 inline-grid align-middle" onEdit={() => requestEdit(host, { kind: "task", path: r.path })} onDelete={() => requestDelete(host, { kind: "task", path: r.path, label: r.id })} />
                     </TableCell>
                   </TableRow>
                   {isOpen && (

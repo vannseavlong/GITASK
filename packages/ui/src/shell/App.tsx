@@ -9,6 +9,7 @@ import { FilterBar } from "./filter-bar.tsx";
 import { StatusBar } from "./status-bar.tsx";
 import { ExportDialog } from "@/components/export-dialog.tsx";
 import { DeleteConfirm } from "@/components/delete-confirm.tsx";
+import { EditDialogs } from "@/components/edit-dialogs.tsx";
 import { GithubDialog } from "@/components/github-dialog.tsx";
 import { DetailPanel } from "@/detail/detail-panel.tsx";
 
@@ -63,6 +64,7 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
           )}
         </Tabs>
         <DeleteConfirm host={host} />
+        <EditDialogs host={host} board={raw} />
         <ExportDialog host={host} board={raw} ui={ui} open={exportOpen} onOpenChange={setExportOpen} />
         {raw?.github && <GithubDialog host={host} github={raw.github} open={githubOpen} onOpenChange={setGithubOpen} />}
         <DetailPanel host={host} board={raw} path={detailPath} onOpenTask={setDetailPath} onClose={closeDetail} />
