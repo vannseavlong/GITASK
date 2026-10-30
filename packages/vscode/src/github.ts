@@ -1,7 +1,9 @@
 import * as vscode from "vscode";
 import { applySync, readGithubConfig } from "gitask-core";
 import type { SyncPlan, SyncResult } from "gitask-core";
-import { buildPlan } from "./github-plan.ts";
+import { applyOptions, buildPlan } from "./github-plan.ts";
+
+const autoCommit = (): boolean => vscode.workspace.getConfiguration("gitask").get<boolean>("autoCommit", true);
 
 /** Classic OAuth scopes the VS Code GitHub provider can grant. `repo` covers issues; `project` covers Projects v2. */
 const scopes = (project: boolean): string[] => (project ? ["repo", "project"] : ["repo"]);
@@ -31,7 +33,7 @@ export async function syncGithub(dir: string | undefined, log?: vscode.OutputCha
     const ok = await vscode.window.showWarningMessage("Sync to GitHub?", { modal: true, detail: describePlan(plan) }, "Sync");
     if (ok !== "Sync") return;
     const session = await vscode.authentication.getSession("github", scopes(!!config.project), { createIfNone: true });
-    const r = await applySync(plan, session.accessToken);
+    const r = await applySync(plan, session.accessToken, applyOptions(autoCommit()));
     const made = r.issues.filter((i) => i.action === "created").length;
     vscode.window.showInformationMessage(`GITASK: synced ${r.issues.length} task(s) to ${plan.repo} (${made} new issue(s)).`);
     for (const w of r.warnings) log?.appendLine(`GitHub sync: ${w}`);
@@ -50,5 +52,5 @@ export async function syncFromDialog(dir: string): Promise<SyncResult & { repo: 
   const built = await buildPlan(dir);
   if (!config || !built.ok) throw new Error(built.ok ? "No GitHub link in Tasks/gitask.json." : built.error);
   const session = await vscode.authentication.getSession("github", scopes(!!config.project), { createIfNone: true });
-  return { ...(await applySync(built.plan, session.accessToken)), repo: built.plan.repo };
+  return { ...(await applySync(built.plan, session.accessToken, applyOptions(autoCommit()))), repo: built.plan.repo };
 }
