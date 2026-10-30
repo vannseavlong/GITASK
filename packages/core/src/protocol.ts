@@ -14,6 +14,11 @@ export type WebviewMessage =
   | { type: "addSubtask"; path: string; text: string; assignee?: string; lane?: string }
   | { type: "setSubtaskAssignee"; path: string; index: number; line: number; assignee: string | null }
   | { type: "setSubtaskLane"; path: string; index: number; line: number; lane: string | null }
+  | { type: "editSubtask"; path: string; index: number; line: number; text?: string; assignee?: string | null; lane?: string | null }
+  /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` refuses a delete without it. */
+  | { type: "deleteSubtask"; path: string; index: number; line: number; confirmed?: true }
+  /** Edit the title and header fields of a task. Absent field = unchanged, `null` = clear. */
+  | { type: "editTask"; path: string; patch: EditTaskPatch }
   | { type: "readTask"; path: string }
   | { type: "view"; id: string }
   | { type: "previewReport"; options: ReportRequest }
@@ -33,6 +38,18 @@ export type WebviewMessage =
    * repo and the plan hash the user was shown; the host refuses when either differs from what it would use now.
    */
   | { type: "githubSync"; confirmRepo: string; planHash: string };
+
+/** The validated patch of an `editTask` message (see `TaskPatch` in taskedit.ts; owner is a person id). */
+export interface EditTaskPatch {
+  title?: string;
+  due?: string | null;
+  tier?: "T0" | "T1" | "T2" | "T3" | null;
+  owner?: string | null;
+  claimedBy?: string | null;
+}
+
+/** What a sub-task delete dialog says (VS Code modal and the browser dialog share it). */
+export const SUBTASK_DELETE_DETAIL = "Only this checkbox line is removed from the task file. If the file is tracked by git the removal is committed, so it can be restored from history.";
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -125,6 +142,10 @@ export type ValidationResult = { ok: true; message: WebviewMessage } | { ok: fal
 
 const MAX_INDEX = 100_000;
 const MAX_SUBTASK_TEXT = 200;
+const MAX_TITLE_LEN = 200;
+const MAX_CLAIMED_LEN = 120;
+/** Control characters and line separators: never allowed in a single-line value. */
+const CONTROL = /[\u0000-\u001f\u007f\u2028\u2029]/;
 // Same charsets as core subtasks.ts (PERSON, LANE).
 const PERSON = /^[A-Za-z0-9_](?:[\w.-]*\w)?$/;
 const LANE = /^[A-Za-z][\w-]*$/;
@@ -233,6 +254,74 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       const l = raw.lane;
       if (l !== null && (typeof l !== "string" || l.length > 40 || !LANE.test(l))) return fail("bad lane");
       return { ok: true, message: { type: "setSubtaskLane", path, ...il, lane: l } };
+    }
+    case "editSubtask": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      const il = indexLine(raw);
+      if (typeof il === "string") return fail(il);
+      const message: Extract<WebviewMessage, { type: "editSubtask" }> = { type: "editSubtask", path, ...il };
+      if (raw.text !== undefined) {
+        if (typeof raw.text !== "string") return fail("bad sub-task text");
+        const text = raw.text.trim();
+        if (!text || text.length > MAX_SUBTASK_TEXT || CONTROL.test(text)) return fail("sub-task text must be one line of 1-200 characters");
+        if (CHECKBOX.test(text)) return fail("sub-task text must not contain [ ] or [x]");
+        message.text = text;
+      }
+      if (raw.assignee !== undefined) {
+        const a = raw.assignee;
+        if (a !== null && (typeof a !== "string" || a.length > 100 || !PERSON.test(a))) return fail("bad assignee");
+        message.assignee = a;
+      }
+      if (raw.lane !== undefined) {
+        const l = raw.lane;
+        if (l !== null && (typeof l !== "string" || l.length > 40 || !LANE.test(l))) return fail("bad lane");
+        message.lane = l;
+      }
+      return { ok: true, message };
+    }
+    case "deleteSubtask": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      const il = indexLine(raw);
+      if (typeof il === "string") return fail(il);
+      if (raw.confirmed !== undefined && raw.confirmed !== true) return fail("confirmed must be true");
+      return { ok: true, message: raw.confirmed ? { type: "deleteSubtask", path, ...il, confirmed: true } : { type: "deleteSubtask", path, ...il } };
+    }
+    case "editTask": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      if (!isRecord(raw.patch)) return fail("bad patch");
+      const p = raw.patch;
+      const patch: EditTaskPatch = {};
+      if (p.title !== undefined) {
+        if (typeof p.title !== "string") return fail("bad title");
+        const t = p.title.trim();
+        if (!t || t.length > MAX_TITLE_LEN || CONTROL.test(t)) return fail("title must be one line of 1-200 characters");
+        patch.title = t;
+      }
+      if (p.due !== undefined) {
+        if (p.due !== null && (typeof p.due !== "string" || !realDay(p.due))) return fail("due must be a real date, YYYY-MM-DD");
+        patch.due = p.due;
+      }
+      if (p.tier !== undefined) {
+        if (p.tier !== null && (typeof p.tier !== "string" || !["T0", "T1", "T2", "T3"].includes(p.tier))) return fail("tier must be T0, T1, T2 or T3");
+        patch.tier = p.tier as EditTaskPatch["tier"];
+      }
+      if (p.owner !== undefined) {
+        if (p.owner !== null && (typeof p.owner !== "string" || p.owner.length > MAX_NAME || !PERSON_ID.test(p.owner))) return fail("bad person id");
+        patch.owner = p.owner;
+      }
+      if (p.claimedBy !== undefined) {
+        if (p.claimedBy !== null) {
+          if (typeof p.claimedBy !== "string") return fail("bad claimed by");
+          const c = p.claimedBy.trim();
+          if (!c || c.length > MAX_CLAIMED_LEN || CONTROL.test(c)) return fail("claimed by must be one line of 1-120 characters");
+          patch.claimedBy = c;
+        } else patch.claimedBy = null;
+      }
+      if (!Object.keys(patch).length) return fail("nothing to change");
+      return { ok: true, message: { type: "editTask", path, patch } };
     }
     case "readTask": {
       const path = taskPathInside(raw.path, ctx);

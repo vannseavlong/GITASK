@@ -44,7 +44,7 @@ async function commitFile(task: Task, text: string, opts: SubtaskOptions): Promi
 }
 
 /** Replace the tokens of one sub-task line. Refuses when the file changed since `task` was read. */
-async function retoken(task: Task, index: number, change: { assignee?: string | null; lane?: string | null }, opts: SubtaskOptions) {
+async function retoken(task: Task, index: number, change: { assignee?: string | null; lane?: string | null; text?: string }, opts: SubtaskOptions) {
   const sub = task.subtasks[index];
   if (!sub) throw new Error(`No sub-task ${index} in ${task.id}`);
   if (!isSubtaskSection(sub.section)) throw new Error(`Sub-task ${index} of ${task.id} is not under "${HEADING}"`);
@@ -62,7 +62,7 @@ async function retoken(task: Task, index: number, change: { assignee?: string | 
   const lead = /^\s*/.exec(rest)![0];
   const { text } = splitTokens(rest);
   const pick = <T>(v: T | null | undefined, old: T | undefined) => (v === undefined ? old : v === null ? undefined : v);
-  lines[sub.line - 1] = line(head + (lead || " "), text, pick(change.assignee, sub.assignee), pick(change.lane, sub.lane)) + cr;
+  lines[sub.line - 1] = line(head + (lead || " "), change.text ?? text, pick(change.assignee, sub.assignee), pick(change.lane, sub.lane)) + cr;
   await writeFile(task.path, lines.join("\n"));
   return { path: task.path, committed: await commitFile(task, sub.text, opts) };
 }
@@ -77,6 +77,42 @@ export async function setSubtaskAssignee(task: Task, index: number, assignee: st
 export async function setSubtaskLane(task: Task, index: number, lane: string | undefined, opts: SubtaskOptions = {}): Promise<SubtaskResult> {
   check(undefined, lane);
   return retoken(task, index, { lane: lane ?? null }, opts);
+}
+
+function cleanText(text: string): string {
+  const clean = text.trim();
+  if (!clean || /[\u0000-\u001f\u007f\u2028\u2029]/.test(clean)) throw new Error("Sub-task text must be one non-empty line");
+  if (/\[[ xX]\]/.test(clean)) throw new Error("Sub-task text must not contain [ ] or [x]");
+  if (splitTokens(clean).text !== clean) throw new Error("Sub-task text must not end with @name or #lane; use the assignee and lane fields");
+  return clean;
+}
+
+/** Change the text, and optionally the assignee and lane (`null` clears), of one sub-task. Only that line changes. */
+export async function editSubtask(
+  task: Task,
+  index: number,
+  change: { text?: string; assignee?: string | null; lane?: string | null },
+  opts: SubtaskOptions = {},
+): Promise<SubtaskResult> {
+  check(change.assignee ?? undefined, change.lane ?? undefined);
+  const text = change.text === undefined ? undefined : cleanText(change.text);
+  return retoken(task, index, { assignee: change.assignee, lane: change.lane, text }, opts);
+}
+
+/** Remove exactly the checkbox line of one sub-task. Refuses when the file changed since `task` was read. */
+export async function deleteSubtask(task: Task, index: number, opts: SubtaskOptions = {}): Promise<SubtaskResult> {
+  const sub = task.subtasks[index];
+  if (!sub) throw new Error(`No sub-task ${index} in ${task.id}`);
+  await assertTaskFile(task.path);
+  const raw = await readFile(task.path, "utf8");
+  const all = parseSubtasks(raw);
+  const now = all.find((s) => s.line === sub.line && s.col === sub.col);
+  if (!now || now.text !== sub.text || now.checked !== sub.checked) throw new Error(`${task.id} changed since it was read; reload and try again`);
+  if (all.filter((s) => s.line === sub.line).length > 1) throw new Error("This line holds several checkboxes; edit the file to remove it");
+  const lines = raw.split("\n");
+  lines.splice(sub.line - 1, 1);
+  await writeFile(task.path, lines.join("\n"));
+  return { path: task.path, committed: await commitFile(task, sub.text, { ...opts, message: opts.message ?? "task({id}): removed sub-task {text}" }) };
 }
 
 /**

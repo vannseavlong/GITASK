@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTask, deleteColumn, deleteSubtask, editSubtask, SUBTASK_DELETE_DETAIL, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
@@ -234,6 +234,29 @@ function openBoard(ctx: vscode.ExtensionContext): void {
             if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
             if (m.type === "setSubtaskAssignee") await setSubtaskAssignee(task, m.index, m.assignee ?? undefined, opts);
             else await setSubtaskLane(task, m.index, m.lane ?? undefined, opts);
+          }
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+        return post();
+      }
+      case "editTask":
+      case "editSubtask":
+      case "deleteSubtask": {
+        const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+        const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+        try {
+          if (!task) throw new Error("task not found");
+          if (m.type === "editTask") await updateTask(task, m.patch, opts);
+          else {
+            // The webview's index refers to the board it saw; refuse if the file has shifted since.
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            if (m.type === "editSubtask") await editSubtask(task, m.index, { text: m.text, assignee: m.assignee, lane: m.lane }, opts);
+            else {
+              const ok = await vscode.window.showWarningMessage(`Delete sub-task "${task.subtasks[m.index].text}"?`, { modal: true, detail: SUBTASK_DELETE_DETAIL }, "Delete");
+              if (ok !== "Delete") return;
+              await deleteSubtask(task, m.index, opts);
+            }
           }
         } catch (e) {
           vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);

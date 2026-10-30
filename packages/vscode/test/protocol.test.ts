@@ -166,3 +166,30 @@ test("addSubtask text may not contain checkbox syntax", () => {
   assert.equal(validateMessage({ type: "addSubtask", path: ok, text: "fine [link](x) and a[0]" }, ctx).ok, true);
   for (const text of ["a [ ] b", "x [x] y", "[X]"]) assert.equal(validateMessage({ type: "addSubtask", path: ok, text }, ctx).ok, false, text);
 });
+
+test("editTask: strict patch, unknown fields dropped, bad values rejected", () => {
+  const good = validateMessage({ type: "editTask", path: ok, patch: { title: " New ", due: "2026-12-01", tier: "T1", owner: "ann-roe", claimedBy: null, evil: 1 }, extra: 1 }, ctx);
+  assert.deepEqual(good, { ok: true, message: { type: "editTask", path: ok, patch: { title: "New", due: "2026-12-01", tier: "T1", owner: "ann-roe", claimedBy: null } } });
+  const bad: unknown[] = [
+    { title: "a\nb" }, { title: "a\r- [ ] x" }, { title: "" }, { title: "x".repeat(201) }, { title: 5 }, { title: "a\u2028b" },
+    { due: "2026-02-30" }, { due: "2026-1-1" }, { due: 5 }, { tier: "T4" }, { tier: "t1" }, { owner: "Ann Roe" }, { owner: "a/b" },
+    { claimedBy: "x\ny" }, { claimedBy: "" }, { claimedBy: "y".repeat(121) }, {}, { unknown: 1 }, "str", null,
+  ];
+  for (const patch of bad) assert.equal(validateMessage({ type: "editTask", path: ok, patch }, ctx).ok, false, JSON.stringify(patch));
+  assert.equal(validateMessage({ type: "editTask", path: "/etc/passwd", patch: { title: "x" } }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "editTask", path: ok }, ctx).ok, false);
+});
+
+test("editSubtask and deleteSubtask validate index, line, text, assignee, lane and confirmed", () => {
+  const good = validateMessage({ type: "editSubtask", path: ok, index: 1, line: 9, text: " t ", assignee: null, lane: "ux-ui", x: 1 }, ctx);
+  assert.deepEqual(good, { ok: true, message: { type: "editSubtask", path: ok, index: 1, line: 9, text: "t", assignee: null, lane: "ux-ui" } });
+  const base = { type: "editSubtask", path: ok, index: 0, line: 3 };
+  for (const extra of [{ text: "a\nb" }, { text: "a [x] b" }, { text: "" }, { text: "x".repeat(201) }, { assignee: "a b" }, { assignee: 4 }, { lane: "1x" }, { lane: "a\nb" }, { index: -1 }, { line: 0 }, { index: 1.5 }]) {
+    assert.equal(validateMessage({ ...base, ...extra }, ctx).ok, false, JSON.stringify(extra));
+  }
+  assert.deepEqual(validateMessage({ type: "deleteSubtask", path: ok, index: 0, line: 3 }, ctx), { ok: true, message: { type: "deleteSubtask", path: ok, index: 0, line: 3 } });
+  assert.deepEqual(validateMessage({ type: "deleteSubtask", path: ok, index: 0, line: 3, confirmed: true }, ctx), { ok: true, message: { type: "deleteSubtask", path: ok, index: 0, line: 3, confirmed: true } });
+  for (const bad of [{ confirmed: "yes" }, { confirmed: false }, { line: "3" }, { index: 1e9 }, { path: "/etc/x.md" }]) {
+    assert.equal(validateMessage({ type: "deleteSubtask", path: ok, index: 0, line: 3, ...bad }, ctx).ok, false, JSON.stringify(bad));
+  }
+});

@@ -2,7 +2,10 @@
 // so there `requestDelete` just sends the message and the dialog never opens. No React here, so node:test can run it.
 import type { Host, WebviewMessage } from "../host/index.ts";
 
-export type DeleteRequest = { kind: "task"; path: string; label: string } | { kind: "column"; column: string; label: string };
+export type DeleteRequest =
+  | { kind: "task"; path: string; label: string }
+  | { kind: "column"; column: string; label: string }
+  | { kind: "subtask"; path: string; index: number; line: number; label: string };
 
 type DeleteHost = Pick<Host, "confirmsDelete" | "send">;
 
@@ -12,6 +15,10 @@ const emit = () => { for (const l of listeners) l(); };
 
 export function deleteMessage(req: DeleteRequest, confirmed: boolean): WebviewMessage {
   if (req.kind === "task") return confirmed ? { type: "deleteTask", path: req.path, confirmed: true } : { type: "deleteTask", path: req.path };
+  if (req.kind === "subtask") {
+    const m = { type: "deleteSubtask" as const, path: req.path, index: req.index, line: req.line };
+    return confirmed ? { ...m, confirmed: true } : m;
+  }
   return confirmed ? { type: "deleteColumn", column: req.column, confirmed: true } : { type: "deleteColumn", column: req.column };
 }
 

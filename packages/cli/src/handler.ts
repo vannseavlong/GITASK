@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, applySync, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, applySync, assignIds, createTask, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
@@ -153,6 +153,23 @@ export function createHandler(o: HandlerOptions) {
             if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
             if (m.type === "setSubtaskAssignee") await setSubtaskAssignee(task, m.index, m.assignee ?? undefined, { commit });
             else await setSubtaskLane(task, m.index, m.lane ?? undefined, { commit });
+          }
+          return { status: 200, changed: true };
+        } catch (e) {
+          return err(`could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+      case "editTask":
+      case "editSubtask":
+      case "deleteSubtask":
+        try {
+          if (m.type === "deleteSubtask" && !m.confirmed) return err(`the sub-task was not deleted: deleting needs the confirm dialog.`);
+          const task = (await loadBoard(o.dir)).columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+          if (!task) throw new Error("task not found");
+          if (m.type === "editTask") await updateTask(task, m.patch, { commit });
+          else {
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            if (m.type === "editSubtask") await editSubtask(task, m.index, { text: m.text, assignee: m.assignee, lane: m.lane }, { commit });
+            else await deleteSubtask(task, m.index, { commit });
           }
           return { status: 200, changed: true };
         } catch (e) {

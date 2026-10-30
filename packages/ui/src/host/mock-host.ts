@@ -90,6 +90,34 @@ export function createMockHost(): Host {
           emit();
         }
       }
+      if (m.type === "editTask") {
+        const t = find(m.path), p = m.patch;
+        if (t) {
+          if (p.title !== undefined) t.title = p.title;
+          if (p.due !== undefined) t.due = p.due ?? undefined;
+          if (p.tier !== undefined) t.tier = p.tier ?? undefined;
+          if (p.owner !== undefined) t.owner = p.owner === null ? undefined : board.people?.find((x) => x.id === p.owner)?.name ?? p.owner;
+          if (p.claimedBy !== undefined) t.claimedBy = p.claimedBy ?? undefined;
+          emit();
+        }
+      }
+      if (m.type === "editSubtask") {
+        const st = find(m.path)?.subtasks[m.index];
+        if (st && st.line === m.line) {
+          if (m.text !== undefined) st.text = m.text;
+          if (m.assignee !== undefined) st.assignee = m.assignee ?? undefined;
+          if (m.lane !== undefined) st.lane = m.lane ?? undefined;
+          emit();
+        }
+      }
+      if (m.type === "deleteSubtask") {
+        const t = find(m.path);
+        if (t && t.subtasks[m.index]?.line === m.line && m.confirmed) {
+          t.subtasks.splice(m.index, 1);
+          t.progress = { done: t.subtasks.filter((x) => x.checked).length, total: t.subtasks.length };
+          emit();
+        }
+      }
       if (m.type === "move") {
         const from = board.columns.find((c) => c.tasks.some((t) => t.path === m.path));
         const to = board.columns.find((c) => c.id === m.to);
