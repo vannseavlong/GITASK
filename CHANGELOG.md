@@ -9,6 +9,13 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - What changed: `bin` exposes both `gitask` and `gitask-cli` from `dist/gitask.js` (shebang + exec bit survive `npm pack`); `gitask serve` with no `--dir` walks up to find `Tasks/` and fails with a clear `init` suggestion; new `gitask init` scaffolds `Tasks/`; root `pnpm gitask` / `pnpm serve` scripts build the CLI first when `dist` is missing. Verified via `npm pack`: `npx --yes <tarball> serve` and `pnpm dlx <tarball> serve` both serve (200 page, 401 on `/api/board` without token). `yarn dlx` and `bunx` were not available in this environment. Docs show the four runners and `npm i -g gitask-cli`.
 - Needs: none
 
+## 2026-10-30 · [Ext] feat(ui): edit/delete tasks and sub-tasks from a three-dots menu
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-edit-delete.md
+- Branch/PR: feat/ui-edit-delete · merged to main (cbf8178)
+- What changed: kebab (vertical ellipsis) DropdownMenu replaces the trash icon on Board cards, List rows, the detail panel and sub-task rows (aria-label, stopPropagation, keyboard accessible). Edit task: title, due, tier T0-T3, owner (reuse picker), claimed by; core `updateTask` rewrites only patched lines, keeps CRLF, never renames, asserts regular file (symlink refused), commits by pathspec with `fillTemplate`. Edit/delete sub-task: text, assignee, lane; `deleteSubtask` removes exactly the index+line checkbox line. Delete keeps safeguards: VS Code modal, browser confirm with the `confirmed` flag. `editTask`/`editSubtask`/`deleteSubtask` validated in core protocol and handled identically in the extension and `gitask serve` through `serialQueue`. MockHost supports them; tests cover CRLF, `$&`, newline injection, stale line, symlink, protocol rejections and handler over HTTP.
+- Needs: none
+
 ## 2026-10-30 · [Ops] chore(release): 0.5.0
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ops-release-0-5.md
