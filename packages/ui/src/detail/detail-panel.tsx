@@ -1,3 +1,4 @@
+import { AssigneePicker } from "@/components/assignee-picker.tsx";
 import * as React from "react";
 import type { Task } from "gitask-core";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,6 @@ export function DetailPanel({ host, board, path, onOpenTask, onClose }: {
   const fields: [string, string | null][] = task
     ? [
         ["Column", SHOW_NONE(task.column)],
-        ["Owner", SHOW_NONE(task.owner)],
         ["Tier", SHOW_NONE(task.tier)],
         ["Claimed by", SHOW_NONE(task.claimedBy)],
         ["Started / updated", SHOW_NONE(task.fields?.["started / updated"])],
@@ -85,6 +85,7 @@ export function DetailPanel({ host, board, path, onOpenTask, onClose }: {
               )}
             </div>
             <dl className="m-0 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-4 gap-y-1.5 border-b border-border px-4 pb-3 pt-2 text-xs">
+              <div><dt className="text-[11px] uppercase opacity-70">Owner</dt><dd className="m-0"><AssigneePicker path={task.path} owner={task.owner} people={board?.people} host={host} /></dd></div>
               {fields.filter(([, v]) => v).map(([k, v]) => (
                 <div key={k}><dt className="text-[11px] uppercase opacity-70">{k}</dt><dd className="m-0 break-words">{v}</dd></div>
               ))}

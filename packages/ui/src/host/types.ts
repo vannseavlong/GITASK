@@ -1,8 +1,8 @@
-import type { Board } from "gitask-core";
+import type { Board, Person } from "gitask-core";
 import type { HostMessage, WebviewMessage } from "@host-src/protocol.ts";
 
 /** What the extension (or server) sends with a board: the core board plus view settings. */
-export type BoardData = Board & { settings?: { staleDays: number } };
+export type BoardData = Board & { settings?: { staleDays: number }; people?: Person[] };
 
 export type { HostMessage, WebviewMessage };
 
@@ -12,6 +12,8 @@ export interface UiState {
   filter?: string;
   hiddenStatuses?: string[];
   range?: { from?: string; to?: string; field?: string };
+  /** Selected person ids in the People filter (`UNASSIGNED` for tasks without an owner). */
+  people?: string[];
   /** Per-view state, remembered across tab switches. */
   list?: { q?: string; status?: string; tier?: string; owner?: string; sort?: string; dir?: string };
   timeline?: { mode?: "calendar" | "waterfall"; zoom?: string; year?: number; month?: number };

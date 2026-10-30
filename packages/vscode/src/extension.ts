@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
+import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, syncPeople, toggleSubtask } from "gitask-core";
 import { syncGithub } from "./github.ts";
 import { uiHtml } from "./html.ts";
+import { handleAddPerson, handleSetOwner } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
 import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
@@ -29,7 +30,9 @@ async function post(): Promise<void> {
   try {
     const board = await loadBoard(dir);
     const staleDays = vscode.workspace.getConfiguration("gitask").get<number>("staleDays", 14);
-    send({ type: "board", board: { ...board, settings: { staleDays } } });
+    // People: names, ids, GitHub login and role only (core never returns emails).
+    const people = await readPeople(dir);
+    send({ type: "board", board: { ...board, people, settings: { staleDays } } });
   } catch (e) {
     send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
   }
@@ -108,6 +111,11 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           } catch (e) {
             log?.appendLine(`Could not assign task IDs: ${(e as Error).message}`);
           }
+          try {
+            await syncPeople(dir, { commit: cfg.get<boolean>("autoCommit", true) }); // contributors from git history
+          } catch (e) {
+            log?.appendLine(`Could not read contributors: ${(e as Error).message}`);
+          }
         }
         return post();
       case "view":
@@ -163,6 +171,15 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           await setColumnColor(dir, m.column, m.color, { commit: cfg.get<boolean>("autoCommit", true) });
         } catch (e) {
           vscode.window.showErrorMessage(`GITASK: could not save the colour: ${(e as Error).message}`);
+        }
+        return post();
+      case "setOwner":
+      case "addPerson":
+        try {
+          const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+          await (m.type === "setOwner" ? handleSetOwner(dir, board, m, opts) : handleAddPerson(dir, board, m, opts));
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not set the owner: ${(e as Error).message}`);
         }
         return post();
       case "toggleSubtask": {

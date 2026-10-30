@@ -218,3 +218,34 @@ export async function setOwner(task: Task, personId: string | null, opts: People
   }
   return { path: task.path, owner, committed };
 }
+
+/**
+ * Add one person by name to `<dir>/gitask.json` (id = slug of the name) and return the saved list.
+ * An existing person with the same id is kept as it is. Other keys are kept; the file is committed
+ * by pathspec only when it is already tracked. Throws when the name has no letters or digits.
+ */
+export async function addPerson(dir: string, name: string, opts: PeopleOptions = {}): Promise<Person[]> {
+  const clean = name.replace(/\s+/g, " ").trim();
+  const id = personId(clean);
+  if (!id) throw new Error("A name needs at least one letter or digit");
+  const file = join(dir, CONFIG_FILE);
+  let json: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = JSON.parse(await readFile(file, "utf8"));
+    if (!isRecord(parsed)) throw new Error(`${CONFIG_FILE} is not a JSON object`);
+    json = parsed;
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw new Error(`Cannot update ${CONFIG_FILE}: ${(e as Error).message}`);
+  }
+  const people = parsePeople(JSON.stringify(json));
+  if (people.some((p) => p.id === id)) return people;
+  people.push({ id, name: clean });
+  json.people = people;
+  await writeFile(file, JSON.stringify(json, null, 2) + "\n");
+  const root = await repoRoot(dir);
+  if (root && opts.commit !== false && (await isTracked(dir, file))) {
+    await gitAdd(root, file);
+    await gitCommitPaths(root, PEOPLE_MESSAGE, file);
+  }
+  return people;
+}

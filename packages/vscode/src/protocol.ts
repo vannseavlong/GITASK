@@ -14,7 +14,9 @@ export type WebviewMessage =
   | { type: "view"; id: string }
   | { type: "setColumnColor"; column: string; color: string | null }
   | { type: "deleteTask"; path: string }
-  | { type: "deleteColumn"; column: string };
+  | { type: "deleteColumn"; column: string }
+  | { type: "setOwner"; path: string; person: string | null }
+  | { type: "addPerson"; name: string; path?: string };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -34,6 +36,9 @@ export interface ValidationContext {
 export type ValidationResult = { ok: true; message: WebviewMessage } | { ok: false; reason: string };
 
 const MAX_INDEX = 100_000;
+/** A person id is a slug: lower-case letters and digits with single dashes (core `personId`). */
+export const PERSON_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_NAME = 64;
 
 /**
  * A task file path: absolute, ends in `.md`, and resolves to `<tasksDir>/<existing column>/<file>.md`.
@@ -110,6 +115,20 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
     case "deleteColumn": {
       if (typeof raw.column !== "string" || !ctx.columns.includes(raw.column)) return fail("unknown column");
       return { ok: true, message: { type: "deleteColumn", column: raw.column } };
+    }
+    case "setOwner": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      if (raw.person === null) return { ok: true, message: { type: "setOwner", path, person: null } };
+      if (typeof raw.person !== "string" || raw.person.length > MAX_NAME || !PERSON_ID.test(raw.person)) return fail("bad person id");
+      return { ok: true, message: { type: "setOwner", path, person: raw.person } };
+    }
+    case "addPerson": {
+      const name = typeof raw.name === "string" ? raw.name.replace(/\s+/g, " ").trim() : "";
+      if (!name || name.length > MAX_NAME || /[\u0000-\u001f\u007f]/.test(name)) return fail("bad person name");
+      if (raw.path === undefined) return { ok: true, message: { type: "addPerson", name } };
+      const path = taskPathInside(raw.path, ctx);
+      return path ? { ok: true, message: { type: "addPerson", name, path } } : fail("path is not a task file in the Tasks dir");
     }
     default:
       return fail(`unknown message type`);

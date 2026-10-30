@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Trash2, Palette } from "lucide-react";
-import type { Column, Task } from "gitask-core";
+import type { Column, Person, Task } from "gitask-core";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { Host } from "@/host/index.ts";
+import { Assignee } from "@/components/assignee-avatar.tsx";
+import { AssigneePicker } from "@/components/assignee-picker.tsx";
 import type { ViewProps } from "./registry.tsx";
 
 const PRESETS = ["#3794ff", "#b180d7", "#cca700", "#d18616", "#89d185", "#e5534b", "#2aa198", "#8b949e"];
@@ -54,7 +56,7 @@ function ColorPicker({ col, host }: { col: Column; host: Host }) {
   );
 }
 
-function TaskCard({ t, color, host, openTask, onDragStart, onDragEnd }: { t: Task; color?: string; host: Host; openTask: (path: string) => void; onDragStart: () => void; onDragEnd: () => void }) {
+function TaskCard({ t, people, color, host, openTask, onDragStart, onDragEnd }: { t: Task; people?: Person[]; color?: string; host: Host; openTask: (path: string) => void; onDragStart: () => void; onDragEnd: () => void }) {
   const open = () => openTask(t.path);
   const [dragging, setDragging] = React.useState(false);
   const pct = t.progress && t.progress.total > 0 ? Math.round((100 * t.progress.done) / t.progress.total) : 0;
@@ -89,12 +91,9 @@ function TaskCard({ t, color, host, openTask, onDragStart, onDragEnd }: { t: Tas
       <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
         {t.prefix && <Badge>{t.prefix}</Badge>}
         {t.tier && <Badge variant={t.tier === "T3" ? "destructive" : "default"}>{t.tier}</Badge>}
-        {t.owner && (
-          <span className="inline-flex items-center gap-1 opacity-85">
-            <Avatar className="size-4"><AvatarFallback>{t.owner.slice(0, 2)}</AvatarFallback></Avatar>
-            {t.owner}
-          </span>
-        )}
+        <AssigneePicker path={t.path} owner={t.owner} people={people} host={host}>
+          {t.owner ? <Assignee owner={t.owner} people={people} /> : <span className="opacity-60">+ Assign</span>}
+        </AssigneePicker>
         {t.claimedBy && t.claimedBy.toLowerCase() !== "none" && <Badge>claimed: {t.claimedBy}</Badge>}
       </div>
       {t.progress && t.progress.total > 0 && (
@@ -152,7 +151,7 @@ export function BoardView({ board, full, host, openTask }: ViewProps) {
               </Button>
             )}
             {col.tasks.map((t) => (
-              <TaskCard key={t.path} t={t} color={col.color} host={host} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
+              <TaskCard key={t.path} t={t} people={full.people} color={col.color} host={host} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
             ))}
           </section>
         ))}

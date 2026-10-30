@@ -32,6 +32,11 @@ A bar under the tabs lists every status as a chip with its task count. Clicking 
 ## Date range filter
 One bar under the tabs filters Board, List, Timeline and Overview alike: `From`, `To` (both optional, inclusive, `YYYY-MM-DD`) and which date, `Due` or `Updated`. Counts, bars and totals use only the tasks in range. While a range is active, tasks without a usable date are hidden. "No tasks in range." shows when nothing matches. The range is remembered per view (webview state, not committed). It combines with the Board and List text filters.
 
+## People and assignee
+The task owner is picked, not typed. On a Board card (click the owner or "+ Assign") and in the detail panel an assignee combobox lists the contributors (searchable; avatar with initials, name, GitHub login) and "Unassigned"; picking one sends `setOwner`, which writes the person's name into `- **Owner:**` and commits that file by pathspec when tracked and `autoCommit` is on. People come from `Tasks/gitask.json` (`people`), filled from git history when a board opens; the board carries ids, names, GitHub login and role, never emails. With no contributors yet the picker says so, and typing a name offers "Add <name>" (`addPerson`: saved to `gitask.json`, and assigned to that task). The host accepts `setOwner` only for a task on the board and a null or saved person id. Owners show with an avatar on Board cards, List rows and the detail panel.
+
+The shared filter bar has a **People** multi-select (plus "Unassigned") that works in all four views and combines with the date range and text filter (all must match). An owner text matches a person by name, id or GitHub login, case-insensitive. The selection is remembered with the other filters; the bar shows "N of M match".
+
 ## Rules
 - Task text is untrusted: render it without raw HTML; links only http(s).
 - Every view works with an empty board, one column, and 500 tasks.

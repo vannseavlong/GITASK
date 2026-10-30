@@ -20,6 +20,8 @@ The UI does not copy the tested logic. `status-visibility.ts` is imported as is.
 
 `renderRowExpansion` in `views/list.tsx` and the chevron column are the slot where a List row expands into sub-task rows.
 
+People: `packages/vscode/src/people-filter.ts` (pure, tested; owner-to-person matching, `filterPeople`, `initials`) is imported as is; host handlers for `setOwner`/`addPerson` are in `packages/vscode/src/owner.ts`; components are `components/assignee-avatar.tsx`, `components/assignee-picker.tsx` and `shell/people-filter.tsx`.
+
 ## Webview and CSP
 
 `packages/vscode/src/html.ts` (`uiHtml`) builds the page; `extension.ts` passes `asWebviewUri` links to `dist/ui/ui.js` and `ui.css`. CSP:

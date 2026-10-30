@@ -1,6 +1,7 @@
 // The shell's pure logic: the tested date-range and status-visibility modules, used as they are.
 import { statusVisibility } from "@host-src/status-visibility.ts";
 import { countTasks, filterBoard, rangeActive, rangeNorm } from "virtual:gitask-filter-logic";
+import { filterPeople } from "@host-src/people-filter.ts";
 import type { BoardData, UiState } from "@/host/index.ts";
 
 export { countTasks, filterBoard, rangeActive, rangeNorm };
@@ -22,7 +23,7 @@ export function filterText(board: BoardData | null, q: string): BoardData | null
 export interface Derived {
   /** Without hidden statuses: what the chips and the empty-column rule look at. */
   visible: BoardData | null;
-  /** Visible, then date range, then text: what a view draws. */
+  /** Visible, then date range, then people, then text: what a view draws. */
   shown: BoardData | null;
   range: Range;
 }
@@ -30,6 +31,8 @@ export interface Derived {
 export function derive(raw: BoardData | null, ui: UiState): Derived {
   const range = rangeNorm(ui.range);
   const visible = (SV.apply(raw, ui.hiddenStatuses) ?? null) as BoardData | null;
-  const shown = filterText(filterBoard(visible, range) as BoardData | null, ui.filter ?? "");
+  const byDate = filterBoard(visible, range) as BoardData | null;
+  const byPeople = byDate ? filterPeople(byDate, ui.people, raw?.people) : byDate;
+  const shown = filterText(byPeople, ui.filter ?? "");
   return { visible, shown, range };
 }
