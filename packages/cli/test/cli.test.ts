@@ -80,7 +80,7 @@ test("report formats, filters and validation", () => {
   const md = cli(root, "report", "--from", "2026-10-01", "--format", "md");
   assert.equal(md.code, 0, md.err);
   assert.match(md.out, /Done thing/);
-  assert.match(cli(root, "report", "--format", "csv", "--people", "ann-roe").out, /^"person","kind","task_id"/);
+  assert.match(cli(root, "report", "--format", "csv", "--people", "ann-roe").out, /^"person","task","sub_task","done_date","sub_tasks_done"/);
   assert.match(cli(root, "report", "--format", "html", "--no-subtasks").out, /<html/i);
   const none = cli(root, "report", "--format", "md", "--people", "sam-lee");
   assert.doesNotMatch(none.out, /Done thing/);

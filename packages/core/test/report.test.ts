@@ -139,7 +139,10 @@ test("no git history: falls back to the updated date and says so; undated tasks 
   assert.equal(rep.tasks.find((t) => t.id === "A-b")!.doneSource, "none");
   assert.equal(rep.summary.fromUpdated, 1);
   assert.equal(rep.summary.undated, 1);
-  assert.match(renderHtml(rep), /source: updated field/);
+  // The report shows the date but no longer says where it came from.
+  const html = renderHtml(rep);
+  assert.ok(html.includes("2026-02-09"));
+  assert.ok(!/source|updated field|git/i.test(html.replace(/<style>[\s\S]*<\/style>/, "")));
   // With a period, the undated task is out, same as the board filter.
   const ranged = await buildReport(board, { from: "2026-02-01", people, includeSubtasks: true });
   assert.deepEqual(ranged.tasks.map((t) => t.id), ["A-a"]);
@@ -248,4 +251,91 @@ test("git-date note counts owned tasks only", async () => {
   const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true, only: ["sam-lee"] });
   assert.equal(rep.tasks.length, 2);
   assert.ok(rep.notes.some((n) => n.startsWith("1 of 1 tasks used the git date")), rep.notes.join("\n"));
+});
+
+const textOf = (html: string) => html.replace(/<style>[\s\S]*?<\/style>/, "");
+
+test("simple report: three tiles, one section per person, no noise (HTML and Markdown)", async () => {
+  const r = repo();
+  r.put("4-testing", "A-one", body("One", { owner: "Sam Lee", due: "2026-01-20", tier: "T2 · new feature", subs: ["- [x] api @ann-roe", "- [x] ui @sam-lee"] }));
+  r.put("4-testing", "A-two", body("Two", { owner: "Sam Lee", due: "2026-01-05", tier: "T1" }));
+  r.put("4-testing", "A-three", body("Three", { owner: "Ann Roe" }));
+  r.put("4-testing", "A-four", body("Four", { owner: "Ann Roe" }));
+  r.commit("2026-01-02", "init");
+  for (const id of ["A-one", "A-two", "A-three"]) r.move(id, "4-testing", "5-done");
+  r.commit("2026-01-11", "done");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true, repo: "demo", generated: "2026-02-01" });
+  const html = textOf(renderHtml(rep));
+  assert.equal((html.match(/class="tile"/g) ?? []).length, 3);
+  for (const label of ["Tasks done", "Sub-tasks done", "People"]) assert.ok(html.includes(label));
+  assert.equal((html.match(/<section class="person">/g) ?? []).length, 2);
+  assert.ok(html.includes("2026-02-01") && html.includes("All time"));
+  assert.ok(!html.includes("Four"), "open task must not appear");
+  assert.ok(html.indexOf("samlee") < html.indexOf("Ann Roe") || html.indexOf("Ann Roe") < html.indexOf("samlee"));
+  // Sub-tasks listed with their parent task, under the person who finished them.
+  const ann = html.slice(html.indexOf("Ann Roe<span"));
+  assert.ok(ann.includes("api") && ann.includes("(One)"));
+  // Everything the owner called noise is gone.
+  for (const gone of ["T1", "T2", "Tier", "git", "source", "Avg", "On time", "Data notes", "Timeliness", "A-one", "Tasks/"]) assert.ok(!html.includes(gone), `html still has ${gone}`);
+  const md = renderMarkdown(rep);
+  assert.ok(md.includes("## samlee") && md.includes("## Ann Roe"));
+  assert.ok(md.includes("api") && md.includes("(One)"));
+  for (const gone of ["T1", "T2", "Tier", "source", "Avg", "On time", "Data notes", "A-one"]) assert.ok(!md.includes(gone), `md still has ${gone}`);
+});
+
+test("late tag only for a task with a Due date done after it", async () => {
+  const r = repo();
+  r.put("4-testing", "A-late", body("Late one", { owner: "Sam Lee", due: "2026-01-05" }));
+  r.put("4-testing", "A-ontime", body("Ontime one", { owner: "Sam Lee", due: "2026-01-30" }));
+  r.put("4-testing", "A-nodue", body("Nodue one", { owner: "Sam Lee" }));
+  r.commit("2026-01-02", "init");
+  for (const id of ["A-late", "A-ontime", "A-nodue"]) r.move(id, "4-testing", "5-done");
+  r.commit("2026-01-11", "done");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: false });
+  const html = textOf(renderHtml(rep));
+  assert.equal((html.match(/class="tag"/g) ?? []).length, 1);
+  assert.match(html, /Late one<span class="tag">late<\/span>/);
+  assert.ok(!/Ontime one<span/.test(html) && !/Nodue one<span/.test(html));
+  const lateLines = renderMarkdown(rep).split("\n").filter((l) => l.includes("(late)"));
+  assert.equal(lateLines.length, 1);
+  assert.ok(lateLines[0].includes("Late one"));
+  assert.ok(!html.includes("Sub-tasks done"));
+});
+
+test("Unassigned section only when non-empty; people filter shown in the muted line", async () => {
+  const r = repo();
+  r.put("5-done", "A-a", body("A", { owner: "Sam Lee" }));
+  r.commit("2026-01-02", "init");
+  const none = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true });
+  assert.ok(!renderHtml(none).includes("Unassigned") && !renderMarkdown(none).includes("Unassigned"));
+  assert.ok(!renderHtml(none).includes("People:"));
+  r.put("5-done", "A-b", body("B"));
+  r.commit("2026-01-03", "more");
+  const some = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true });
+  const html = renderHtml(some);
+  assert.ok(html.includes("Unassigned<span"));
+  assert.ok(html.indexOf("Unassigned<span") > html.indexOf("samlee<span"));
+  assert.ok(renderMarkdown(some).includes("## Unassigned"));
+  const only = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true, only: ["sam-lee"], from: "2026-01-01", to: "2026-12-31" });
+  assert.ok(renderHtml(only).includes("People: samlee"));
+  assert.ok(!renderHtml(only).includes("Unassigned"));
+});
+
+test("CSV: flat columns, one row per task and per finished sub-task, no source/tier/timeliness", async () => {
+  const r = repo();
+  r.put("5-done", "A-a", body("Alpha", { owner: "Sam Lee", tier: "T2", due: "2026-01-01", subs: ["- [x] api @ann-roe", "- [x] ui @sam-lee", "- [ ] open @sam-lee"] }));
+  r.put("5-done", "A-b", body("Beta", { owner: "Ann Roe" }));
+  r.commit("2026-01-02", "init");
+  const parse = (csv: string) => csv.trim().split("\r\n").map((l) => (l.match(/"(?:[^"]|"")*"/g) ?? []).map((c) => c.slice(1, -1).replace(/""/g, '"')));
+  const withSubs = parse(renderCsv(await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true })));
+  assert.deepEqual(withSubs[0], ["person", "task", "sub_task", "done_date", "sub_tasks_done"]);
+  assert.equal(withSubs.length, 1 + 2 + 2);
+  assert.ok(withSubs.some((c) => c[0] === "samlee" && c[1] === "Alpha" && c[2] === "" && c[3] === "2026-01-02" && c[4] === "2"));
+  assert.ok(withSubs.some((c) => c[0] === "Ann Roe" && c[1] === "Alpha" && c[2] === "api" && c[3] === "2026-01-02" && c[4] === ""));
+  assert.ok(withSubs.some((c) => c[0] === "Ann Roe" && c[1] === "Beta" && c[4] === "0"));
+  const without = parse(renderCsv(await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: false })));
+  assert.equal(without.length, 1 + 2);
+  assert.ok(without.slice(1).every((c) => c[2] === "" && c[4] === ""));
+  const flat = renderCsv(await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true }));
+  for (const gone of ["T2", "git", "on-time", "late", "source", "tier"]) assert.ok(!flat.includes(gone), `csv has ${gone}`);
 });
