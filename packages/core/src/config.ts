@@ -92,7 +92,14 @@ export interface GithubConfig {
   project?: number;
 }
 
-const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
+const NAME_RE = /^(?!\.{1,2}$)[A-Za-z0-9_.-]{1,100}$/;
+
+/** `owner/name` as GitHub allows it: no `.`/`..` segments (a URL would normalise them away), no `.git` suffix. */
+export function isRepoSlug(v: string): boolean {
+  const [owner, name, ...rest] = v.split("/");
+  return !rest.length && name !== undefined && OWNER_RE.test(owner) && NAME_RE.test(name) && !/\.git$/i.test(name);
+}
 
 /** Parse the `github` block. Missing or malformed input yields `undefined` (then no GitHub call is ever made). */
 export function parseGithubConfig(text: string): GithubConfig | undefined {
@@ -103,7 +110,7 @@ export function parseGithubConfig(text: string): GithubConfig | undefined {
     return undefined;
   }
   const g = isRecord(json) ? json.github : undefined;
-  if (!isRecord(g) || typeof g.repo !== "string" || !REPO_RE.test(g.repo.trim())) return undefined;
+  if (!isRecord(g) || typeof g.repo !== "string" || !isRepoSlug(g.repo.trim())) return undefined;
   const out: GithubConfig = { repo: g.repo.trim() };
   if (typeof g.project === "number" && Number.isInteger(g.project) && g.project > 0) out.project = g.project;
   return out;
