@@ -16,6 +16,7 @@ export const FIXTURE_PEOPLE = [
 export const FIXTURE: BoardData = {
   dir: "/fixture/Tasks",
   people: FIXTURE_PEOPLE,
+  github: { repo: "acme/app", project: 3 },
   settings: { staleDays: 14 },
   columns: [
     { id: "1-backlog", label: "backlog", tasks: [task("1-backlog", "Ext-dark-mode", "Dark mode polish", { displayId: "T-0004", tier: "T1", owner: "Ann Roe", due: "2026-11-20", fields: { "started / updated": "2026-10-01 / 2026-10-12" } })] },
@@ -63,6 +64,11 @@ export function createMockHost(): Host {
         const t = find(m.path);
         for (const cb of msgSubs) cb(t ? { type: "taskBody", path: m.path, text: BODY(t) } : { type: "taskBody", path: m.path, error: "not found" });
       }
+      if (m.type === "githubPlan") {
+        const issues = board.columns.filter((c) => !/done/.test(c.id)).flatMap((c) => c.tasks).map((t, i) => ({ taskId: t.id, title: t.title, action: (i % 2 ? "update" : "create") as "create" | "update", issue: i % 2 ? 40 + i : undefined, state: "open" as const, assignees: t.owner === "Ann Roe" ? ["annroe"] : t.owner === "SNLRLONG" ? ["snlrlong"] : [], subIssues: t.subtasks.slice(0, 2).map((s) => ({ title: s.text, state: s.checked ? "closed" as const : "open" as const, assignees: [] })) }));
+        for (const cb of msgSubs) cb({ type: "githubPlanResult", plan: { repo: "acme/app", project: 3, issues, notify: [{ login: "annroe", name: "Ann Roe", tasks: ["Ext-dark-mode"] }, { login: "snlrlong", name: "SNLRLONG", tasks: ["Core-people", "Ext-ui-foundation"] }], warnings: ['Bob Ng has no GitHub name; skipped (set "github" for them in Tasks/gitask.json).'] } });
+      }
+      if (m.type === "githubSync") for (const cb of msgSubs) cb({ type: "githubSyncResult", ok: true, summary: "Synced 3 task(s) to acme/app (2 new issue(s)).", warnings: [] });
       if (m.type === "previewReport") { const r = m.options; for (const cb of msgSubs) cb({ type: "reportPreview", html: REPORT_FIXTURE(r.from, r.to) }); }
       if (m.type === "exportReport") for (const cb of msgSubs) cb({ type: "reportExported", ok: true, path: `gitask-report-${m.options.from}_${m.options.to}.${m.format}` });
       if (m.type === "toggleSubtask") { const st = find(m.path)?.subtasks[m.index]; if (st) { st.checked = !st.checked; emit(); } }

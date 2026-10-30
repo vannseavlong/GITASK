@@ -140,3 +140,8 @@ test("addSubtask / setSubtaskAssignee / setSubtaskLane validation", () => {
     ]) assert.equal(v(bad).ok, false, JSON.stringify(bad));
   }
 });
+
+test("github messages: accepted, extra fields (a token, a plan) dropped", () => {
+  assert.deepEqual(validateMessage({ type: "githubPlan" }, ctx), { ok: true, message: { type: "githubPlan" } });
+  assert.deepEqual(validateMessage({ type: "githubSync", token: "ghp_x", plan: { repo: "evil/repo" } }, ctx), { ok: true, message: { type: "githubSync" } });
+});

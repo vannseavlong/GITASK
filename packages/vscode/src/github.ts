@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
-import { applySync, listPeople, loadBoard, planSync, readGithubConfig, readPeople, repoRoot } from "gitask-core";
-import type { Person, SyncPlan } from "gitask-core";
+import { applySync, readGithubConfig } from "gitask-core";
+import type { SyncPlan, SyncResult } from "gitask-core";
+import { buildPlan } from "./github-plan.ts";
 
 /** Classic OAuth scopes the VS Code GitHub provider can grant. `repo` covers issues; `project` covers Projects v2. */
 const scopes = (project: boolean): string[] => (project ? ["repo", "project"] : ["repo"]);
@@ -22,16 +23,10 @@ export async function syncGithub(dir: string | undefined, log?: vscode.OutputCha
     return void vscode.window.showInformationMessage('GITASK: add {"github": {"repo": "owner/name"}} to Tasks/gitask.json to enable GitHub sync. Nothing was sent.');
   }
   try {
-    const root = await repoRoot(dir);
-    const saved = await readPeople(dir);
-    const people: Person[] = [...saved];
-    for (const g of root ? await listPeople(root) : []) {
-      const have = people.find((p) => p.id === g.id);
-      if (!have) people.push(g);
-      else have.github ??= g.github;
-    }
     // Dry run first: no token is requested and nothing is sent until the user confirms.
-    const plan = planSync(await loadBoard(dir), config, people);
+    const built = await buildPlan(dir);
+    if (!built.ok) return void vscode.window.showErrorMessage(`GITASK: ${built.error}`);
+    const plan = built.plan;
     if (!plan.issues.length) return void vscode.window.showInformationMessage("GITASK: no tasks to sync.");
     const ok = await vscode.window.showWarningMessage("Sync to GitHub?", { modal: true, detail: describePlan(plan) }, "Sync");
     if (ok !== "Sync") return;
@@ -44,4 +39,16 @@ export async function syncGithub(dir: string | undefined, log?: vscode.OutputCha
     // GithubError messages never contain the token.
     vscode.window.showErrorMessage(`GITASK: GitHub sync failed. ${(e as Error).message}`);
   }
+}
+
+/**
+ * Apply from the webview dialog. The dialog already showed the dry-run plan and the user confirmed it, so there is
+ * no second modal. The plan is recomputed here (the webview never supplies one) and the token stays in this process.
+ */
+export async function syncFromDialog(dir: string): Promise<SyncResult & { repo: string }> {
+  const config = await readGithubConfig(dir);
+  const built = await buildPlan(dir);
+  if (!config || !built.ok) throw new Error(built.ok ? "No GitHub link in Tasks/gitask.json." : built.error);
+  const session = await vscode.authentication.getSession("github", scopes(!!config.project), { createIfNone: true });
+  return { ...(await applySync(built.plan, session.accessToken)), repo: built.plan.repo };
 }

@@ -1,7 +1,9 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
 import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
-import { syncGithub } from "./github.ts";
+import { readGithubConfig } from "gitask-core";
+import { syncFromDialog, syncGithub } from "./github.ts";
+import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
 import { uiHtml } from "./html.ts";
 import { handleAddPerson, handleSetOwner } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
@@ -33,7 +35,8 @@ async function post(): Promise<void> {
     const staleDays = vscode.workspace.getConfiguration("gitask").get<number>("staleDays", 14);
     // People: names, ids, GitHub login and role only (core never returns emails).
     const people = await readPeople(dir).catch(() => []);
-    send({ type: "board", board: { ...board, settings: { staleDays }, people } });
+    const github = await readGithubConfig(dir); // repo/project only; the Sync button shows when it exists
+    send({ type: "board", board: { ...board, settings: { staleDays }, people, github } });
   } catch (e) {
     send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
   }
@@ -227,6 +230,27 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not set the owner: ${(e as Error).message}`);
         }
         return post();
+      case "githubPlan": {
+        // Dry run: reads files only, never asks for a token and never touches the network.
+        try {
+          const built = await buildPlan(dir);
+          send(built.ok ? { type: "githubPlanResult", plan: toPlanView(built.plan) } : { type: "githubPlanResult", error: built.error });
+        } catch (e) {
+          send({ type: "githubPlanResult", error: (e as Error).message });
+        }
+        return;
+      }
+      case "githubSync": {
+        // The dialog showed the plan and the user pressed its confirm button. Token comes from the VS Code session.
+        try {
+          const r = await syncFromDialog(dir);
+          for (const w of r.warnings) log?.appendLine(`GitHub sync: ${w}`);
+          send(syncResultMessage(r, r.repo));
+        } catch (e) {
+          send(syncErrorMessage(e));
+        }
+        return post(); // issue numbers were written into task files
+      }
       case "toggleSubtask": {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {

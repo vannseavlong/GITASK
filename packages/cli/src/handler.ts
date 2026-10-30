@@ -1,8 +1,9 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readPeople, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
-import type { HostMessage } from "gitask-core";
+import { applySync, readGithubConfig, addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readPeople, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
+import type { ApplyOptions, HostMessage } from "gitask-core";
+import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
 
@@ -14,6 +15,10 @@ export interface HandlerOptions {
   staleDays?: number;
   /** Owner written into tasks created from the browser. */
   owner?: string;
+  /** Environment to read `GITHUB_TOKEN` from (default `process.env`). The token comes from here only, never from a message. */
+  env?: NodeJS.ProcessEnv;
+  /** Test hooks for the GitHub API (fake server). */
+  github?: Pick<ApplyOptions, "fetch" | "baseUrl">;
 }
 
 export interface HandlerResult {
@@ -32,7 +37,8 @@ export function createHandler(o: HandlerOptions) {
   async function board() {
     const b = await loadBoard(o.dir);
     // People: names, ids, GitHub login and role only (core never returns emails).
-    return { ...b, people: await readPeople(o.dir).catch(() => []), settings: { staleDays: o.staleDays ?? 14 } };
+    const github = await readGithubConfig(o.dir); // repo/project only
+    return { ...b, people: await readPeople(o.dir).catch(() => []), settings: { staleDays: o.staleDays ?? 14 }, github };
   }
 
   const err = (message: string): HandlerResult => ({ status: 200, reply: { type: "error", message }, changed: true });
@@ -139,6 +145,26 @@ export function createHandler(o: HandlerOptions) {
         } catch (e) {
           return err(`could not update ${basename(m.path)}: ${(e as Error).message}`);
         }
+      case "githubPlan":
+        try {
+          const built = await buildPlan(o.dir);
+          return { status: 200, reply: built.ok ? { type: "githubPlanResult", plan: toPlanView(built.plan) } : { type: "githubPlanResult", error: built.error }, changed: false };
+        } catch (e) {
+          return { status: 200, reply: { type: "githubPlanResult", error: (e as Error).message }, changed: false };
+        }
+      case "githubSync": {
+        // The token is read from the server process environment only. It is never sent to or accepted from the browser.
+        const token = (o.env ?? process.env).GITHUB_TOKEN?.trim();
+        if (!token) return { status: 200, reply: { type: "githubSyncResult", ok: false, error: "No GITHUB_TOKEN set for the server. Stop `gitask serve`, run `export GITHUB_TOKEN=<token>` (scopes: repo, plus project for Projects) and start it again." }, changed: false };
+        try {
+          const built = await buildPlan(o.dir);
+          if (!built.ok) return { status: 200, reply: { type: "githubSyncResult", ok: false, error: built.error }, changed: false };
+          const r = await applySync(built.plan, token, { commit, ...o.github });
+          return { status: 200, reply: syncResultMessage(r, built.plan.repo), changed: true };
+        } catch (e) {
+          return { status: 200, reply: syncErrorMessage(e, token), changed: true };
+        }
+      }
       case "toggleSubtask":
         try {
           const task = (await loadBoard(o.dir)).columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
