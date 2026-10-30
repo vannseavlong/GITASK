@@ -1,7 +1,6 @@
 import { execFile } from "node:child_process";
 import { join, resolve } from "node:path";
 import { startServer } from "./serve.ts";
-import { assets } from "./ui-assets.ts";
 import { appendChangelog, createTask, loadBoard, moveTask, repoRoot } from "gitask-core";
 import type { Board, Task } from "gitask-core";
 import { assignCmd, githubCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
@@ -97,6 +96,7 @@ async function main(argv: string[]) {
       const val = (n: string) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : undefined; };
       const port = val("port") === undefined ? 4173 : Number(val("port"));
       if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("--port must be 0-65535");
+      const { assets } = await import("./ui-assets.ts"); // lazy: only serve needs the bundled UI
       const srv = await startServer({ dir, port, host: val("host") ?? "127.0.0.1", commit: !flag("no-commit"), owner: process.env.GIT_AUTHOR_NAME, assets });
       console.log(`GITASK board: ${srv.url}\nServing ${dir}. Ctrl+C to stop.`);
       if (!flag("no-open")) openBrowser(srv.url);
