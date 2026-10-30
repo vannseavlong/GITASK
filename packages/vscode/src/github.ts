@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { applySync, readGithubConfig } from "gitask-core";
 import type { SyncPlan, SyncResult } from "gitask-core";
-import { applyOptions, buildPlan } from "./github-plan.ts";
+import { applyOptions, buildPlan, confirmProblem } from "./github-plan.ts";
 
 const autoCommit = (): boolean => vscode.workspace.getConfiguration("gitask").get<boolean>("autoCommit", true);
 
@@ -14,6 +14,7 @@ export function describePlan(plan: SyncPlan): string {
   const n = (k: "create" | "update") => plan.issues.filter((i) => i.action === k).length;
   lines.push(`${n("create")} issue(s) to create, ${n("update")} to update, ${plan.issues.reduce((a, i) => a + i.subIssues.length, 0)} sub-issue(s).`);
   lines.push(plan.notify.length ? `GitHub may notify: ${plan.notify.map((x) => `@${x.login}`).join(", ")}` : "Nobody will be assigned or notified.");
+  if (plan.repoMismatch) lines.unshift(`WARNING: ${plan.repoMismatch.message}`);
   for (const w of plan.warnings) lines.push(`Warning: ${w}`);
   return lines.join("\n");
 }
@@ -32,8 +33,13 @@ export async function syncGithub(dir: string | undefined, log?: vscode.OutputCha
     if (!plan.issues.length) return void vscode.window.showInformationMessage("GITASK: no tasks to sync.");
     const ok = await vscode.window.showWarningMessage("Sync to GitHub?", { modal: true, detail: describePlan(plan) }, "Sync");
     if (ok !== "Sync") return;
+    if (plan.repoMismatch) {
+      // Second, separate acknowledgement: the target repo comes from a file other contributors can change.
+      const again = await vscode.window.showWarningMessage(`Send task titles to ${plan.repo}?`, { modal: true, detail: plan.repoMismatch.message }, `Send to ${plan.repo}`);
+      if (again !== `Send to ${plan.repo}`) return;
+    }
     const session = await vscode.authentication.getSession("github", scopes(!!config.project), { createIfNone: true });
-    const r = await applySync(plan, session.accessToken, applyOptions(autoCommit()));
+    const r = await applySync(plan, session.accessToken, { ...applyOptions(autoCommit()), allowRepo: plan.repo });
     const made = r.issues.filter((i) => i.action === "created").length;
     vscode.window.showInformationMessage(`GITASK: synced ${r.issues.length} task(s) to ${plan.repo} (${made} new issue(s)).`);
     for (const w of r.warnings) log?.appendLine(`GitHub sync: ${w}`);
@@ -47,10 +53,12 @@ export async function syncGithub(dir: string | undefined, log?: vscode.OutputCha
  * Apply from the webview dialog. The dialog already showed the dry-run plan and the user confirmed it, so there is
  * no second modal. The plan is recomputed here (the webview never supplies one) and the token stays in this process.
  */
-export async function syncFromDialog(dir: string): Promise<SyncResult & { repo: string }> {
+export async function syncFromDialog(dir: string, m: { confirmRepo: string; planHash: string }): Promise<SyncResult & { repo: string }> {
   const config = await readGithubConfig(dir);
   const built = await buildPlan(dir);
   if (!config || !built.ok) throw new Error(built.ok ? "No GitHub link in Tasks/gitask.json." : built.error);
+  const bad = confirmProblem(built.plan, m); // before any token is requested
+  if (bad) throw new Error(bad);
   const session = await vscode.authentication.getSession("github", scopes(!!config.project), { createIfNone: true });
-  return { ...(await applySync(built.plan, session.accessToken, applyOptions(autoCommit()))), repo: built.plan.repo };
+  return { ...(await applySync(built.plan, session.accessToken, { ...applyOptions(autoCommit()), allowRepo: m.confirmRepo })), repo: built.plan.repo };
 }

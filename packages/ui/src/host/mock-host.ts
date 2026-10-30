@@ -67,7 +67,7 @@ export function createMockHost(): Host {
       }
       if (m.type === "githubPlan") {
         const issues = board.columns.filter((c) => !/done/.test(c.id)).flatMap((c) => c.tasks).map((t, i) => ({ taskId: t.id, title: t.title, action: (i % 2 ? "update" : "create") as "create" | "update", issue: i % 2 ? 40 + i : undefined, state: "open" as const, assignees: t.owner === "Ann Roe" ? ["annroe"] : t.owner === "SNLRLONG" ? ["snlrlong"] : [], subIssues: t.subtasks.slice(0, 2).map((s) => ({ title: s.text, state: s.checked ? "closed" as const : "open" as const, assignees: [] })) }));
-        for (const cb of msgSubs) cb({ type: "githubPlanResult", plan: { repo: "acme/app", project: 3, issues, notify: [{ login: "annroe", name: "Ann Roe", tasks: ["Ext-dark-mode"] }, { login: "snlrlong", name: "SNLRLONG", tasks: ["Core-people", "Ext-ui-foundation"] }], warnings: ['Bob Ng has no GitHub name; skipped (set "github" for them in Tasks/gitask.json).'] } });
+        for (const cb of msgSubs) cb({ type: "githubPlanResult", plan: { repo: "acme/app", hash: "0".repeat(64), project: 3, issues, notify: [{ login: "annroe", name: "Ann Roe", tasks: ["Ext-dark-mode"] }, { login: "snlrlong", name: "SNLRLONG", tasks: ["Core-people", "Ext-ui-foundation"] }], warnings: ['Bob Ng has no GitHub name; skipped (set "github" for them in Tasks/gitask.json).'] } });
       }
       if (m.type === "githubSync") for (const cb of msgSubs) cb({ type: "githubSyncResult", ok: true, summary: "Synced 3 task(s) to acme/app (2 new issue(s)).", warnings: [] });
       if (m.type === "previewReport") { const r = m.options; for (const cb of msgSubs) cb({ type: "reportPreview", html: REPORT_FIXTURE(r.from, r.to) }); }

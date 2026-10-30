@@ -28,8 +28,11 @@ export type WebviewMessage =
   | { type: "addPerson"; name: string; path?: string }
   /** Dry run: ask what a GitHub sync would do. Never sends anything to GitHub. */
   | { type: "githubPlan" }
-  /** Apply the sync. The host recomputes the plan itself and holds the token; the webview sends none. */
-  | { type: "githubSync" };
+  /**
+   * Apply the sync. The host recomputes the plan itself and holds the token; the webview sends none. It carries the
+   * repo and the plan hash the user was shown; the host refuses when either differs from what it would use now.
+   */
+  | { type: "githubSync"; confirmRepo: string; planHash: string };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -45,6 +48,10 @@ export type HostMessage =
 /** What the webview sees of a sync plan: titles, actions and GitHub names only (no paths, bodies or tokens). */
 export interface GithubPlanView {
   repo: string;
+  /** Hash of the plan; send it back in `githubSync` so the host can refuse a plan that changed after it was shown. */
+  hash: string;
+  /** `github.repo` is not the origin remote: the dialog must warn in red and require a tick before it enables Confirm. */
+  repoMismatch?: { configured: string; origin: string | null; message: string };
   project?: number;
   issues: {
     taskId: string;
@@ -135,6 +142,7 @@ function indexLine(raw: Record<string, unknown>): { index: number; line: number 
 /** A person id is a slug: lower-case letters and digits with single dashes (core `personId`). */
 export const PERSON_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_NAME = 64;
+const GITHUB_SLUG = /^[A-Za-z0-9][A-Za-z0-9-]{0,38}\/[A-Za-z0-9_.-]{1,100}$/;
 
 /**
  * A task file path: absolute, ends in `.md`, and resolves to `<tasksDir>/<existing column>/<file>.md`.
@@ -281,8 +289,11 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
     }
     case "githubPlan":
       return { ok: true, message: { type: "githubPlan" } };
-    case "githubSync":
-      return { ok: true, message: { type: "githubSync" } };
+    case "githubSync": {
+      if (typeof raw.confirmRepo !== "string" || !GITHUB_SLUG.test(raw.confirmRepo)) return fail("bad confirmRepo");
+      if (typeof raw.planHash !== "string" || !/^[0-9a-f]{64}$/.test(raw.planHash)) return fail("bad planHash");
+      return { ok: true, message: { type: "githubSync", confirmRepo: raw.confirmRepo, planHash: raw.planHash } };
+    }
     default:
       return fail(`unknown message type`);
   }

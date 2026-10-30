@@ -1,5 +1,6 @@
 import { localDate } from "./date.ts";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, writeFile } from "node:fs/promises";
+import { assertRegularFile } from "./taskfile.ts";
 import { join } from "node:path";
 import { loadBoard } from "./board.ts";
 import { nextDisplayId, setIdField } from "./ids.ts";
@@ -37,14 +38,17 @@ export async function createTask(
 ): Promise<string> {
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id)) throw new Error(`Invalid task id: ${id}`);
   const dest = join(tasksDir, column, `${id}.md`);
-  const exists = await access(dest).then(() => true, () => false);
-  if (exists) throw new Error(`Task already exists: ${dest}`);
+  const colDir = join(tasksDir, column);
+  const col = await lstat(colDir).catch(() => undefined);
+  if (col && (col.isSymbolicLink() || !col.isDirectory())) throw new Error(`Not a status folder: ${column}`);
 
   const date = opts.today ?? localDate();
   const owner = opts.owner ?? "Owner";
   let body: string;
   try {
-    body = (await readFile(join(tasksDir, "_TEMPLATE.md"), "utf8"))
+    const template = join(tasksDir, "_TEMPLATE.md");
+    await assertRegularFile(template, tasksDir); // a symlinked template would copy a foreign file into a task
+    body = (await readFile(template, "utf8"))
       .replace(/^#\s+.*$/m, () => `# ${id}`)
       .replaceAll("{{OWNER}}", () => owner)
       .replace(/^(\s*[-*]\s+\*\*Owner:\*\*\s*).*$/m, (_m, head: string) => `${head}${owner}`)
@@ -55,6 +59,11 @@ export async function createTask(
   const displayId = nextDisplayId(await loadBoard(tasksDir).catch(() => ({ dir: tasksDir, columns: [] })));
   body = setIdField(body, displayId);
   await mkdir(join(tasksDir, column), { recursive: true });
-  await writeFile(dest, body);
+  try {
+    await writeFile(dest, body, { flag: "wx" }); // O_EXCL: never follows a planted (even dangling) symlink, never overwrites
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "EEXIST") throw new Error(`Task already exists: ${dest}`);
+    throw e;
+  }
   return dest;
 }

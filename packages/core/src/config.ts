@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
+import { assertRegularFile } from "./taskfile.ts";
 
 export const CONFIG_FILE = "gitask.json";
 export const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
@@ -73,6 +74,7 @@ export async function setColumnColor(dir: string, column: string, color: string 
   if (Object.keys(entry).length) columns.set(column, entry);
   else columns.delete(column);
   json.columns = Object.fromEntries(columns);
+  await assertRegularFile(file, dir, { missingOk: true });
   await writeFile(file, JSON.stringify(json, null, 2) + "\n");
 
   const root = await repoRoot(dir);
@@ -91,7 +93,14 @@ export interface GithubConfig {
   project?: number;
 }
 
-const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
+const NAME_RE = /^(?!\.{1,2}$)[A-Za-z0-9_.-]{1,100}$/;
+
+/** `owner/name` as GitHub allows it: no `.`/`..` segments (a URL would normalise them away), no `.git` suffix. */
+export function isRepoSlug(v: string): boolean {
+  const [owner, name, ...rest] = v.split("/");
+  return !rest.length && name !== undefined && OWNER_RE.test(owner) && NAME_RE.test(name) && !/\.git$/i.test(name);
+}
 
 /** Parse the `github` block. Missing or malformed input yields `undefined` (then no GitHub call is ever made). */
 export function parseGithubConfig(text: string): GithubConfig | undefined {
@@ -102,7 +111,7 @@ export function parseGithubConfig(text: string): GithubConfig | undefined {
     return undefined;
   }
   const g = isRecord(json) ? json.github : undefined;
-  if (!isRecord(g) || typeof g.repo !== "string" || !REPO_RE.test(g.repo.trim())) return undefined;
+  if (!isRecord(g) || typeof g.repo !== "string" || !isRepoSlug(g.repo.trim())) return undefined;
   const out: GithubConfig = { repo: g.repo.trim() };
   if (typeof g.project === "number" && Number.isInteger(g.project) && g.project > 0) out.project = g.project;
   return out;

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
@@ -8,6 +8,7 @@ import { uiHtml } from "./html.ts";
 import { handleAddPerson, handleSetOwner } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
+import { resolveTasksDir } from "./tasks-dir.ts";
 import { buildReportFile } from "./report-request.ts";
 import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
 
@@ -18,10 +19,18 @@ let panel: vscode.WebviewPanel | undefined;
 let idsAssigned = false;
 const queue = serialQueue(); // webview messages are handled one at a time so two quick writes never race on one file
 
+let tasksDirErrorShown = false;
+
 function tasksDir(): string | undefined {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!root) return undefined;
-  return join(root, vscode.workspace.getConfiguration("gitask").get<string>("tasksDir", "Tasks"));
+  const r = resolveTasksDir(root, vscode.workspace.getConfiguration("gitask").get<string>("tasksDir", "Tasks"));
+  if (r.ok) return r.dir;
+  if (!tasksDirErrorShown) {
+    tasksDirErrorShown = true;
+    vscode.window.showErrorMessage(`GITASK: ${r.error}`);
+  }
+  return undefined;
 }
 
 function send(msg: HostMessage): void {
@@ -108,6 +117,11 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       return send({ type: "error", message: `Rejected: ${v.reason}` }); // visible in the UI, not a silent no-op
     }
     const m = v.message;
+    const unsafe = await guardMessagePath(m, dir); // a symlink in Tasks/ must never be opened, moved or edited
+    if (unsafe) {
+      log?.appendLine(`Rejected webview message: ${unsafe}`);
+      return;
+    }
     const cfg = vscode.workspace.getConfiguration("gitask");
     switch (m.type) {
       case "ready":
@@ -248,7 +262,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "githubSync": {
         // The dialog showed the plan and the user pressed its confirm button. Token comes from the VS Code session.
         try {
-          const r = await syncFromDialog(dir);
+          const r = await syncFromDialog(dir, m);
           for (const w of r.warnings) log?.appendLine(`GitHub sync: ${w}`);
           send(syncResultMessage(r, r.repo));
         } catch (e) {

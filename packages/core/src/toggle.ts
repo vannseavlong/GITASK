@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
+import { assertTaskFile } from "./taskfile.ts";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
 import { parseSubtasks } from "./parse.ts";
@@ -29,6 +30,7 @@ export async function toggleSubtask(task: Task, index: number, opts: ToggleOptio
   const sub: Subtask | undefined = task.subtasks[index];
   if (!sub) throw new Error(`No sub-task ${index} in ${task.id}`);
 
+  await assertTaskFile(task.path);
   const raw = await readFile(task.path, "utf8");
   const now = parseSubtasks(raw).find((s) => s.line === sub.line && s.col === sub.col);
   if (!now || now.text !== sub.text || now.checked !== sub.checked) {

@@ -26,11 +26,11 @@ export type { Report, ReportOptions, ReportTask, ReportSubtask, ReportSummary, P
 export { renderHtml, renderMarkdown, renderCsv, escapeHtml, escapeMd, csvCell, CSV_HEADER } from "./report-render.ts";
 export { fileHistory } from "./git.ts";
 export type { FileChange } from "./git.ts";
-export { parseGithubConfig, readGithubConfig } from "./config.ts";
+export { parseGithubConfig, readGithubConfig, isRepoSlug } from "./config.ts";
 export type { GithubConfig } from "./config.ts";
-export { planSync, applySync, setIssueField, parseIssueNumber, GithubError, ISSUE_MESSAGE } from "./github.ts";
-export type { SyncPlan, SyncIssuePlan, SyncSubPlan, SyncNotify, SyncOptions, ApplyOptions, SyncResult, GithubErrorKind } from "./github.ts";
+export { planSync, applySync, parseGithubRemote, readOriginRepo, setIssueField, parseIssueNumber, GithubError, ISSUE_MESSAGE } from "./github.ts";
+export type { RepoMismatch, SyncPlan, SyncIssuePlan, SyncSubPlan, SyncNotify, SyncOptions, ApplyOptions, SyncResult, GithubErrorKind } from "./github.ts";
 export { fillTemplate } from "./template.ts";
 export { serialQueue } from "./queue.ts";
 export * from "./protocol.ts";
-export { readTaskBody, MAX_TASK_BYTES } from "./taskfile.ts";
+export { readTaskBody, assertRegularFile, assertTaskFile, guardMessagePath, MAX_TASK_BYTES } from "./taskfile.ts";

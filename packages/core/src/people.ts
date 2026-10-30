@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { CONFIG_FILE } from "./config.ts";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
+import { assertRegularFile, assertTaskFile } from "./taskfile.ts";
 import type { Task } from "./types.ts";
 
 const run = promisify(execFile);
@@ -149,6 +150,7 @@ export async function syncPeople(dir: string, opts: PeopleOptions = {}): Promise
   if (!changed) return people;
 
   json.people = people;
+  await assertRegularFile(file, dir, { missingOk: true });
   await writeFile(file, JSON.stringify(json, null, 2) + "\n");
   if (root && opts.commit !== false && (await isTracked(dir, file))) {
     await gitAdd(root, file);
@@ -210,6 +212,7 @@ export async function setOwner(task: Task, personId: string | null, opts: People
     const people = await readPeople(dirname(cwd));
     owner = people.find((p) => p.id === personId)?.name ?? personId;
   }
+  await assertTaskFile(task.path);
   const raw = await readFile(task.path, "utf8");
   const out = setOwnerField(raw, owner);
   if (out === raw) return { path: task.path, owner, committed: false };
@@ -247,6 +250,7 @@ export async function addPerson(dir: string, name: string, opts: PeopleOptions =
   if (people.some((p) => p.id === id)) return people;
   people.push({ id, name: clean });
   json.people = people;
+  await assertRegularFile(file, dir, { missingOk: true });
   await writeFile(file, JSON.stringify(json, null, 2) + "\n");
   const root = await repoRoot(dir);
   if (root && opts.commit !== false && (await isTracked(dir, file))) {

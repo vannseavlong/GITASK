@@ -1,5 +1,6 @@
 import { localDate } from "./date.ts";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { assertRegularFile } from "./taskfile.ts";
 import { basename, join } from "node:path";
 import { columnLabel } from "./board.ts";
 import { gitAdd, gitCommitPaths, gitMv, isTracked, repoRoot } from "./git.ts";
@@ -42,6 +43,8 @@ export async function moveTask(
   const to = join(tasksDir, toColumn, basename(taskPath));
   if (fromColumn === toColumn) return { from, to, committed: false };
 
+  await assertRegularFile(from, tasksDir);
+  if (await lstat(to).then(() => true, () => false)) throw new Error(`${basename(to)} already exists in ${columnLabel(toColumn)}`);
   const id = basename(taskPath, ".md");
   const cwd = join(taskPath, "..");
   const root = await repoRoot(cwd);

@@ -1,9 +1,9 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { applySync, readGithubConfig, addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, loadBoard, moveTask, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, applySync, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
-import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
+import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
 
@@ -58,6 +58,8 @@ export function createHandler(o: HandlerOptions) {
     const v = validateMessage(raw, { tasksDir: o.dir, columns, views: [] });
     if (!v.ok) return { status: 400, reply: { type: "error", message: `Rejected: ${v.reason}` }, changed: false };
     const m = v.message;
+    const unsafe = await guardMessagePath(m, o.dir); // a symlink in Tasks/ must never be opened, moved or edited
+    if (unsafe) return { status: 400, reply: { type: "error", message: `Rejected: ${unsafe}` }, changed: false };
     switch (m.type) {
       case "ready":
         if (!idsAssigned) {
@@ -170,7 +172,9 @@ export function createHandler(o: HandlerOptions) {
         try {
           const built = await buildPlan(o.dir);
           if (!built.ok) return { status: 200, reply: { type: "githubSyncResult", ok: false, error: built.error }, changed: false };
-          const r = await applySync(built.plan, token, { commit, ...o.github });
+          const bad = confirmProblem(built.plan, m);
+          if (bad) return { status: 200, reply: { type: "githubSyncResult", ok: false, error: bad }, changed: false };
+          const r = await applySync(built.plan, token, { commit, allowRepo: m.confirmRepo, ...o.github });
           return { status: 200, reply: syncResultMessage(r, built.plan.repo), changed: true };
         } catch (e) {
           return { status: 200, reply: syncErrorMessage(e, token), changed: true };

@@ -1,7 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, sep } from "node:path";
+import { createHash } from "node:crypto";
+import { isRepoSlug } from "./config.ts";
 import type { GithubConfig } from "./config.ts";
-import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
+import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, originUrl, repoRoot } from "./git.ts";
+import { assertTaskFile } from "./taskfile.ts";
 import { fillTemplate } from "./template.ts";
 import { isSubtaskSection } from "./parse.ts";
 import type { Person } from "./people.ts";
@@ -13,7 +16,13 @@ import type { Board, Task } from "./types.ts";
  */
 
 export const ISSUE_MESSAGE = "task({id}): link GitHub issue #{n}";
-export const MARKER = (id: string): string => `<!-- gitask:${id} -->`;
+/** The id comes from a file name: keep it to harmless characters so it cannot close the comment (`-->`) or inject HTML. */
+export const MARKER = (id: string): string => `<!-- gitask:${id.replace(/[^\w.-]/g, "_")} -->`;
+
+/** Path for a Markdown link target: every segment percent-encoded, including the characters `encodeURIComponent` leaves (`()!'*`). */
+const hrefPath = (rel: string): string => rel.split("/").map((s) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)).join("/");
+/** Link text from a file name: no backtick, bracket, paren, `@`, `<` or `|`, so it cannot end the span or ping anyone. */
+const labelOf = (rel: string): string => rel.replace(/[^\w ./-]/g, "_");
 const DEFAULT_BASE = "https://api.github.com";
 const LOGIN_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const DONE_COLUMN = /^\d+-(done|deploy)\b/i;
@@ -101,8 +110,20 @@ export interface SyncNotify {
   tasks: string[];
 }
 
+/** `github.repo` (which comes from a file the repo's contributors can change) is not the `origin` remote. */
+export interface RepoMismatch {
+  configured: string;
+  /** `owner/name` of the origin remote on github.com, or null when there is no such remote. */
+  origin: string | null;
+  message: string;
+}
+
 export interface SyncPlan {
   repo: string;
+  /** Set when `repo` differs from the `origin` remote (or origin is not on GitHub). Apply needs `allowRepo`. */
+  repoMismatch?: RepoMismatch;
+  /** SHA-256 of the rest of the plan. A host refuses to apply when the plan it recomputes has another hash. */
+  hash: string;
   project?: number;
   issues: SyncIssuePlan[];
   /** Who GitHub may notify. For an update only a CHANGED assignee is notified. */
@@ -112,6 +133,11 @@ export interface SyncPlan {
 }
 
 export interface SyncOptions {
+  /**
+   * `owner/name` of the `origin` remote (see `readOriginRepo`), or `null` for none. Left out, the repo is not
+   * compared (pure callers and tests); every host passes it.
+   */
+  origin?: string | null;
   /** Only these task ids (file names without `.md`). Default: every task outside the done and deploy columns, plus any already linked. */
   tasks?: string[];
 }
@@ -181,7 +207,7 @@ export function planSync(board: Board, config: GithubConfig, people: Person[], o
       taskId: t.id,
       path: t.path,
       title: t.title,
-      body: `Tracked in GITASK: [\`${rel}\`](https://github.com/${config.repo}/blob/HEAD/${rel})\n\n${MARKER(t.id)}`,
+      body: `Tracked in GITASK: [${labelOf(rel)}](https://github.com/${config.repo}/blob/HEAD/${hrefPath(rel)})\n\n${MARKER(t.id)}`,
       state: closed ? "closed" : "open",
       assignees,
       action: linked === undefined ? "create" : "update",
@@ -191,7 +217,31 @@ export function planSync(board: Board, config: GithubConfig, people: Person[], o
     });
   }
   if (only) for (const id of only) if (!issues.some((i) => i.taskId === id)) warnings.push(`Task not found: ${id}`);
-  return { repo: config.repo, ...(config.project ? { project: config.project } : {}), issues, notify: [...notify.values()], warnings };
+  let repoMismatch: RepoMismatch | undefined;
+  if (opts.origin !== undefined && norm(opts.origin ?? "") !== norm(config.repo)) {
+    const where = opts.origin ? `the origin remote is ${opts.origin}` : "there is no GitHub origin remote";
+    repoMismatch = {
+      configured: config.repo,
+      origin: opts.origin,
+      message: `Tasks/gitask.json sends task titles to ${config.repo}, but ${where}. Anyone who can change that file can redirect this sync; continue only if ${config.repo} is the repo you intend.`,
+    };
+  }
+  const body = { repo: config.repo, ...(config.project ? { project: config.project } : {}), ...(repoMismatch ? { repoMismatch } : {}), issues, notify: [...notify.values()], warnings };
+  return { ...body, hash: createHash("sha256").update(JSON.stringify(body)).digest("hex") };
+}
+
+/** `owner/name` from a github.com remote URL (https, ssh:// or scp-style), or undefined for anything else. */
+export function parseGithubRemote(url: string): string | undefined {
+  const m = /^(?:https?:\/\/(?:[^@/]+@)?github\.com(?::\d+)?\/|ssh:\/\/git@github\.com(?::\d+)?\/|git@github\.com:)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i.exec(url.trim());
+  if (!m) return undefined;
+  const slug = `${m[1]}/${m[2]}`;
+  return isRepoSlug(slug) ? slug : undefined;
+}
+
+/** The github.com repo of the `origin` remote of the repo containing `dir`; null when none (read-only git). */
+export async function readOriginRepo(dir: string): Promise<string | null> {
+  const url = await originUrl(dir);
+  return (url && parseGithubRemote(url)) || null;
 }
 
 function note(map: Map<string, SyncNotify>, who: { login: string; name: string }, task: string): void {
@@ -203,6 +253,8 @@ function note(map: Map<string, SyncNotify>, who: { login: string; name: string }
 // ---------------------------------------------------------------- apply
 
 export interface ApplyOptions {
+  /** `owner/name` the user explicitly confirmed. A plan with `repoMismatch` is refused unless this equals `plan.repo`. */
+  allowRepo?: string;
   /** Injectable for tests. Default: global `fetch`. */
   fetch?: typeof fetch;
   /** Default `https://api.github.com`. The token is sent only to this origin. */
@@ -315,6 +367,9 @@ function diff(current: Json, want: { title: string; state: string; assignees: st
  */
 export async function applySync(plan: SyncPlan, token: string, opts: ApplyOptions = {}): Promise<SyncResult> {
   if (!token.trim()) throw new GithubError("auth", "No GitHub token. Sign in (VS Code) or set GITHUB_TOKEN.");
+  if (plan.repoMismatch && norm(opts.allowRepo ?? "") !== norm(plan.repo)) {
+    throw new GithubError("invalid", `${plan.repoMismatch.message} Nothing was sent. Confirm ${plan.repo} explicitly to continue.`);
+  }
   const base = (opts.baseUrl ?? DEFAULT_BASE).replace(/\/+$/, "");
   const ctx: Ctx = { token, base, doFetch: opts.fetch ?? fetch, timeoutMs: opts.timeoutMs ?? 30000 };
   const [owner, name] = plan.repo.split("/").map(encodeURIComponent);
@@ -340,6 +395,7 @@ export async function applySync(plan: SyncPlan, token: string, opts: ApplyOption
         if (it.state === "closed") issueObj = { ...issueObj, ...(await call(ctx, "PATCH", `${repoPath}/issues/${issueObj.number}`, { state: "closed" })) };
         action = "created";
         const dirty = (await isTracked(dirname(it.path), it.path)) && (await hasLocalChanges(dirname(it.path), it.path));
+        await assertTaskFile(it.path);
         const raw = await readFile(it.path, "utf8");
         await writeFile(it.path, setIssueField(raw, issueObj.number as number));
         result.written.push(it.path);

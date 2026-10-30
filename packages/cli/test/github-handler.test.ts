@@ -24,6 +24,12 @@ function repo(github = true) {
   return tasks;
 }
 
+/** What the dialog sends: the repo and plan hash from the preview. */
+async function confirm(h: ReturnType<typeof createHandler>, extra: Record<string, unknown> = {}) {
+  const plan = ((await h.handle({ type: "githubPlan" })).reply as { plan: { repo: string; hash: string } }).plan;
+  return { type: "githubSync", confirmRepo: plan.repo, planHash: plan.hash, ...extra };
+}
+
 const servers: Server[] = [];
 after(() => { for (const s of servers) s.close(); });
 async function fake() {
@@ -70,7 +76,7 @@ test("githubSync applies with the env token; the token is only in the Authorizat
   const dir = repo();
   const h = createHandler({ dir, env: { GITHUB_TOKEN: TOKEN }, github: { baseUrl: f.base } });
   // a hostile browser tries to smuggle its own token and plan: both are dropped by validation
-  const r = await h.handle({ type: "githubSync", token: "ghp_EVIL", plan: { repo: "evil/x" } });
+  const r = await h.handle(await confirm(h, { token: "ghp_EVIL", plan: { repo: "evil/x" } }));
   assert.equal(r.status, 200);
   assert.equal(r.reply?.type, "githubSyncResult");
   assert.equal((r.reply as { ok: boolean }).ok, true);
@@ -83,7 +89,7 @@ test("githubSync applies with the env token; the token is only in the Authorizat
 test("githubSync without GITHUB_TOKEN says how to set it and sends nothing", async () => {
   const f = await fake();
   const h = createHandler({ dir: repo(), env: {}, github: { baseUrl: f.base } });
-  const r = await h.handle({ type: "githubSync" });
+  const r = await h.handle(await confirm(h));
   const m = r.reply as { ok: boolean; error: string };
   assert.equal(m.ok, false);
   assert.match(m.error, /GITHUB_TOKEN/);
@@ -93,14 +99,53 @@ test("githubSync without GITHUB_TOKEN says how to set it and sends nothing", asy
 test("githubSync failure from GitHub never leaks the token", async () => {
   const dir = repo();
   const h = createHandler({ dir, env: { GITHUB_TOKEN: TOKEN }, github: { fetch: async () => { throw new Error(`socket closed for Bearer ${TOKEN}`); } } });
-  const r = await h.handle({ type: "githubSync" });
+  const r = await h.handle(await confirm(h));
   assert.equal((r.reply as { ok: boolean }).ok, false);
   assert.ok(!JSON.stringify(r).includes(TOKEN));
 });
 
 test("no github config: plan and sync answer with an error", async () => {
   const h = createHandler({ dir: repo(false), env: { GITHUB_TOKEN: TOKEN } });
+  const fake0 = { type: "githubSync", confirmRepo: "acme/app", planHash: "0".repeat(64) };
   assert.ok((await h.handle({ type: "githubPlan" })).reply && (await h.handle({ type: "githubPlan" })).reply!.type === "githubPlanResult");
-  const s = await h.handle({ type: "githubSync" });
+  const s = await h.handle(fake0);
   assert.equal((s.reply as { ok: boolean }).ok, false);
+});
+
+test("githubSync is refused when confirmRepo is not the repo the host would use, or the plan changed since the preview", async () => {
+  const f = await fake();
+  const dir = repo();
+  const h = createHandler({ dir, env: { GITHUB_TOKEN: TOKEN }, github: { baseUrl: f.base } });
+  const ok = (await confirm(h)) as { confirmRepo: string; planHash: string };
+  const wrongRepo = (await h.handle({ ...ok, type: "githubSync", confirmRepo: "attacker/public" })).reply as { ok: boolean; error: string };
+  assert.equal(wrongRepo.ok, false);
+  assert.match(wrongRepo.error, /attacker\/public/);
+  // the repo changes after the user saw the preview (e.g. a pulled commit edits gitask.json)
+  const cfgFile = join(dir, "gitask.json");
+  const cfg = JSON.parse(readFileSync(cfgFile, "utf8"));
+  cfg.github.repo = "attacker/public";
+  writeFileSync(cfgFile, JSON.stringify(cfg));
+  const moved = (await h.handle({ ...ok, type: "githubSync" })).reply as { ok: boolean; error: string };
+  assert.equal(moved.ok, false);
+  // same repo but different tasks: hash differs
+  cfg.github.repo = "acme/app";
+  writeFileSync(cfgFile, JSON.stringify(cfg));
+  writeFileSync(join(dir, "2-todo", "A-new.md"), "# New\n");
+  const changed = (await h.handle({ ...ok, type: "githubSync" })).reply as { ok: boolean; error: string };
+  assert.equal(changed.ok, false);
+  assert.match(changed.error, /changed since/);
+  assert.equal(f.reqs.length, 0);
+});
+
+test("githubPlan reports a repo that is not the origin remote; a matching origin has no warning", async () => {
+  const dir = repo();
+  const root = join(dir, "..");
+  const g = (...a: string[]) => execFileSync("git", a, { cwd: root, stdio: "pipe" }).toString().trim();
+  const h = createHandler({ dir });
+  const view = async () => ((await h.handle({ type: "githubPlan" })).reply as { plan: { repoMismatch?: { origin: string | null } } }).plan;
+  assert.equal((await view()).repoMismatch?.origin, null); // no origin at all
+  g("remote", "add", "origin", "git@github.com:attacker/public.git");
+  assert.equal((await view()).repoMismatch?.origin, "attacker/public");
+  g("remote", "set-url", "origin", "https://github.com/Acme/App.git");
+  assert.equal((await view()).repoMismatch, undefined);
 });

@@ -19,7 +19,11 @@ export async function loadBoard(dir: string): Promise<Board> {
   const listed = await Promise.all(
     ids.map(async (id) => ({
       id,
-      files: (await readdir(join(dir, id))).filter((f) => f.endsWith(".md")).sort(),
+      files: (await readdir(join(dir, id), { withFileTypes: true }))
+        // Regular files only: a symlink, a folder named `x.md` or a dangling link is skipped, never read.
+        .filter((e) => e.isFile() && e.name.endsWith(".md"))
+        .map((e) => e.name)
+        .sort(),
     })),
   );
   const known = new Set(listed.flatMap((c) => c.files.map((f) => f.replace(/\.md$/, ""))));

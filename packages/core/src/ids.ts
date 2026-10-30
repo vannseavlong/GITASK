@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { loadBoard } from "./board.ts";
 import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
+import { assertTaskFile } from "./taskfile.ts";
 import type { Board } from "./types.ts";
 
 /** A display id: `T-` plus digits. Anything else in the `ID` field is treated as missing. */
@@ -85,6 +86,7 @@ export async function assignIds(tasksDir: string, opts: AssignIdsOptions = {}): 
     const cwd = dirname(t.path);
     // Tracked file with uncommitted edits: leave it, so WIP is never swept into the commit.
     if ((await isTracked(cwd, t.path)) && (await hasLocalChanges(cwd, t.path))) continue;
+    await assertTaskFile(t.path);
     const raw = await readFile(t.path, "utf8");
     const id = formatDisplayId(next);
     const out = setIdField(raw, id);

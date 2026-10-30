@@ -154,7 +154,12 @@ ${r.people.length ? `<h2>By person</h2>${table}<h2>Tasks by person</h2>${byPerso
 
 /** Escape text for use inside a Markdown table cell or line. */
 export function escapeMd(s: string): string {
-  return s.replace(/\r?\n/g, " ").replace(/[\\`*_{}[\]<>()#+!|~&]/g, (c) => (c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === "&" ? "&amp;" : `\\${c}`)).replace(/^-/, "\\-");
+  const ZWSP = "\u200b"; // invisible; breaks @mentions and bare-URL autolinks without a visible escape
+  return s
+    .replace(/@/g, () => `@${ZWSP}`)
+    .replace(/\b(https?|ftp):\/\//gi, (_m, scheme: string) => `${scheme}:${ZWSP}//`)
+    .replace(/\bwww\./gi, () => `www${ZWSP}.`)
+    .replace(/\r?\n/g, " ").replace(/[\\`*_{}[\]<>()#+!|~&]/g, (c) => (c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === "&" ? "&amp;" : `\\${c}`)).replace(/^-/, "\\-");
 }
 
 export function renderMarkdown(r: Report): string {
