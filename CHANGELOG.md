@@ -9,6 +9,13 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - What changed: Overview tab gains real charts: donut by status and by tier, bar per person (owner + sub-task assignees) and completed per week (last 12 weeks), and a GitHub-style activity heatmap of the last 12 months. Core gains `taskActivity(dir)`/`taskActivityCached(dir)`: one `git log --since --name-only`, committer dates, counts per day, `[]` outside git/empty repo, never throws, cached by HEAD; exposed as an `activity` field on the board payload in both hosts (heatmap always the full year, status/tier/person charts follow the existing filters). Charts use theme tokens (`--chart-*`, `--heat-*`), accessible palette, tooltips with numbers, `role=img` + `aria-label`, empty states, hand-made SVG (no new dependency).
 - Needs: none
 
+## 2026-10-30 · [Ext] feat(ui): browser System/Light/Dark theme with custom colour tokens
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-theme.md
+- Branch/PR: feat/ui-theme · merged to main (d9ba1eb)
+- What changed: browser-only System/Light/Dark toggle applied before first paint (inline nonce script under the existing CSP, no unsafe-inline) and remembered in localStorage; hidden in VS Code which owns its theme. Theme popover: presets (Neutral, Blue, Green, Violet, Orange, Red), custom #rrggbb for primary/accent/background/card/border, radius slider 0-20, live preview, Reset, strict JSON export/import (unknown keys dropped). Every custom value is validated and applied only through `document.documentElement.style.setProperty`; contrast warns below 4.5:1. Explicit light/dark token sets in `index.css` so charts and the calendar follow the theme.
+- Needs: none
+
 ## 2026-10-30 · [CLI] feat(cli): npx/gitask-cli serve, walk-up Tasks discovery and init
 - Owner: SNLRLONG
 - Task: Tasks/5-done/CLI-npx-run.md
