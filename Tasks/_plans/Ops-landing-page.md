@@ -27,7 +27,7 @@ A public site where a visitor learns what GITASK is, downloads it for their OS o
 Home (hero · what it does · views preview · download · how it works · footer) and docs pages. Download states: detecting, detected, loading, failed (fallback links), no release yet, unknown OS (equal cards), phone width (cards stack, CLI first).
 
 ## Data and API
-One external call: GitHub Releases API, unauthenticated, read-only, cached in `sessionStorage`. No backend, secrets in the page, or analytics in v1. No `Docs/api` or backend-request entry needed (public API, not another team).
+One external call: GitHub Releases API, unauthenticated, read-only, cached in `sessionStorage`. No backend, secrets in the page, or analytics in v1. No `Docs/api` entry needed (public API).
 
 ## Gaps
 - Repo not pushed yet (`Ops-github-remote`, owner approval): downloads are built and tested against a mocked release until then.

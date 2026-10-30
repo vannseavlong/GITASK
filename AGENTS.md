@@ -30,16 +30,13 @@ Every task has a tier (T0 to T3). The tier decides the gates it passes; see `Tas
 
 | Fact | Single home |
 |---|---|
-| Open asks to another team | `Docs/backend-request/` (open items only; later items in `backlog.md`) |
-| What they replied / what is live | `Docs/backend-response/` (newest dated file wins) |
 | Endpoint shapes and live status | `Docs/api/` |
 | How the system works | `Docs/architecture/` |
 | What we build and why | `Docs/requirements/` |
 
 When something changes, do all of these in the same session:
-1. **A reply arrives** → delete the answered item from the pending request, update the status in `api/`, add the reply to `backend-response/`.
-2. **Our behaviour changes** (new param, call, header) → update `api/` or `architecture/`, and add or close the matching request.
-3. **Finished or replaced doc** → move to `archive/` with a one-line banner pointing to its replacement.
-4. Put `Updated: <date>` at the top of any request file you edit. No history logs inside docs; git and the response files hold history.
+1. **Our behaviour changes** (new param, call, header) → update `api/` or `architecture/`.
+2. **Finished or replaced doc** → move to `archive/` with a one-line banner pointing to its replacement.
+3. No history logs inside docs; git holds history.
 
 Do not save doc contents, status or dates in agent memory; memory only holds pointers to the index above.

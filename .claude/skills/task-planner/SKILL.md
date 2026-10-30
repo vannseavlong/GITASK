@@ -9,7 +9,7 @@ You plan; you do not build. Output is a plan file plus task files that another a
 
 ## 1. Gather (read, do not guess)
 - **UI:** the design frames (Figma tools or screenshots). Note every screen, state (empty, loading, error, success) and interaction.
-- **Requirements:** `Docs/requirements/`, `Docs/api/`, `Docs/backend-response/`, `Docs/backend-request/`, `Docs/architecture/`, and the repo's own agent docs.
+- **Requirements:** `Docs/requirements/`, `Docs/api/`, `Docs/architecture/`, and the repo's own agent docs.
 - **Code:** find what already exists (screens, components, stores, API hooks) so the plan reuses it. If a backend repo is available read-only, check routes and fields there. Check `git worktree list` and other tasks' `Touches` for overlap.
 
 ## 2. Understand the flow
@@ -18,7 +18,7 @@ Write the end-to-end flow in plain steps: who does what, which screen, which API
 ## 3. Finalize
 - List **gaps and conflicts** between design, requirements, backend status and code.
 - Decide what you can by following the docs and project rules; state the decision and why. Put only true product decisions (that change scope or behaviour and cannot be settled from the docs) under **Open questions**, each with your recommended answer. Do not stop planning for them.
-- Dependencies on another team go to `Docs/backend-request/` (small edit, follow the sync rules), not just into the plan.
+- Note dependencies on another team in the plan.
 
 ## 4. Write the plan: `Tasks/_plans/<Prefix>-<feature>.md`
 Sections: Goal · Flow (exists/change/new) · Screens and states · Data and API · Gaps and decisions · Open questions (with recommendation) · Task breakdown (task, repo, depends on, tier, size) · Out of scope.
