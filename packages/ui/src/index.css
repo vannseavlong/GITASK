@@ -102,3 +102,22 @@ body.vscode-high-contrast [data-slot="input"], body.vscode-high-contrast-light [
 }
 .gitask-calendar .rdp-day_button:hover { background: var(--accent); }
 .gitask-calendar .rdp-chevron { fill: currentColor; }
+
+/* Task detail: rendered Markdown. Headings, lists, code and tables, themed with the shadcn tokens. */
+.gitask-md > :first-child { margin-top: 0; }
+.gitask-md h1, .gitask-md h2, .gitask-md h3, .gitask-md h4 { margin: 14px 0 6px; font-size: 13px; font-weight: 600; text-transform: uppercase; opacity: .85; }
+.gitask-md h2 { border-bottom: 1px solid var(--border); padding-bottom: 2px; }
+.gitask-md p { margin: 4px 0; }
+.gitask-md ul, .gitask-md ol { margin: 4px 0; padding-left: 22px; }
+.gitask-md ul { list-style: disc; }
+.gitask-md ol { list-style: decimal; }
+.gitask-md li.task-list-item { list-style: none; margin-left: -18px; }
+.gitask-md input[type="checkbox"] { margin: 0 6px 0 0; vertical-align: middle; accent-color: var(--primary); }
+.gitask-md a { color: var(--vscode-textLink-foreground, var(--primary)); text-decoration: underline; }
+.gitask-md code { font-family: var(--vscode-editor-font-family, monospace); font-size: .95em; background: var(--vscode-textCodeBlock-background, var(--secondary)); padding: 0 3px; border-radius: 3px; }
+.gitask-md pre { background: var(--vscode-textCodeBlock-background, var(--secondary)); padding: 8px; border-radius: 4px; overflow: auto; margin: 6px 0; }
+.gitask-md pre code { background: none; padding: 0; }
+.gitask-md blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--border); opacity: .9; }
+.gitask-md table { border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+.gitask-md th, .gitask-md td { border: 1px solid var(--border); padding: 3px 8px; text-align: left; }
+.gitask-md hr { border: 0; border-top: 1px solid var(--border); margin: 10px 0; }

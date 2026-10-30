@@ -6,6 +6,7 @@ import { DEFAULT_VIEW, VIEWS } from "@/views/registry.tsx";
 import { SV, derive } from "./logic.ts";
 import { FilterBar } from "./filter-bar.tsx";
 import { StatusBar } from "./status-bar.tsx";
+import { DetailPanel } from "@/detail/detail-panel.tsx";
 
 export function App({ host, initialView }: { host: Host; initialView: string }) {
   const [raw, setRaw] = React.useState<BoardData | null>(null);
@@ -28,6 +29,8 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
     });
   }, [host]);
 
+  const [detailPath, setDetailPath] = React.useState<string | null>(null);
+  const closeDetail = React.useCallback(() => setDetailPath(null), []);
   const d = React.useMemo(() => derive(raw, ui), [raw, ui]);
 
   return (
@@ -46,20 +49,21 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
           {raw && d.shown && d.visible ? (SV.summary(raw, ui.hiddenStatuses).allHidden ? null : (
             VIEWS.map((v) => (
               <TabsContent key={v.id} value={v.id}>
-                {renderView(v.id, d.shown!, raw, host)}
+                {renderView(v.id, d.shown!, raw, host, ui, update, setDetailPath)}
               </TabsContent>
             ))
           )) : (
             <div className="p-6 text-muted-foreground" role="status">{error ? "" : "Loading…"}</div>
           )}
         </Tabs>
+        <DetailPanel host={host} board={raw} path={detailPath} onOpenTask={setDetailPath} onClose={closeDetail} />
       </div>
     </TooltipProvider>
   );
 }
 
-function renderView(id: string, board: BoardData, full: BoardData, host: Host) {
+function renderView(id: string, board: BoardData, full: BoardData, host: Host, ui: UiState, update: (p: Partial<UiState>) => void, openTask: (path: string) => void) {
   const v = VIEWS.find((x) => x.id === id)!;
   const C = v.component;
-  return <C board={board} full={full} host={host} />;
+  return <C board={board} full={full} host={host} ui={ui} update={update} openTask={openTask} />;
 }

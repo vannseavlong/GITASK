@@ -12,6 +12,10 @@ export interface UiState {
   filter?: string;
   hiddenStatuses?: string[];
   range?: { from?: string; to?: string; field?: string };
+  /** Per-view state, remembered across tab switches. */
+  list?: { q?: string; status?: string; tier?: string; owner?: string; sort?: string; dir?: string };
+  timeline?: { mode?: "calendar" | "waterfall"; zoom?: string; year?: number; month?: number };
+  overview?: { all?: Record<string, boolean> };
 }
 
 /**

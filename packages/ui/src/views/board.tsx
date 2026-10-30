@@ -54,8 +54,8 @@ function ColorPicker({ col, host }: { col: Column; host: Host }) {
   );
 }
 
-function TaskCard({ t, color, host, onDragStart, onDragEnd }: { t: Task; color?: string; host: Host; onDragStart: () => void; onDragEnd: () => void }) {
-  const open = () => host.send({ type: "open", path: t.path });
+function TaskCard({ t, color, host, openTask, onDragStart, onDragEnd }: { t: Task; color?: string; host: Host; openTask: (path: string) => void; onDragStart: () => void; onDragEnd: () => void }) {
+  const open = () => openTask(t.path);
   const [dragging, setDragging] = React.useState(false);
   const pct = t.progress && t.progress.total > 0 ? Math.round((100 * t.progress.done) / t.progress.total) : 0;
   return (
@@ -109,7 +109,7 @@ function TaskCard({ t, color, host, onDragStart, onDragEnd }: { t: Task; color?:
   );
 }
 
-export function BoardView({ board, full, host }: ViewProps) {
+export function BoardView({ board, full, host, openTask }: ViewProps) {
   const dragging = React.useRef<Task | null>(null);
   const [over, setOver] = React.useState<string | null>(null);
   // A status is only deletable when it has no tasks at all, not merely none that pass the filters.
@@ -152,7 +152,7 @@ export function BoardView({ board, full, host }: ViewProps) {
               </Button>
             )}
             {col.tasks.map((t) => (
-              <TaskCard key={t.path} t={t} color={col.color} host={host} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
+              <TaskCard key={t.path} t={t} color={col.color} host={host} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
             ))}
           </section>
         ))}

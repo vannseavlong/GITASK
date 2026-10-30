@@ -13,7 +13,7 @@ export const FIXTURE: BoardData = {
   columns: [
     { id: "1-backlog", label: "backlog", tasks: [task("1-backlog", "Ext-dark-mode", "Dark mode polish", { displayId: "T-0004", tier: "T1", owner: "ann", due: "2026-11-20", fields: { "started / updated": "2026-10-01 / 2026-10-12" } })] },
     { id: "2-todo", label: "todo", color: "#3794ff", tasks: [
-      task("2-todo", "Core-people", "Contributors from git history", { displayId: "T-0035", tier: "T2", owner: "SNLRLONG", due: "2026-11-05", progress: { done: 1, total: 4 }, fields: { "started / updated": "2026-10-20 / 2026-10-28" } }),
+      task("2-todo", "Core-people", "Contributors from git history", { displayId: "T-0035", tier: "T2", owner: "SNLRLONG", due: "2026-11-05", progress: { done: 1, total: 2 }, dependsOn: ["CLI-serve"], subtasks: [{ text: "Read authors from git log", checked: true, line: 9 }, { text: "Merge duplicate emails", checked: false, line: 10 }], fields: { "started / updated": "2026-10-20 / 2026-10-28" } }),
       task("2-todo", "CLI-serve", "Local web server", { displayId: "T-0040", tier: "T3", owner: "bob", claimedBy: "agent-7", due: "2026-12-01" }),
     ] },
     { id: "3-in-progress", label: "in-progress", color: "#cca700", tasks: [
@@ -27,15 +27,25 @@ export const FIXTURE: BoardData = {
 } as unknown as BoardData;
 
 /** In-memory host with a fixture board, used by `vite --mode mock` to look at the UI in a plain browser. */
+const BODY = (t: { title: string; subtasks: { text: string; checked: boolean }[] }) =>
+  `# ${t.title}\n\n## Goal\nShow **who** works on the repo. See [docs](https://example.com/docs) and [bad](javascript:alert(1)).\n\n<script>alert(1)</script>\n\n## Done when\n${t.subtasks.map((s) => `- [${s.checked ? "x" : " "}] ${s.text}`).join("\n")}\n`;
+
 export function createMockHost(): Host {
   const board: BoardData = structuredClone(FIXTURE);
   const subs = new Set<(b: BoardData) => void>();
+  const msgSubs = new Set<Parameters<Host["onMessage"]>[0]>();
+  const find = (path: string) => board.columns.flatMap((c) => c.tasks).find((t) => t.path === path);
   const emit = () => { for (const cb of subs) cb(structuredClone(board)); };
   let state: UiState = {};
   return {
     getBoard: () => Promise.resolve(structuredClone(board)),
     send(m) {
       if (m.type === "ready") queueMicrotask(emit);
+      if (m.type === "readTask") {
+        const t = find(m.path);
+        for (const cb of msgSubs) cb(t ? { type: "taskBody", path: m.path, text: BODY(t) } : { type: "taskBody", path: m.path, error: "not found" });
+      }
+      if (m.type === "toggleSubtask") { const st = find(m.path)?.subtasks[m.index]; if (st) { st.checked = !st.checked; emit(); } }
       if (m.type === "move") {
         const from = board.columns.find((c) => c.tasks.some((t) => t.path === m.path));
         const to = board.columns.find((c) => c.id === m.to);
@@ -47,7 +57,7 @@ export function createMockHost(): Host {
       if (m.type === "setColumnColor") { const c = board.columns.find((x) => x.id === m.column); if (c) { c.color = m.color ?? undefined; emit(); } }
     },
     onBoard(cb) { subs.add(cb); return () => void subs.delete(cb); },
-    onMessage: () => () => undefined,
+    onMessage(cb) { msgSubs.add(cb); return () => void msgSubs.delete(cb); },
     loadState: () => state,
     saveState: (s) => { state = s; },
   };
