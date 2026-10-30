@@ -1,6 +1,7 @@
 import { join, resolve } from "node:path";
 import { appendChangelog, createTask, loadBoard, moveTask, repoRoot } from "gitask-core";
 import type { Board, Task } from "gitask-core";
+import { assignCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
 
 const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
 
@@ -8,6 +9,13 @@ const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
   gitask move <task> <column>       move a task (git mv + commit); column = 2-todo or todo
   gitask new <id> [column]          create a task from _TEMPLATE.md (default column: backlog)
   gitask changelog <task>           add a CHANGELOG.md entry for a task (idempotent)
+  gitask people [--json]            list contributors (id, name, GitHub login)
+  gitask assign <task> <person|none>   set or clear the task Owner (person = id, name or GitHub login)
+  gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>]
+  gitask subtask assign <task> <index> <person|none>   index from "subtask list" (0-based)
+  gitask subtask list <task>        list a task's checkboxes with their index
+  gitask report --format html|md|csv [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--people a,b]
+                [--date done|due|updated] [--no-subtasks] [--out file]   done report by person (stdout without --out)
 
 Options: --dir <path>  tasks folder (default ./Tasks)   --no-commit  move without committing`;
 
@@ -64,6 +72,14 @@ async function main(argv: string[]) {
       console.log(added ? `changelog entry added for ${t.id}` : `${t.id} already in changelog`);
       return;
     }
+    case "people":
+      return peopleCmd(dir, parseArgs(argv));
+    case "assign":
+      return assignCmd(dir, board, parseArgs(argv), findTask);
+    case "subtask":
+      return subtaskCmd(dir, board, parseArgs(argv), findTask);
+    case "report":
+      return reportCmd(dir, board, parseArgs(argv));
     default:
       throw new Error(`Unknown command: ${cmd}\n\n${USAGE}`);
   }
