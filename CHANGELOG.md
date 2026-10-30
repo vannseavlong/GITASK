@@ -2,6 +2,13 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-30 · [Ext] feat(ui): dashboard charts on the Overview tab
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-dashboard-charts.md
+- Branch/PR: feat/ui-dashboard-charts · merged to main (2238de1)
+- What changed: Overview tab gains real charts: donut by status and by tier, bar per person (owner + sub-task assignees) and completed per week (last 12 weeks), and a GitHub-style activity heatmap of the last 12 months. Core gains `taskActivity(dir)`/`taskActivityCached(dir)`: one `git log --since --name-only`, committer dates, counts per day, `[]` outside git/empty repo, never throws, cached by HEAD; exposed as an `activity` field on the board payload in both hosts (heatmap always the full year, status/tier/person charts follow the existing filters). Charts use theme tokens (`--chart-*`, `--heat-*`), accessible palette, tooltips with numbers, `role=img` + `aria-label`, empty states, hand-made SVG (no new dependency).
+- Needs: none
+
 ## 2026-10-30 · [CLI] feat(cli): npx/gitask-cli serve, walk-up Tasks discovery and init
 - Owner: SNLRLONG
 - Task: Tasks/5-done/CLI-npx-run.md
