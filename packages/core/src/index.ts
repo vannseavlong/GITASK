@@ -26,3 +26,5 @@ export type { Report, ReportOptions, ReportTask, ReportSubtask, ReportSummary, P
 export { renderHtml, renderMarkdown, renderCsv, escapeHtml, escapeMd, csvCell, CSV_HEADER } from "./report-render.ts";
 export { fileHistory } from "./git.ts";
 export type { FileChange } from "./git.ts";
+export * from "./protocol.ts";
+export { readTaskBody, MAX_TASK_BYTES } from "./taskfile.ts";

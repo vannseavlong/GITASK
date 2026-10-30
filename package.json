@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc -p packages/core && tsc -p packages/cli && tsc -p packages/vscode && tsc -p packages/ui",
-    "test": "node --test packages/core/test/*.test.ts packages/vscode/test/*.test.ts",
-    "build": "pnpm --filter gitask-cli --filter gitask-vscode run build",
+    "test": "node --test packages/core/test/*.test.ts packages/vscode/test/*.test.ts packages/cli/test/*.test.ts",
+    "build": "pnpm --workspace-concurrency=1 --filter gitask-cli --filter gitask-vscode run build",
     "package": "pnpm --filter gitask-vscode run package",
     "bump": "node scripts/bump.mjs",
     "deploy:pro": "pnpm --filter gitask-web run deploy"
