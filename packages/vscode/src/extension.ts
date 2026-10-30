@@ -5,6 +5,7 @@ import { syncGithub } from "./github.ts";
 import { uiHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
+import { buildReportFile } from "./report-request.ts";
 import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
 
 const VIEW_KEY = "gitask.lastView";
@@ -157,6 +158,30 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "readTask": {
         const r = await readTaskBody(m.path, dir);
         return send({ type: "taskBody", path: m.path, ...r });
+      }
+      case "previewReport": {
+        try {
+          send({ type: "reportPreview", html: (await buildReportFile(dir, m.options, "html")).content });
+        } catch (e) {
+          send({ type: "reportPreview", html: "", error: (e as Error).message });
+        }
+        return;
+      }
+      case "exportReport": {
+        try {
+          const file = await buildReportFile(dir, m.options, m.format);
+          const root = vscode.workspace.workspaceFolders?.[0]?.uri ?? vscode.Uri.file(dir);
+          const target = await vscode.window.showSaveDialog({ defaultUri: vscode.Uri.joinPath(root, file.name), filters: { Report: [file.name.split(".").pop() ?? "html"] }, saveLabel: "Save report" });
+          if (!target) return send({ type: "reportExported", ok: false });
+          await vscode.workspace.fs.writeFile(target, Buffer.from(file.content, "utf8"));
+          send({ type: "reportExported", ok: true, path: target.fsPath });
+          const open = await vscode.window.showInformationMessage(`GITASK: report saved to ${basename(target.fsPath)}.`, "Open");
+          if (open === "Open") void vscode.env.openExternal(target);
+        } catch (e) {
+          send({ type: "reportExported", ok: false, error: (e as Error).message });
+          vscode.window.showErrorMessage(`GITASK: could not export the report: ${(e as Error).message}`);
+        }
+        return;
       }
       case "setColumnColor":
         try {

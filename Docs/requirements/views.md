@@ -32,6 +32,14 @@ A bar under the tabs lists every status as a chip with its task count. Clicking 
 ## Date range filter
 One bar under the tabs filters Board, List, Timeline and Overview alike: `From`, `To` (both optional, inclusive, `YYYY-MM-DD`) and which date, `Due` or `Updated`. Counts, bars and totals use only the tasks in range. While a range is active, tasks without a usable date are hidden. "No tasks in range." shows when nothing matches. The range is remembered per view (webview state, not committed). It combines with the Board and List text filters.
 
+## Export
+
+An **Export** button in the filter bar opens a dialog that turns the current filter into a "what was done" report (design of the report itself: core `report.ts`).
+- Pre-filled from the active filter: the period and its date field (`Due`/`Updated`) carry over; with no active period the report defaults to "done this month". The text filter and hidden statuses do not apply: a report always covers `5-done` and `6-deploy`. The People filter, when it exists, pre-selects people (`filterToReportRequest` in `packages/vscode/src/report-options.ts`).
+- Changeable in the dialog: period (range picker), date field (Done, Due, Updated), people (from the board `people`, plus owners found on tasks; empty means everyone), include sub-tasks, format (HTML, Markdown, CSV).
+- Live preview: the real HTML report in a sandboxed iframe (`sandbox=""`, no scripts), built by the host. Names only (GitHub name), never email addresses.
+- Messages `previewReport {options}` -> `reportPreview {html}`, and `exportReport {options, format}` -> `reportExported`. The host validates the options (`validateReportRequest`: real `YYYY-MM-DD` dates, from <= to, date field and format enums, person id charset, at most 200 people) and builds the report itself; it never uses HTML from the webview. VS Code asks for a file name with a save dialog (default `gitask-report-<from>_<to>.<ext>`), writes it and offers to open it. The browser download route belongs to `gitask serve`.
+
 ## Rules
 - Task text is untrusted: render it without raw HTML; links only http(s).
 - Every view works with an empty board, one column, and 500 tasks.

@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { Search } from "lucide-react";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import type { BoardData, UiState } from "@/host/index.ts";
 import { countTasks, filterBoard, rangeActive, rangeNorm, type Range } from "./logic.ts";
 
 /** Text filter plus the date range. The state is shared by every tab and remembered. */
-export function FilterBar({ ui, range, board, onChange }: { ui: UiState; range: Range; board: BoardData | null; onChange: (p: Partial<UiState>) => void }) {
+export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; range: Range; board: BoardData | null; onChange: (p: Partial<UiState>) => void; extra?: React.ReactNode }) {
   const active = rangeActive(range);
   const total = countTasks(board);
   const shown = countTasks(filterBoard(board, range));
@@ -26,6 +27,7 @@ export function FilterBar({ ui, range, board, onChange }: { ui: UiState; range: 
         </SelectContent>
       </Select>
       <DateRangePicker value={{ from: range.from, to: range.to }} onChange={(r) => onChange({ range: rangeNorm({ ...r, field: range.field }) })} />
+      {extra}
       {active && (
         <>
           <Button variant="ghost" size="sm" onClick={() => onChange({ range: rangeNorm({ field: range.field }) })}>Clear dates</Button>
