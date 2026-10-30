@@ -13,7 +13,8 @@
   ],
   "type": "module",
   "bin": {
-    "gitask": "dist/gitask.js"
+    "gitask": "dist/gitask.js",
+    "gitask-cli": "dist/gitask.js"
   },
   "files": [
     "dist",
@@ -37,7 +38,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm --filter gitask-ui run build && esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --loader:.js=text --loader:.css=text --outfile=dist/gitask.js --banner:js=\"#!/usr/bin/env node\"",
+    "build": "pnpm --filter gitask-ui run build && esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --loader:.js=text --loader:.css=text --outfile=dist/gitask.js --banner:js=\"#!/usr/bin/env node\" && chmod +x dist/gitask.js",
     "prepack": "pnpm run build"
   },
   "devDependencies": {
