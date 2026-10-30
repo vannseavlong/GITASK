@@ -2,6 +2,13 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-30 · [CLI] feat(cli): npx/gitask-cli serve, walk-up Tasks discovery and init
+- Owner: SNLRLONG
+- Task: Tasks/5-done/CLI-npx-run.md
+- Branch/PR: feat/npx-run · merged to main (8dbcdb1)
+- What changed: `bin` exposes both `gitask` and `gitask-cli` from `dist/gitask.js` (shebang + exec bit survive `npm pack`); `gitask serve` with no `--dir` walks up to find `Tasks/` and fails with a clear `init` suggestion; new `gitask init` scaffolds `Tasks/`; root `pnpm gitask` / `pnpm serve` scripts build the CLI first when `dist` is missing. Verified via `npm pack`: `npx --yes <tarball> serve` and `pnpm dlx <tarball> serve` both serve (200 page, 401 on `/api/board` without token). `yarn dlx` and `bunx` were not available in this environment. Docs show the four runners and `npm i -g gitask-cli`.
+- Needs: none
+
 ## 2026-10-30 · [Ops] chore(release): 0.5.0
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ops-release-0-5.md
