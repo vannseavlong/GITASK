@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { applySync, readGithubConfig, addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readPeople, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
+import { applySync, readGithubConfig, addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, loadBoard, moveTask, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
@@ -33,6 +33,7 @@ export interface HandlerResult {
 export function createHandler(o: HandlerOptions) {
   const commit = o.commit ?? true;
   let idsAssigned = false;
+  const queue = serialQueue(); // every message is handled one at a time: two quick writes never race on one file
 
   async function board() {
     const b = await loadBoard(o.dir);
@@ -43,7 +44,9 @@ export function createHandler(o: HandlerOptions) {
 
   const err = (message: string): HandlerResult => ({ status: 200, reply: { type: "error", message }, changed: true });
 
-  async function handle(raw: unknown): Promise<HandlerResult> {
+  const handle = (raw: unknown): Promise<HandlerResult> => queue(() => handleNow(raw));
+
+  async function handleNow(raw: unknown): Promise<HandlerResult> {
     let columns: string[];
     try {
       columns = (await loadBoard(o.dir)).columns.map((c) => c.id);
@@ -60,6 +63,7 @@ export function createHandler(o: HandlerOptions) {
         if (!idsAssigned) {
           idsAssigned = true; // backfill task IDs once per server run, like the extension does per board
           try { await assignIds(o.dir, { commit }); } catch { /* not fatal */ }
+          try { await syncPeople(o.dir, { commit }); } catch { /* not fatal: contributors from git history */ }
         }
         return { status: 200, changed: true };
       case "view":
@@ -81,7 +85,13 @@ export function createHandler(o: HandlerOptions) {
         } catch (e) {
           return err(`could not move ${basename(m.path)}: ${(e as Error).message}`);
         }
+      case "deleteImpact": {
+        const impact = await deleteImpact(m.path, { commit });
+        return { status: 200, reply: { type: "deleteImpact", path: m.path, impact, detail: describeDeleteImpact(impact) }, changed: false };
+      }
       case "deleteTask":
+        // The browser UI shows a confirm dialog and then sets `confirmed`; a bare delete is refused.
+        if (!m.confirmed) return err(`${basename(m.path, ".md")} was not deleted: deleting needs the confirm dialog.`);
         try {
           await deleteTask(o.dir, m.path, { commit });
           return { status: 200, changed: true };
@@ -89,6 +99,7 @@ export function createHandler(o: HandlerOptions) {
           return err(`could not delete ${basename(m.path, ".md")}: ${(e as Error).message}`);
         }
       case "deleteColumn": {
+        if (!m.confirmed) return err(`status ${m.column} was not deleted: deleting needs the confirm dialog.`);
         const col = (await loadBoard(o.dir)).columns.find((c) => c.id === m.column);
         if (col?.tasks.length) return err(`cannot delete status "${col.label}": it still has ${col.tasks.length} task(s). Move or delete them first.`);
         try {

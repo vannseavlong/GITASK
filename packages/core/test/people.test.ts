@@ -140,3 +140,27 @@ test("addPerson adds a slug id, keeps other keys, dedupes and rejects empty name
   assert.equal(JSON.parse(readFileSync(join(tasks, "gitask.json"), "utf8")).columns["2-todo"], "#112233");
   await assert.rejects(() => addPerson(tasks, "!!!"));
 });
+
+test("parsePeople: hand-edited ids become slugs the protocol accepts; collisions keep both people", async () => {
+  const { validateMessage } = await import("../src/index.ts");
+  const text = JSON.stringify({
+    people: [
+      { id: "Sam_Lee", name: "Sam Lee" },
+      { id: "sam.lee", name: "Sam Lee Two" },
+      { id: "sam-lee", name: "Sam Lee Three" },
+      { id: "Ünï.Co", name: "Uni Co" },
+      { id: "!!!", name: "Zed Quux" },
+      { id: "---", name: "---" },
+    ],
+  });
+  const people = parsePeople(text);
+  assert.deepEqual(people.map((p) => [p.id, p.name]), [
+    ["sam-lee", "Sam Lee"],
+    ["sam-lee-2", "Sam Lee Two"],
+    ["sam-lee-3", "Sam Lee Three"],
+    ["uni-co", "Uni Co"],
+    ["zed-quux", "Zed Quux"],
+  ]);
+  const ctx = { tasksDir: "/t", columns: ["2-todo"], views: [] };
+  for (const p of people) assert.equal(validateMessage({ type: "setOwner", path: "/t/2-todo/a.md", person: p.id }, ctx).ok, true, p.id);
+});

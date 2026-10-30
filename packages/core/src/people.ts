@@ -82,8 +82,13 @@ export function parsePeople(text: string): Person[] {
   for (const e of list) {
     if (!isRecord(e)) continue;
     const name = str(e.name);
-    const id = str(e.id) ?? (name ? personId(name) : undefined);
-    if (!id || !name || seen.has(id)) continue;
+    if (!name) continue;
+    // Hand-edited ids (`Sam_Lee`, `sam.lee`) become the slug form the protocol accepts. Two people that
+    // normalise to the same slug stay two people: the later one gets a `-2`, `-3`... suffix.
+    const base = personId(str(e.id) ?? "") || personId(name);
+    if (!base) continue;
+    let id = base;
+    for (let n = 2; seen.has(id); n++) id = `${base}-${n}`;
     seen.add(id);
     const p: Person = { id, name };
     const github = str(e.github);

@@ -145,3 +145,20 @@ test("github messages: accepted, extra fields (a token, a plan) dropped", () => 
   assert.deepEqual(validateMessage({ type: "githubPlan" }, ctx), { ok: true, message: { type: "githubPlan" } });
   assert.deepEqual(validateMessage({ type: "githubSync", token: "ghp_x", plan: { repo: "evil/repo" } }, ctx), { ok: true, message: { type: "githubSync" } });
 });
+
+test("deleteImpact request and the confirmed flag on deletes", () => {
+  assert.deepEqual(validateMessage({ type: "deleteImpact", path: ok }, ctx), { ok: true, message: { type: "deleteImpact", path: ok } });
+  assert.equal(validateMessage({ type: "deleteImpact", path: "/etc/passwd" }, ctx).ok, false);
+  assert.deepEqual(validateMessage({ type: "deleteTask", path: ok }, ctx), { ok: true, message: { type: "deleteTask", path: ok } });
+  assert.deepEqual(validateMessage({ type: "deleteTask", path: ok, confirmed: true }, ctx), { ok: true, message: { type: "deleteTask", path: ok, confirmed: true } });
+  assert.deepEqual(validateMessage({ type: "deleteColumn", column: "2-todo", confirmed: true }, ctx), { ok: true, message: { type: "deleteColumn", column: "2-todo", confirmed: true } });
+  for (const bad of [false, "yes", 1, null]) {
+    assert.equal(validateMessage({ type: "deleteTask", path: ok, confirmed: bad }, ctx).ok, false, String(bad));
+    assert.equal(validateMessage({ type: "deleteColumn", column: "2-todo", confirmed: bad }, ctx).ok, false, String(bad));
+  }
+});
+
+test("addSubtask text may not contain checkbox syntax", () => {
+  assert.equal(validateMessage({ type: "addSubtask", path: ok, text: "fine [link](x) and a[0]" }, ctx).ok, true);
+  for (const text of ["a [ ] b", "x [x] y", "[X]"]) assert.equal(validateMessage({ type: "addSubtask", path: ok, text }, ctx).ok, false, text);
+});
