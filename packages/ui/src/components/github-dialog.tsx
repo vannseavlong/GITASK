@@ -11,7 +11,7 @@ type Phase = "loading" | "plan" | "syncing" | "done";
  * Dry run first: the host answers `githubPlan` without contacting GitHub. Only the confirm button sends
  * `githubSync`, and the host (never this page) holds the token.
  */
-export function GithubDialog({ host, github, open, onOpenChange }: { host: Host; github: { repo: string; project?: number }; open: boolean; onOpenChange: (o: boolean) => void }) {
+export function GithubDialog({ host, github, open, onOpenChange }: { host: Host; github?: { repo: string; project?: number }; open: boolean; onOpenChange: (o: boolean) => void }) {
   const [phase, setPhase] = React.useState<Phase>("loading");
   const [plan, setPlan] = React.useState<GithubPlanView | null>(null);
   const [error, setError] = React.useState("");
@@ -31,9 +31,10 @@ export function GithubDialog({ host, github, open, onOpenChange }: { host: Host;
 
   React.useEffect(() => {
     if (!open) return;
+    if (!github) { setPhase("done"); setError(""); setSummary(""); setWarnings([]); setAck(false); return; }
     setPhase("loading"); setPlan(null); setError(""); setSummary(""); setWarnings([]); setAck(false);
     host.send({ type: "githubPlan" });
-  }, [open, host]);
+  }, [open, host, github]);
 
   const created = plan?.issues.filter((i) => i.action === "create").length ?? 0;
   const updated = (plan?.issues.length ?? 0) - created;
@@ -44,14 +45,20 @@ export function GithubDialog({ host, github, open, onOpenChange }: { host: Host;
   return (
     <Dialog open={open} onOpenChange={(o) => { if (phase !== "syncing") onOpenChange(o); }}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-auto" aria-describedby="github-desc">
-        <DialogHeader>
-          <DialogTitle>Sync to GitHub</DialogTitle>
-          <DialogDescription id="github-desc">
-            Creates or updates issues in {github.repo}{github.project ? ` and project #${github.project}` : ""}. This is a preview: nothing is sent until you confirm.
-          </DialogDescription>
-        </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Sync to GitHub</DialogTitle>
+            <DialogDescription id="github-desc">{github ? `Creates or updates issues in ${github.repo}${github.project ? ` and project #${github.project}` : ""}. This is a preview: nothing is sent until you confirm.` : "Set up GitHub sync in Tasks/gitask.json, then open this dialog to preview and confirm."}</DialogDescription>
+          </DialogHeader>
         <div className="grid gap-3 text-xs">
-          {phase === "loading" && <p role="status">Building the preview…</p>}
+          {!github && (
+            <section aria-label="GitHub not configured" className="rounded border border-border p-3 text-muted-foreground">
+              <p role="status" className="m-0 font-semibold">GitHub sync is not set up.</p>
+              <p className="m-0 mt-1">Add this to `Tasks/gitask.json`, then open the board again:</p>
+              <code className="block mt-1 font-mono text-xs bg-background p-1 rounded border border-border">{`{  "github": { "repo": "owner/name", "project": 3 } }`}</code>
+              <p className="m-0 mt-1 opacity-80">`gitask github plan` previews changes; confirm sends them. Token comes from the host, never from this page.</p>
+            </section>
+          )}
+          {phase === "loading" && github && <p role="status">Building the preview…</p>}
           {error && <div role="alert" className="text-destructive">{error}</div>}
           {phase === "done" && summary && <p role="status">{summary}</p>}
           {phase === "done" && warnings.map((w) => <p key={w} className="opacity-80">Warning: {w}</p>)}

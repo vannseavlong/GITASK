@@ -12,6 +12,7 @@ test("accepts well-formed messages", () => {
   assert.deepEqual(validateMessage({ type: "open", path: ok }, ctx), { ok: true, message: { type: "open", path: ok } });
   assert.deepEqual(validateMessage({ type: "new" }, ctx), { ok: true, message: { type: "new" } });
   assert.deepEqual(validateMessage({ type: "new", column: "1-backlog" }, ctx), { ok: true, message: { type: "new", column: "1-backlog" } });
+  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog", id: "Web-login-page" }, ctx), { ok: true, message: { type: "new", column: "1-backlog", id: "Web-login-page" } });
   assert.deepEqual(validateMessage({ type: "move", path: ok, to: "3-in-progress" }, ctx), { ok: true, message: { type: "move", path: ok, to: "3-in-progress" } });
   assert.deepEqual(validateMessage({ type: "toggleSubtask", path: ok, index: 3, line: 7 }, ctx), { ok: true, message: { type: "toggleSubtask", path: ok, index: 3, line: 7 } });
   assert.deepEqual(validateMessage({ type: "view", id: "list" }, ctx), { ok: true, message: { type: "view", id: "list" } });
@@ -65,6 +66,12 @@ test("rejects unknown columns", () => {
   assert.equal(validateMessage({ type: "move", path: ok }, ctx).ok, false);
   assert.equal(validateMessage({ type: "new", column: "x" }, ctx).ok, false);
   assert.equal(validateMessage({ type: "new", column: 3 }, ctx).ok, false);
+});
+
+test("rejects bad new-task ids", () => {
+  for (const id of ["-dash", "  space", "a/b", "a b", "a\nb", "", "a<b", "a;b", 5, null]) {
+    assert.equal(validateMessage({ type: "new", column: "1-backlog", id }, ctx).ok, false, String(id));
+  }
 });
 
 test("rejects bad sub-task indexes and views", () => {

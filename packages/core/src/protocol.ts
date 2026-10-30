@@ -8,7 +8,7 @@ import { isAbsolute, relative, resolve, sep } from "node:path";
 export type WebviewMessage =
   | { type: "ready" }
   | { type: "open"; path: string }
-  | { type: "new"; column?: string }
+  | { type: "new"; column?: string; id?: string }
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "addSubtask"; path: string; text: string; assignee?: string; lane?: string }
@@ -204,7 +204,12 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
     case "new": {
       if (raw.column === undefined) return { ok: true, message: { type: "new" } };
       if (typeof raw.column !== "string" || !ctx.columns.includes(raw.column)) return fail("unknown column");
-      return { ok: true, message: { type: "new", column: raw.column } };
+      const message: Extract<WebviewMessage, { type: "new" }> = { type: "new", column: raw.column };
+      if (raw.id !== undefined) {
+        if (typeof raw.id !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(raw.id)) return fail("task id must start with a letter or digit and contain only letters, digits, . _ -");
+        message.id = raw.id;
+      }
+      return { ok: true, message };
     }
     case "move": {
       const path = taskPathInside(raw.path, ctx);
