@@ -1,13 +1,15 @@
 {
   "name": "gitask-cli",
-  "version": "0.4.0",
-  "description": "Git-backed Kanban for a Tasks/ folder: board, move, new, changelog.",
+  "version": "0.5.0",
+  "description": "Git-backed Kanban for a Tasks/ folder: board, move, assign, sub-tasks, reports, GitHub sync and a local browser UI.",
   "keywords": [
     "kanban",
     "tasks",
     "git",
     "markdown",
-    "cli"
+    "cli",
+    "assignee",
+    "report"
   ],
   "type": "module",
   "bin": {

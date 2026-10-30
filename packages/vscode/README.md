@@ -28,6 +28,15 @@ A task is a Markdown file. The `#` heading is the title and the `- **Key:** valu
 - **Started / updated:** 2026-10-01 / 2026-10-17
 ```
 
+## People, sub-tasks and reports
+
+- **Assign:** click the owner on a card (or **+ Assign**) to pick a repo contributor. The **People** filter shows one person's tasks.
+- **Sub-tasks:** under `## Sub-tasks`, write `- [ ] Build login API @sam-lee #backend`. Expand them in List, or with the **Sub-tasks** toggle on a card; add and assign in the task detail.
+- **Export:** the **Export** button builds a "what was done" report by person (HTML, Markdown or CSV) with a live preview. See the [report guide](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/report.md).
+- **GITASK: Sync to GitHub** (opt-in, shows a dry run first) creates issues for your tasks so assignees are notified. It does nothing until `Tasks/gitask.json` has a `github` entry; see [Docs/architecture/github.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/github.md).
+
+<!-- TODO(screenshot): Board with avatars and sub-tasks; Export dialog -->
+
 ## Settings
 
 | Setting | Default | What it does |
@@ -40,6 +49,6 @@ A task is a Markdown file. The `#` heading is the title and the `- **Key:** valu
 
 - A move commits only that task's file; other staged or dirty files are not touched.
 - GITASK **never pushes**.
-- Same engine as the command line: `npx gitask-cli board`.
+- Same engine as the command line: `npx gitask-cli board`. `npx gitask-cli serve` opens the same UI in a browser (local, token-protected).
 
 [Source and issues](https://github.com/vannseavlong/GITASK) · MIT
