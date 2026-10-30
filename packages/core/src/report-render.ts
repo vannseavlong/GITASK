@@ -8,7 +8,7 @@ export const escapeHtml = (s: string): string => s.replace(/[&<>"']/g, (c) => HT
 
 const FIELD_LABEL = { done: "Done date", due: "Due date", updated: "Updated date" } as const;
 const SOURCE_LABEL = { git: "git", updated: "updated field", none: "no date" } as const;
-const TIMELY_LABEL = { "on-time": "On time", late: "Late", "no-due": "No due date" } as const;
+const TIMELY_LABEL = { "on-time": "On time", late: "Late", "no-due": "No due date", unknown: "No done date" } as const;
 
 const period = (r: Report): string =>
   r.from && r.to ? `${r.from} to ${r.to}` : r.from ? `From ${r.from}` : r.to ? `Up to ${r.to}` : "All time";

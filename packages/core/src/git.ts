@@ -66,7 +66,7 @@ export interface FileChange {
 export async function fileHistory(cwd: string, file: string): Promise<FileChange[]> {
   let out: string;
   try {
-    out = await git(cwd, ["log", "--follow", "-M", "--name-status", "--format=%x01%H%x09%cs", "--", file]);
+    out = await git(cwd, ["-c", "core.quotepath=false", "log", "--follow", "-M", "--name-status", "--format=%x01%H%x09%cs", "--", file]);
   } catch {
     return [];
   }
