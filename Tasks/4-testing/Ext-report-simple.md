@@ -4,7 +4,7 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · changes an export of personal data (names, per-person figures) (auto picker, see `PIPELINE.md`)
-- **Claimed by:** claude session (agent), 2026-10-30
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-report-simple/` · **Branch:** `feat/report-simple`
 - **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-polish-0-5-0.md`

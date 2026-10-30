@@ -4,7 +4,7 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · assets and one route; no logic beyond a static file (auto picker, see `PIPELINE.md`)
-- **Claimed by:** claude session (agent), 2026-10-30
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-brand-icon/` · **Branch:** `feat/brand-icon`
 - **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-polish-0-5-0.md`

@@ -2,6 +2,27 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-30 · [Ext] feat(report): simple report
+- Owner: SNLRLONG
+- Task: Tasks/4-testing/Ext-report-simple.md
+- Branch/PR: feat/report-simple · merged to main (c68308c)
+- What changed: the report is now three tiles (tasks done, sub-tasks done, people) and one section per person with their done tasks and finished sub-tasks; `late` tag only when a Due date exists. Removed per-person tables, tier mix, data notes and date-source labels. CSV is `person,task,sub_task,done_date,sub_tasks_done`. Escaping, CSV formula neutralisation and no-email rules unchanged.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): modern date range picker
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-date-picker.md
+- Branch/PR: feat/ui-date-picker · merged to main (75f75f8)
+- What changed: the date range picker is a popover card with a light range band, rounded start/end, normal-weight numbers and Clear / Apply buttons; closing without Apply keeps the old range. Uses theme tokens.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(brand): colourful tab icon and favicon
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-brand-icon.md
+- Branch/PR: feat/brand-icon · merged to main (e01d47e)
+- What changed: one coloured icon (`media/icon.svg`, `icon.png` 256 px) on the VS Code tab; `gitask serve` serves `/favicon.svg` and `/favicon.png` so the browser tab shows the icon.
+- Needs: none
+
 ## 2026-10-30 · [Ext] feat(ui): dashboard charts on the Overview tab
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ext-ui-dashboard-charts.md
