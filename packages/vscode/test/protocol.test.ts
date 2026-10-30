@@ -74,6 +74,19 @@ test("rejects bad new-task ids", () => {
   }
 });
 
+test("accepts new task with title, due, tier, owner and claimed by", () => {
+  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog", id: "Web-login-page", title: "Web login page", due: "2026-11-06", tier: "T2", owner: "ann-roe", claimedBy: "claude session" }, ctx), { ok: true, message: { type: "new", column: "1-backlog", id: "Web-login-page", title: "Web login page", due: "2026-11-06", tier: "T2", owner: "ann-roe", claimedBy: "claude session" } });
+  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog", id: "Web-login-page", due: null, tier: null, owner: null, claimedBy: null }, ctx), { ok: true, message: { type: "new", column: "1-backlog", id: "Web-login-page", due: null, tier: null, owner: null, claimedBy: null } });
+});
+
+test("rejects bad new task fields", () => {
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", title: "" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", due: "not-a-date" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", tier: "T9" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", owner: "Bad Id" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", claimedBy: "" }, ctx).ok, false);
+});
+
 test("rejects bad sub-task indexes and views", () => {
   for (const index of [-1, 1.5, NaN, Infinity, "1", null, undefined, 1e9]) {
     assert.equal(validateMessage({ type: "toggleSubtask", path: ok, index, line: 1 }, ctx).ok, false, String(index));

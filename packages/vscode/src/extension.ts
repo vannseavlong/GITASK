@@ -54,7 +54,7 @@ async function post(): Promise<void> {
   }
 }
 
-async function newTask(id?: string, column?: string): Promise<void> {
+async function newTask(id?: string, column?: string, patch?: { due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null; claimedBy?: string | null }): Promise<void> {
   const dir = tasksDir();
   if (!dir) return;
   if (!id) {
@@ -66,7 +66,16 @@ async function newTask(id?: string, column?: string): Promise<void> {
   }
   try {
     const owner = vscode.workspace.getConfiguration("git").get<string>("userName");
-    const file = await createTask(dir, column ?? "1-backlog", id, { owner });
+    const file = await createTask(dir, column ?? "1-backlog", id, { owner: patch?.owner ?? owner });
+    const b = await loadBoard(dir);
+    const task = b.columns.flatMap((c) => c.tasks).find((t) => t.path === file);
+    if (task) {
+      const p: { due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; claimedBy?: string | null } = {};
+      if (patch?.due !== undefined) p.due = patch.due;
+      if (patch?.tier !== undefined) p.tier = patch.tier;
+      if (patch?.claimedBy !== undefined) p.claimedBy = patch.claimedBy;
+      if (Object.keys(p).length) await updateTask(task, p, { commit: vscode.workspace.getConfiguration("gitask").get<boolean>("autoCommit", true) });
+    }
     await vscode.window.showTextDocument(vscode.Uri.file(file));
   } catch (e) {
     vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
@@ -148,7 +157,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "open":
         return void vscode.window.showTextDocument(vscode.Uri.file(m.path));
       case "new":
-        return newTask(m.id, m.column);
+        return newTask(m.id, m.column, { due: m.due, tier: m.tier, owner: m.owner, claimedBy: m.claimedBy });
       case "move":
         try {
           await moveTask(dir, m.path, m.to, {
