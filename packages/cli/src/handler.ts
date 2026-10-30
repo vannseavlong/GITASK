@@ -3,6 +3,7 @@
 import { basename } from "node:path";
 import { addSubtask, applySync, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
+import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
@@ -39,7 +40,7 @@ export function createHandler(o: HandlerOptions) {
     const b = await loadBoard(o.dir);
     // People: names, ids, GitHub login and role only (core never returns emails).
     const github = await readGithubConfig(o.dir); // repo/project only
-    return { ...b, people: await readPeople(o.dir).catch(() => []), settings: { staleDays: o.staleDays ?? 14 }, github };
+    return { ...b, people: await readPeople(o.dir).catch(() => []), settings: { staleDays: o.staleDays ?? 14 }, github, activity: await taskActivityCached(o.dir) };
   }
 
   const err = (message: string): HandlerResult => ({ status: 200, reply: { type: "error", message }, changed: true });

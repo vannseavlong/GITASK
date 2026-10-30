@@ -34,3 +34,5 @@ export { fillTemplate } from "./template.ts";
 export { serialQueue } from "./queue.ts";
 export * from "./protocol.ts";
 export { readTaskBody, assertRegularFile, assertTaskFile, guardMessagePath, MAX_TASK_BYTES } from "./taskfile.ts";
+export { taskActivity, taskActivityCached } from "./activity.ts";
+export type { ActivityDay, ActivityOptions } from "./activity.ts";

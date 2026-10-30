@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { basename, join } from "node:path";
 import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
+import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
 import { uiHtml } from "./html.ts";
@@ -46,7 +47,8 @@ async function post(): Promise<void> {
     // People: names, ids, GitHub login and role only (core never returns emails).
     const people = await readPeople(dir).catch(() => []);
     const github = await readGithubConfig(dir); // repo/project only; the Sync button shows when it exists
-    send({ type: "board", board: { ...board, settings: { staleDays }, people, github } });
+    const activity = await taskActivityCached(dir); // one git log per HEAD, for the Overview heatmap
+    send({ type: "board", board: { ...board, settings: { staleDays }, people, github, activity } });
   } catch (e) {
     send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
   }
