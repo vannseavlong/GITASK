@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-30 · [Ext] feat(ui): new-task dialog and always-visible GitHub sync button
+- Owner: SNLRLONG
+- Branch/PR: feat/new-task-dialog · merged to main (dfb8d8c)
+- What changed: creating a task now opens a dialog that asks for the task id (the H1 title) and target status before creating, in the browser and in VS Code; the `new` message carries an optional validated id and hosts fall back to a generated id when none is given. Sync to GitHub is always visible in the browser filter bar instead of only when `Tasks/gitask.json` already has a github block; when not configured the dialog shows setup instructions.
+- Needs: none
+
 ## 2026-10-30 · [Ext] feat(report): simple report
 - Owner: SNLRLONG
 - Task: Tasks/4-testing/Ext-report-simple.md
