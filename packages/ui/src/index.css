@@ -89,19 +89,50 @@
 body.vscode-high-contrast [data-slot="input"], body.vscode-high-contrast-light [data-slot="input"] { border-color: var(--vscode-contrastBorder); }
 
 /* react-day-picker v9 reads these variables. */
-.gitask-calendar {
-  --rdp-accent-color: var(--primary);
-  --rdp-accent-background-color: var(--accent);
-  --rdp-range_middle-background-color: var(--accent);
-  --rdp-range_middle-color: var(--accent-foreground);
+.gitask-calendar.rdp-root {
+  --rdp-day-height: 36px;
+  --rdp-day-width: 38px;
+  --rdp-day_button-height: 36px;
+  --rdp-day_button-width: 38px;
+  --rdp-day_button-border: 0;
+  --rdp-day_button-border-radius: 8px;
+  --rdp-selected-border: 0;
+  --rdp-range_start-background: none;
+  --rdp-range_end-background: none;
+  --rdp-range_start-date-background-color: var(--primary);
+  --rdp-range_end-date-background-color: var(--primary);
+  --rdp-range_middle-background-color: var(--muted, var(--accent));
   --rdp-range_start-color: var(--primary-foreground);
   --rdp-range_end-color: var(--primary-foreground);
-  --rdp-day_button-border-radius: var(--radius);
-  --rdp-today-color: var(--ring);
+  --rdp-nav_button-height: 28px;
+  --rdp-nav_button-width: 28px;
+  --rdp-months-gap: 28px;
   color: var(--popover-foreground);
+  font-size: 13px;
+  position: relative;
 }
-.gitask-calendar .rdp-day_button:hover { background: var(--accent); }
-.gitask-calendar .rdp-chevron { fill: currentColor; }
+.gitask-calendar.rdp-root .rdp-nav { position: absolute; inset: 0 0 auto 0; height: 36px; justify-content: space-between; pointer-events: none; z-index: 1; }
+.gitask-calendar.rdp-root .rdp-button_previous, .gitask-calendar.rdp-root .rdp-button_next { pointer-events: auto; border-radius: 6px; color: var(--foreground); }
+.gitask-calendar.rdp-root .rdp-button_previous:hover, .gitask-calendar.rdp-root .rdp-button_next:hover { background: var(--muted, var(--accent)); }
+.gitask-calendar.rdp-root .rdp-month_caption { height: 36px; justify-content: center; font-size: 13px; font-weight: 600; }
+.gitask-calendar.rdp-root .rdp-caption_label { font-weight: 600; }
+.gitask-calendar.rdp-root .rdp-weekday { font-size: 12px; font-weight: 400; color: var(--muted-foreground); opacity: 1; }
+.gitask-calendar.rdp-root .rdp-day { padding: 1px 0; }
+.gitask-calendar.rdp-root .rdp-day_button { font-size: 13px; font-weight: 400; color: inherit; }
+.gitask-calendar.rdp-root .rdp-day_button:hover { background: var(--muted, var(--accent)); }
+.gitask-calendar.rdp-root .rdp-outside { color: var(--muted-foreground); opacity: .7; }
+.gitask-calendar.rdp-root .rdp-today:not(.rdp-selected) .rdp-day_button { box-shadow: inset 0 0 0 1px var(--ring); }
+.gitask-calendar.rdp-root .rdp-day.rdp-today, .gitask-calendar.rdp-root .rdp-day.rdp-today .rdp-day_button { color: inherit; }
+.gitask-calendar.rdp-root .rdp-range_start, .gitask-calendar.rdp-root .rdp-range_middle, .gitask-calendar.rdp-root .rdp-range_end { background: var(--muted, var(--accent)); }
+.gitask-calendar.rdp-root .rdp-range_middle { color: var(--foreground); }
+.gitask-calendar.rdp-root .rdp-selected { font-weight: 400; font-size: 13px; }
+.gitask-calendar.rdp-root .rdp-range_start .rdp-day_button, .gitask-calendar.rdp-root .rdp-range_end .rdp-day_button { background: var(--primary); color: var(--primary-foreground); }
+.gitask-calendar.rdp-root .rdp-range_start { border-radius: 8px 0 0 8px; }
+.gitask-calendar.rdp-root .rdp-range_end { border-radius: 0 8px 8px 0; }
+.gitask-calendar.rdp-root .rdp-range_start.rdp-range_end { border-radius: 8px; }
+.gitask-calendar.rdp-root .rdp-week > .rdp-range_middle:first-child { border-radius: 8px 0 0 8px; }
+.gitask-calendar.rdp-root .rdp-week > .rdp-range_middle:last-child { border-radius: 0 8px 8px 0; }
+.gitask-calendar.rdp-root .rdp-chevron { fill: currentColor; }
 
 /* Task detail: rendered Markdown. Headings, lists, code and tables, themed with the shadcn tokens. */
 .gitask-md > :first-child { margin-top: 0; }
