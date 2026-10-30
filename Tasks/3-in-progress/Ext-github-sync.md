@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · writes to a third party, notifies real people, uses auth tokens (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-github-sync/` · **Branch:** `feat/github-sync`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md` (section GitHub Issues and Projects)
 - **Depends on:** Core-people, Core-subtask-assignee, Ext-ui-views
 - **Touches:** packages/core/src/github.ts (new, fetch only, no SDK), config.ts (`github` block), packages/vscode/src/extension.ts (auth session), packages/cli/src/main.ts (one case), packages/ui sync button and dialog
