@@ -37,6 +37,10 @@
       {
         "command": "gitask.initTasks",
         "title": "GITASK: Initialize Tasks Folder"
+      },
+      {
+        "command": "gitask.syncGithub",
+        "title": "GITASK: Sync to GitHub"
       }
     ],
     "configuration": {

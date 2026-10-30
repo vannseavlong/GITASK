@@ -94,3 +94,24 @@ test("report formats, filters and validation", () => {
   assert.match(cli(root, "report", "--format", "md", "--people", "ghost").err, /Unknown person/);
   assert.match(cli(root, "report", "--format", "md", "--date", "never").err, /Invalid --date/);
 });
+
+test("github: no config means no call; plan is a dry run; sync needs --yes and a token", () => {
+  const { root } = repo();
+  const none = cli(root, "github", "plan");
+  assert.equal(none.code, 1);
+  assert.match(none.err, /No GitHub link/);
+  writeFileSync(join(root, "Tasks", "gitask.json"), JSON.stringify({ github: { repo: "acme/app" } }));
+  const before = readFileSync(join(root, "Tasks/2-todo/A-one.md"), "utf8");
+  const plan = cli(root, "github", "plan");
+  assert.equal(plan.code, 0, plan.err);
+  assert.match(plan.out, /create {2}A-one/);
+  assert.match(plan.out, /@samlee/);
+  assert.match(plan.out, /Dry run: nothing was sent/);
+  const noYes = cli(root, "github", "sync");
+  assert.equal(noYes.code, 1);
+  assert.match(noYes.err, /--yes/);
+  const r = spawnSync(process.execPath, [MAIN, "github", "sync", "--yes"], { cwd: root, encoding: "utf8", env: { ...process.env, GITHUB_TOKEN: "" } });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /GITHUB_TOKEN/);
+  assert.equal(readFileSync(join(root, "Tasks/2-todo/A-one.md"), "utf8"), before);
+});

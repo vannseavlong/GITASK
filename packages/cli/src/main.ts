@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import { appendChangelog, createTask, loadBoard, moveTask, repoRoot } from "gitask-core";
 import type { Board, Task } from "gitask-core";
-import { assignCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
+import { assignCmd, githubCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
 
 const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
 
@@ -16,6 +16,8 @@ const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
   gitask subtask list <task>        list a task's checkboxes with their index
   gitask report --format html|md|csv [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--people a,b]
                 [--date done|due|updated] [--no-subtasks] [--out file]   done report by person (stdout without --out)
+  gitask github plan [task...]      dry run: what a GitHub sync would create/update and who is notified
+  gitask github sync --yes [task...]   apply it (token from GITHUB_TOKEN; needs "github" in Tasks/gitask.json)
 
 Options: --dir <path>  tasks folder (default ./Tasks)   --no-commit  move without committing`;
 
@@ -80,6 +82,8 @@ async function main(argv: string[]) {
       return subtaskCmd(dir, board, parseArgs(argv), findTask);
     case "report":
       return reportCmd(dir, board, parseArgs(argv));
+    case "github":
+      return githubCmd(dir, board, parseArgs(argv));
     default:
       throw new Error(`Unknown command: ${cmd}\n\n${USAGE}`);
   }

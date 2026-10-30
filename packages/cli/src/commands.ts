@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import {
   addSubtask, buildReport, listPeople, readPeople, renderCsv, renderHtml, renderMarkdown, repoRoot,
-  setOwner, setSubtaskAssignee, UNASSIGNED_KEY,
+  setOwner, setSubtaskAssignee, UNASSIGNED_KEY, planSync, applySync, readGithubConfig,
 } from "gitask-core";
 import type { Board, Person, ReportDateField, Task } from "gitask-core";
 
@@ -140,4 +140,27 @@ export async function reportCmd(dir: string, board: Board, p: Parsed): Promise<v
   await mkdir(dirname(resolve(out)), { recursive: true });
   await writeFile(resolve(out), text);
   console.log(`report written to ${out}`);
+}
+
+/** `gitask github plan [task...]` (dry run) and `gitask github sync --yes [task...]` (token from GITHUB_TOKEN). */
+export async function githubCmd(dir: string, board: Board, p: Parsed): Promise<void> {
+  const [, sub, ...tasks] = p.positional;
+  if (sub !== "plan" && sub !== "sync") throw new Error("usage: gitask github plan|sync [--yes] [task...]");
+  const config = await readGithubConfig(dir);
+  if (!config) throw new Error('No GitHub link. Add {"github": {"repo": "owner/name"}} to Tasks/gitask.json first; nothing was sent.');
+  const plan = planSync(board, config, await knownPeople(dir), tasks.length ? { tasks } : {});
+  console.log(`GitHub repo ${plan.repo}${plan.project ? `, project #${plan.project}` : ""}`);
+  for (const i of plan.issues) {
+    console.log(`  ${i.action === "create" ? "create" : `update #${i.issue}`}  ${i.taskId}  [${i.state}]${i.assignees.length ? `  assign ${i.assignees.map((a) => "@" + a).join(", ")}` : ""}${i.status ? `  status ${i.status}` : ""}`);
+    for (const s of i.subIssues) console.log(`      sub-issue  ${s.title}  [${s.state}]${s.assignees.length ? `  @${s.assignees.join(", @")}` : ""}`);
+  }
+  if (plan.notify.length) console.log(`\nGitHub may notify: ${plan.notify.map((n) => `@${n.login}`).join(", ")}`);
+  for (const w of plan.warnings) console.log(`warning: ${w}`);
+  if (sub === "plan") return console.log("\nDry run: nothing was sent. Run `gitask github sync --yes` to apply.");
+  if (!p.has("yes")) throw new Error("Refusing to send without --yes. Review the plan above, then add --yes.");
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) throw new Error("Set GITHUB_TOKEN to a GitHub token first (see Docs/architecture/github.md).");
+  const r = await applySync(plan, token, { commit: !p.has("no-commit") });
+  for (const i of r.issues) console.log(`${i.action}  ${i.taskId}  #${i.number}  ${i.url}`);
+  for (const w of r.warnings) console.log(`warning: ${w}`);
 }
