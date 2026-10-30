@@ -1,0 +1,200 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, writeFileSync, renameSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { buildReport, renderHtml, renderMarkdown, renderCsv, csvCell, loadBoard } from "../src/index.ts";
+import type { Person } from "../src/index.ts";
+
+const FOLDERS = ["1-backlog", "2-todo", "3-in-progress", "4-testing", "5-done", "6-deploy"];
+
+function body(title: string, f: { owner?: string; started?: string; updated?: string; due?: string; tier?: string; subs?: string[] } = {}) {
+  const lines = [`# ${title}`, ""];
+  if (f.owner !== undefined) lines.push(`- **Owner:** ${f.owner}`);
+  if (f.tier) lines.push(`- **Tier:** ${f.tier}`);
+  if (f.due) lines.push(`- **Due:** ${f.due}`);
+  lines.push(`- **Started / updated:** ${f.started ?? "2026-01-01"} / ${f.updated ?? f.started ?? "2026-01-01"}`, "", "## Goal", "x", "", "## Done when", "- [x] a", "");
+  if (f.subs) lines.push("## Sub-tasks", ...f.subs, "");
+  return lines.join("\n");
+}
+
+function repo(git = true) {
+  const root = mkdtempSync(join(tmpdir(), "gitask-report-"));
+  const tasks = join(root, "Tasks");
+  for (const f of FOLDERS) mkdirSync(join(tasks, f), { recursive: true });
+  const g = (...a: string[]) => execFileSync("git", a, { cwd: root, stdio: "pipe" }).toString().trim();
+  if (git) {
+    g("init", "-q", "-b", "main");
+    g("config", "user.email", "t@t.t");
+    g("config", "user.name", "T");
+  }
+  const commit = (date: string, msg: string) => {
+    g("add", "-A");
+    execFileSync("git", ["commit", "-q", "-m", msg], { cwd: root, stdio: "pipe", env: { ...process.env, GIT_AUTHOR_DATE: `${date}T12:00:00Z`, GIT_COMMITTER_DATE: `${date}T12:00:00Z` } });
+  };
+  const put = (folder: string, id: string, text: string) => writeFileSync(join(tasks, folder, `${id}.md`), text);
+  const move = (id: string, from: string, to: string) => renameSync(join(tasks, from, `${id}.md`), join(tasks, to, `${id}.md`));
+  return { root, tasks, g, commit, put, move };
+}
+
+const people: Person[] = [
+  { id: "sam-lee", name: "Sam Lee", github: "samlee" },
+  { id: "ann-roe", name: "Ann Roe" },
+];
+
+test("empty period: no tasks, no people, still a valid report", async () => {
+  const r = repo();
+  r.put("2-todo", "A-open", body("Open", { owner: "Sam Lee" }));
+  r.commit("2026-02-01", "init");
+  const rep = await buildReport(await loadBoard(r.tasks), { from: "2026-03-01", to: "2026-03-31", people, includeSubtasks: true });
+  assert.equal(rep.summary.tasksDone, 0);
+  assert.deepEqual(rep.people, []);
+  assert.match(renderHtml(rep), /No tasks were completed/);
+  assert.match(renderMarkdown(rep), /No tasks were completed/);
+  assert.equal(renderCsv(rep).trim().split("\r\n").length, 1);
+});
+
+test("one person: git move date, on time vs late, average days, tier mix, GitHub name", async () => {
+  const r = repo();
+  r.put("4-testing", "A-one", body("One", { owner: "Sam Lee", started: "2026-01-01", due: "2026-01-20", tier: "T2 · new feature" }));
+  r.put("4-testing", "A-two", body("Two", { owner: "samlee", started: "2026-01-05", due: "2026-01-10", tier: "T1" }));
+  r.commit("2026-01-02", "init");
+  r.move("A-one", "4-testing", "5-done");
+  r.commit("2026-01-11", "move one");
+  r.move("A-two", "4-testing", "6-deploy");
+  r.commit("2026-01-15", "move two");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true, repo: "demo" });
+  assert.equal(rep.people.length, 1);
+  const p = rep.people[0];
+  assert.equal(p.name, "samlee");
+  assert.equal(p.tasksDone, 2);
+  assert.equal(p.onTime, 1);
+  assert.equal(p.late, 1);
+  assert.equal(p.avgDays, 10);
+  assert.deepEqual(p.tiers, { T1: 1, T2: 1 });
+  const one = rep.tasks.find((t) => t.id === "A-one")!;
+  assert.equal(one.doneDate, "2026-01-11");
+  assert.equal(one.doneSource, "git");
+  assert.equal(one.days, 10);
+});
+
+test("many people, sub-tasks credited to assignees, unassigned bucket, unknown owner", async () => {
+  const r = repo();
+  r.put("5-done", "A-a", body("A", { owner: "Sam Lee", subs: ["- [x] api @ann-roe #backend", "- [x] ui @sam-lee #frontend", "- [ ] open @sam-lee", "- [x] loose"] }));
+  r.put("5-done", "A-b", body("B", { owner: "Ann Roe" }));
+  r.put("5-done", "A-c", body("C"));
+  r.put("5-done", "A-d", body("D", { owner: "Zed Quux <zed@secret.io>" }));
+  r.commit("2026-01-02", "init");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true });
+  const by = Object.fromEntries(rep.people.map((p) => [p.name, p]));
+  assert.equal(by["samlee"].tasksDone, 1);
+  assert.equal(by["samlee"].subtasksDone, 1);
+  assert.equal(by["Ann Roe"].tasksDone, 1);
+  assert.equal(by["Ann Roe"].subtasksDone, 1);
+  assert.equal(by["Unassigned"].tasksDone, 1);
+  assert.equal(by["Unassigned"].subtasksDone, 1);
+  assert.equal(by["Zed Quux"].tasksDone, 1);
+  assert.equal(rep.people.at(-1)!.name, "Unassigned");
+  assert.equal(rep.summary.unassignedTasks, 1);
+  assert.equal(rep.summary.subtasksDone, 3);
+  const noSubs = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: false });
+  assert.equal(noSubs.summary.subtasksDone, 0);
+  for (const out of [renderHtml(rep), renderMarkdown(rep), renderCsv(rep)]) {
+    assert.ok(!out.includes("secret.io") && !out.includes("zed@"));
+  }
+  const only = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true, only: ["ann-roe"] });
+  assert.deepEqual(only.people.map((p) => p.name), ["Ann Roe"]);
+  assert.equal(only.tasks.length, 2);
+});
+
+test("task moved out and back: done date is the last move in; a move between done and deploy is not", async () => {
+  const r = repo();
+  r.put("3-in-progress", "A-x", body("X", { owner: "Sam Lee" }));
+  r.commit("2026-01-02", "init");
+  r.move("A-x", "3-in-progress", "5-done");
+  r.commit("2026-01-10", "done");
+  r.move("A-x", "5-done", "3-in-progress");
+  r.commit("2026-01-12", "reopen");
+  r.move("A-x", "3-in-progress", "5-done");
+  r.commit("2026-01-20", "done again");
+  r.move("A-x", "5-done", "6-deploy");
+  r.commit("2026-01-25", "deploy");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true });
+  assert.equal(rep.tasks[0].doneDate, "2026-01-20");
+  assert.equal(rep.summary.tasksDone, 1);
+  const jan = await buildReport(await loadBoard(r.tasks), { from: "2026-01-01", to: "2026-01-15", people, includeSubtasks: true });
+  assert.equal(jan.summary.tasksDone, 0);
+});
+
+test("no git history: falls back to the updated date and says so; undated tasks are noted", async () => {
+  const r = repo(false);
+  r.put("5-done", "A-a", body("A", { owner: "Sam Lee", started: "2026-02-01", updated: "2026-02-09" }));
+  r.put("5-done", "A-b", body("B", { owner: "Sam Lee" }).replace(/- \*\*Started.*\n/, ""));
+  const board = await loadBoard(r.tasks);
+  const rep = await buildReport(board, { people, includeSubtasks: true });
+  const a = rep.tasks.find((t) => t.id === "A-a")!;
+  assert.equal(a.doneDate, "2026-02-09");
+  assert.equal(a.doneSource, "updated");
+  assert.equal(rep.tasks.find((t) => t.id === "A-b")!.doneSource, "none");
+  assert.equal(rep.summary.fromUpdated, 1);
+  assert.equal(rep.summary.undated, 1);
+  assert.match(renderHtml(rep), /source: updated field/);
+  // With a period, the undated task is out, same as the board filter.
+  const ranged = await buildReport(board, { from: "2026-02-01", people, includeSubtasks: true });
+  assert.deepEqual(ranged.tasks.map((t) => t.id), ["A-a"]);
+});
+
+test("open-ended ranges are inclusive and match the board filter on due / updated", async () => {
+  const r = repo(false);
+  r.put("5-done", "A-a", body("A", { owner: "Sam Lee", due: "2026-03-10", updated: "2026-03-05" }));
+  r.put("5-done", "A-b", body("B", { owner: "Sam Lee", due: "2026-04-10", updated: "2026-04-05" }));
+  const board = await loadBoard(r.tasks);
+  const ids = async (o: object) => (await buildReport(board, { includeSubtasks: false, ...o })).tasks.map((t) => t.id);
+  assert.deepEqual(await ids({ from: "2026-03-05" }), ["A-a", "A-b"]);
+  assert.deepEqual(await ids({ to: "2026-03-05" }), ["A-a"]);
+  assert.deepEqual(await ids({ from: "2026-04-05", to: "2026-04-05" }), ["A-b"]);
+  assert.deepEqual(await ids({ from: "garbage", to: "2026-13-40" }), ["A-a", "A-b"]);
+  assert.deepEqual(await ids({ dateField: "due", to: "2026-03-10" }), ["A-a"]);
+  assert.deepEqual(await ids({ dateField: "updated", from: "2026-04-01" }), ["A-b"]);
+});
+
+test("a title with <script> is escaped everywhere; HTML has no script or network", async () => {
+  const r = repo();
+  r.put("5-done", "A-x", body(`<script>alert(1)</script> & "q"`, { owner: "<img src=x onerror=alert(1)>", subs: ["- [x] <b>bold</b> @sam-lee"] }));
+  r.commit("2026-01-02", "init");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true });
+  const html = renderHtml(rep);
+  assert.ok(!html.includes("<script"));
+  assert.ok(!/<img|<b>bold/.test(html));
+  assert.ok(html.includes("&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot;q&quot;"));
+  assert.ok(!/https?:\/\//.test(html));
+  assert.ok(!/<link|<iframe|<img/.test(html));
+  const md = renderMarkdown(rep);
+  assert.ok(!md.includes("<script") && !md.includes("<b>"));
+});
+
+test("CSV: formula prefixes are defused, quotes doubled, commas and newlines safe", async () => {
+  assert.equal(csvCell("=1+1"), `"'=1+1"`);
+  assert.equal(csvCell("+cmd"), `"'+cmd"`);
+  assert.equal(csvCell("-2"), `"'-2"`);
+  assert.equal(csvCell("@SUM(A1)"), `"'@SUM(A1)"`);
+  assert.equal(csvCell('say "hi", ok'), `"say ""hi"", ok"`);
+  assert.equal(csvCell(5), `"5"`);
+  const r = repo();
+  r.put("5-done", "A-x", body(`=HYPERLINK("http://e.x")`, { owner: "Sam Lee", subs: ["- [x] @bad? @sam-lee"] }));
+  r.put("5-done", "A-y", body("+1,2", { owner: "@evil" }));
+  r.commit("2026-01-02", "init");
+  const csv = renderCsv(await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true }));
+  assert.ok(csv.includes(`"'=HYPERLINK(""http://e.x"")"`));
+  assert.ok(csv.includes(`"'+1,2"`));
+  for (const line of csv.split("\r\n")) assert.ok(!/(^|,)"?[=+@-]/.test(line.replace(/^"[^"]*"/, "")) || line.includes("'"), line);
+});
+
+test("filter parity with the board's date filter rule", async () => {
+  const { inReportRange } = await import("../src/index.ts");
+  assert.equal(inReportRange("", "2026-01-01", ""), false);
+  assert.equal(inReportRange("", "", ""), true);
+  assert.equal(inReportRange("2026-01-01", "2026-01-01", "2026-01-01"), true);
+  assert.equal(inReportRange("2026-01-02", "", "2026-01-01"), false);
+});

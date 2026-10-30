@@ -21,3 +21,8 @@ export { listPeople, readPeople, parsePeople, syncPeople, setOwner, setOwnerFiel
 export type { Person, PeopleOptions, OwnerResult } from "./people.ts";
 export { addSubtask, setSubtaskAssignee, setSubtaskLane, SUBTASK_MESSAGE } from "./subtasks.ts";
 export type { SubtaskOptions, SubtaskResult } from "./subtasks.ts";
+export { buildReport, reportDate, inReportRange, UNASSIGNED_KEY, UNASSIGNED_NAME } from "./report.ts";
+export type { Report, ReportOptions, ReportTask, ReportSubtask, ReportSummary, PersonRow, ReportDateField, DateSource, Timeliness } from "./report.ts";
+export { renderHtml, renderMarkdown, renderCsv, escapeHtml, escapeMd, csvCell, CSV_HEADER } from "./report-render.ts";
+export { fileHistory } from "./git.ts";
+export type { FileChange } from "./git.ts";
