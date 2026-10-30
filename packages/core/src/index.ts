@@ -10,7 +10,7 @@ export { appendChangelog, changelogEntry } from "./changelog.ts";
 export { repoRoot } from "./git.ts";
 export { toggleSubtask, TOGGLE_MESSAGE } from "./toggle.ts";
 export type { ToggleOptions, ToggleResult } from "./toggle.ts";
-export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf } from "./parse.ts";
+export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf, splitTokens } from "./parse.ts";
 export { parseColors, colorOf, readColors, setColumnColor, isColor, CONFIG_FILE } from "./config.ts";
 export type { ColorOptions } from "./config.ts";
 export { assignIds, setIdField, nextDisplayId, formatDisplayId, DISPLAY_ID, ASSIGN_IDS_MESSAGE } from "./ids.ts";
@@ -19,3 +19,5 @@ export { deleteTask, deleteColumn, deleteImpact, DELETE_TASK_MESSAGE, DELETE_COL
 export type { DeleteOptions, DeleteResult, DeleteImpact } from "./delete.ts";
 export { listPeople, readPeople, parsePeople, syncPeople, setOwner, setOwnerField, personId, PEOPLE_MESSAGE, OWNER_MESSAGE } from "./people.ts";
 export type { Person, PeopleOptions, OwnerResult } from "./people.ts";
+export { addSubtask, setSubtaskAssignee, setSubtaskLane, SUBTASK_MESSAGE } from "./subtasks.ts";
+export type { SubtaskOptions, SubtaskResult } from "./subtasks.ts";
