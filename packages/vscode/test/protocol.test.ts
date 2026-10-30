@@ -106,3 +106,37 @@ test("deleteTask and deleteColumn validate path and column", () => {
   assert.equal(validateMessage({ type: "deleteColumn", column: "../2-todo" }, ctx).ok, false);
   assert.equal(validateMessage({ type: "deleteColumn", column: 5 }, ctx).ok, false);
 });
+
+test("addSubtask / setSubtaskAssignee / setSubtaskLane validation", () => {
+  const v = (m: unknown) => validateMessage(m, ctx);
+  assert.deepEqual(v({ type: "addSubtask", path: ok, text: "  Do it " }), { ok: true, message: { type: "addSubtask", path: ok, text: "Do it" } });
+  assert.deepEqual(v({ type: "addSubtask", path: ok, text: "x", assignee: "ann", lane: "ux-ui" }), { ok: true, message: { type: "addSubtask", path: ok, text: "x", assignee: "ann", lane: "ux-ui" } });
+  for (const bad of [
+    { type: "addSubtask", path: "/etc/passwd.md", text: "x" },
+    { type: "addSubtask", path: ok },
+    { type: "addSubtask", path: ok, text: "   " },
+    { type: "addSubtask", path: ok, text: "a\nb" },
+    { type: "addSubtask", path: ok, text: "x".repeat(201) },
+    { type: "addSubtask", path: ok, text: "x", assignee: "a b" },
+    { type: "addSubtask", path: ok, text: "x", assignee: "@ann" },
+    { type: "addSubtask", path: ok, text: "x", assignee: 5 },
+    { type: "addSubtask", path: ok, text: "x", lane: "1x" },
+    { type: "addSubtask", path: ok, text: "x", lane: "a b" },
+  ]) assert.equal(v(bad).ok, false, JSON.stringify(bad));
+
+  assert.deepEqual(v({ type: "setSubtaskAssignee", path: ok, index: 1, line: 9, assignee: "bob" }), { ok: true, message: { type: "setSubtaskAssignee", path: ok, index: 1, line: 9, assignee: "bob" } });
+  assert.deepEqual(v({ type: "setSubtaskAssignee", path: ok, index: 0, line: 1, assignee: null }), { ok: true, message: { type: "setSubtaskAssignee", path: ok, index: 0, line: 1, assignee: null } });
+  assert.deepEqual(v({ type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: "backend" }), { ok: true, message: { type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: "backend" } });
+  assert.deepEqual(v({ type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: null }), { ok: true, message: { type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: null } });
+  for (const t of ["setSubtaskAssignee", "setSubtaskLane"]) {
+    const key = t === "setSubtaskLane" ? "lane" : "assignee";
+    for (const bad of [
+      { type: t, path: ok, index: -1, line: 1, [key]: null },
+      { type: t, path: ok, index: 1.5, line: 1, [key]: null },
+      { type: t, path: ok, index: 0, line: 0, [key]: null },
+      { type: t, path: ok, index: 0, line: 1 },
+      { type: t, path: ok, index: 0, line: 1, [key]: "bad value!" },
+      { type: t, path: "/x/y.md", index: 0, line: 1, [key]: null },
+    ]) assert.equal(v(bad).ok, false, JSON.stringify(bad));
+  }
+});

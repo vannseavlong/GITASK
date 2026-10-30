@@ -20,6 +20,13 @@ Every task has a short ID in its header, `- **ID:** T-0001`, shown on board card
 ## Sub-tasks
 A sub-task is a Markdown checkbox line (`- [ ]` or `- [x]`) in the task file. Card progress counts the `## Done when` section only. Toggling writes the one line and commits that file, following the existing auto-commit setting.
 
+Under `## Sub-tasks` a line may end with `@person` and `#lane` tokens (core: `addSubtask`, `setSubtaskAssignee`, `setSubtaskLane`). The UI shows them Jira-style:
+- **List:** a chevron expands a task into its sub-task rows (tick, text, assignee avatar, lane badge); `Expand all` / `Collapse all`; the open set is remembered in view state.
+- **Board:** a card with sub-tasks has a `Sub-tasks` toggle (keyboard reachable) that shows the same rows in place; stacked avatars show the owner plus assignees, and `done/total` counts `Done when` and `Sub-tasks` checkboxes.
+- **Detail:** a Sub-tasks section to add, tick, assign, set lane, and a "Split into backend / UX/UI / frontend" button that adds one sub-task per missing lane.
+- **Messages** (validated in `protocol.ts`, index and line must match the board like `toggleSubtask`): `addSubtask`, `setSubtaskAssignee`, `setSubtaskLane`.
+- **Person filter:** a task matches a person when they own it or any of its sub-tasks (`taskInvolves` in `packages/vscode/src/subtask-logic.ts`).
+
 ## Fields
 Existing: `Owner`, `Tier`, `Claimed by`, `Started / updated`, `Depends on`. New and optional: `Due` (`YYYY-MM-DD`). Missing or malformed values are shown as empty, never as an error.
 

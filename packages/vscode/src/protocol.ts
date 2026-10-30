@@ -10,6 +10,9 @@ export type WebviewMessage =
   | { type: "new"; column?: string }
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number; line: number }
+  | { type: "addSubtask"; path: string; text: string; assignee?: string; lane?: string }
+  | { type: "setSubtaskAssignee"; path: string; index: number; line: number; assignee: string | null }
+  | { type: "setSubtaskLane"; path: string; index: number; line: number; lane: string | null }
   | { type: "readTask"; path: string }
   | { type: "view"; id: string }
   | { type: "setColumnColor"; column: string; color: string | null }
@@ -34,6 +37,18 @@ export interface ValidationContext {
 export type ValidationResult = { ok: true; message: WebviewMessage } | { ok: false; reason: string };
 
 const MAX_INDEX = 100_000;
+const MAX_SUBTASK_TEXT = 200;
+// Same charsets as core subtasks.ts (PERSON, LANE).
+const PERSON = /^[A-Za-z0-9_](?:[\w.-]*\w)?$/;
+const LANE = /^[A-Za-z][\w-]*$/;
+
+function indexLine(raw: Record<string, unknown>): { index: number; line: number } | string {
+  const i = raw.index;
+  if (typeof i !== "number" || !Number.isInteger(i) || i < 0 || i > MAX_INDEX) return "bad sub-task index";
+  const line = raw.line;
+  if (typeof line !== "number" || !Number.isInteger(line) || line < 1 || line > MAX_INDEX) return "bad sub-task line";
+  return { index: i, line };
+}
 
 /**
  * A task file path: absolute, ends in `.md`, and resolves to `<tasksDir>/<existing column>/<file>.md`.
@@ -88,6 +103,41 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       const line = raw.line;
       if (typeof line !== "number" || !Number.isInteger(line) || line < 1 || line > MAX_INDEX) return fail("bad sub-task line");
       return { ok: true, message: { type: "toggleSubtask", path, index: i, line } };
+    }
+    case "addSubtask": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      if (typeof raw.text !== "string") return fail("bad sub-task text");
+      const text = raw.text.trim();
+      if (!text || text.length > MAX_SUBTASK_TEXT || /[\r\n\0]/.test(text)) return fail("sub-task text must be one line of 1-200 characters");
+      const message: Extract<WebviewMessage, { type: "addSubtask" }> = { type: "addSubtask", path, text };
+      if (raw.assignee !== undefined) {
+        if (typeof raw.assignee !== "string" || raw.assignee.length > 100 || !PERSON.test(raw.assignee)) return fail("bad assignee");
+        message.assignee = raw.assignee;
+      }
+      if (raw.lane !== undefined) {
+        if (typeof raw.lane !== "string" || raw.lane.length > 40 || !LANE.test(raw.lane)) return fail("bad lane");
+        message.lane = raw.lane;
+      }
+      return { ok: true, message };
+    }
+    case "setSubtaskAssignee": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      const il = indexLine(raw);
+      if (typeof il === "string") return fail(il);
+      const a = raw.assignee;
+      if (a !== null && (typeof a !== "string" || a.length > 100 || !PERSON.test(a))) return fail("bad assignee");
+      return { ok: true, message: { type: "setSubtaskAssignee", path, ...il, assignee: a } };
+    }
+    case "setSubtaskLane": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      const il = indexLine(raw);
+      if (typeof il === "string") return fail(il);
+      const l = raw.lane;
+      if (l !== null && (typeof l !== "string" || l.length > 40 || !LANE.test(l))) return fail("bad lane");
+      return { ok: true, message: { type: "setSubtaskLane", path, ...il, lane: l } };
     }
     case "readTask": {
       const path = taskPathInside(raw.path, ctx);

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import type { BoardData, Host } from "@/host/index.ts";
+import { SubtasksSection } from "@/components/subtasks.tsx";
 import { Markdown, type SubtaskBinding } from "./markdown.tsx";
 
 const SHOW_NONE = (v: unknown): string | null => (v === undefined || v === null || v === "" || String(v).toLowerCase() === "none" ? null : String(v));
@@ -66,7 +67,7 @@ export function DetailPanel({ host, board, path, onOpenTask, onClose }: {
     <Dialog open={!!task} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent
         aria-describedby="detail-desc"
-        className="left-auto right-0 top-0 h-full max-w-[680px] translate-x-0 translate-y-0 grid-rows-[auto_auto_auto_1fr] gap-0 rounded-none border-y-0 border-r-0 p-0"
+        className="left-auto right-0 top-0 h-full max-w-[680px] translate-x-0 translate-y-0 grid-rows-[auto_auto_auto_auto_1fr] gap-0 rounded-none border-y-0 border-r-0 p-0"
       >
         {task && (
           <>
@@ -104,6 +105,7 @@ export function DetailPanel({ host, board, path, onOpenTask, onClose }: {
                 </div>
               )}
             </dl>
+            <SubtasksSection task={task} host={host} people={board?.people} />
             <div className="min-h-0 overflow-auto px-4 pb-6 pt-2" tabIndex={-1}>
               {text?.error ? (
                 <p className="opacity-75">Cannot show the task text: {text.error}</p>
