@@ -1,6 +1,6 @@
 // Delete confirmation for hosts without a native dialog (the browser). VS Code asks through its own modal,
 // so there `requestDelete` just sends the message and the dialog never opens. No React here, so node:test can run it.
-import type { Host, WebviewMessage } from "@/host/index.ts";
+import type { Host, WebviewMessage } from "../host/index.ts";
 
 export type DeleteRequest = { kind: "task"; path: string; label: string } | { kind: "column"; column: string; label: string };
 
