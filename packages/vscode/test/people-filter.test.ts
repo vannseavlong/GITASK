@@ -43,3 +43,14 @@ test("initials", () => {
   assert.equal(initials("ann"), "AN");
   assert.equal(initials(""), "?");
 });
+
+test("matchesPeople also matches a task through a sub-task assignee", () => {
+  const people = [{ id: "ann-roe", name: "Ann Roe" }, { id: "bob-ng", name: "Bob Ng" }];
+  const t = { owner: "Bob Ng", subtasks: [{ assignee: "ann-roe" }, {}] };
+  assert.equal(matchesPeople(t, ["ann-roe"], people), true);
+  assert.equal(matchesPeople(t, ["bob-ng"], people), true);
+  assert.equal(matchesPeople(t, ["zed"], people), false);
+  // "Unassigned" is about the task owner only: an unassigned sub-task does not count.
+  assert.equal(matchesPeople(t, [UNASSIGNED], people), false);
+  assert.equal(matchesPeople({ subtasks: [{ assignee: "ann-roe" }] }, [UNASSIGNED], people), true);
+});
