@@ -45,3 +45,40 @@ export async function hasLocalChanges(cwd: string, file: string): Promise<boolea
     return false;
   }
 }
+
+/** One commit that touched a file, as seen by `git log --follow`. */
+export interface FileChange {
+  hash: string;
+  /** Committer date, `YYYY-MM-DD`. */
+  date: string;
+  /** `A`, `M`, `R`, ... (first letter of git's name-status). */
+  status: string;
+  /** Path before the commit (renames only). */
+  from?: string;
+  /** Path after the commit. */
+  to: string;
+}
+
+/**
+ * History of one file across renames, newest first (read-only). Paths are relative to the repo root.
+ * An untracked file, a path outside a repo or any git error yields `[]`, never throws.
+ */
+export async function fileHistory(cwd: string, file: string): Promise<FileChange[]> {
+  let out: string;
+  try {
+    out = await git(cwd, ["log", "--follow", "-M", "--name-status", "--format=%x01%H%x09%cs", "--", file]);
+  } catch {
+    return [];
+  }
+  const changes: FileChange[] = [];
+  for (const chunk of out.split("\x01")) {
+    const [head, ...rest] = chunk.split(/\r?\n/).filter((l) => l.trim());
+    if (!head) continue;
+    const [hash, date] = head.split("\t");
+    const cols = rest[0]?.split("\t");
+    if (!hash || !date || !cols || cols.length < 2) continue;
+    const status = cols[0][0];
+    changes.push(status === "R" || status === "C" ? { hash, date, status, from: cols[1], to: cols[2] ?? cols[1] } : { hash, date, status, to: cols[1] });
+  }
+  return changes;
+}
