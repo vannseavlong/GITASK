@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readTaskBody, setColumnColor, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
 import type { HostMessage } from "gitask-core";
 
 export interface HandlerOptions {
@@ -99,6 +99,23 @@ export function createHandler(o: HandlerOptions) {
           return { status: 200, changed: true };
         } catch (e) {
           return err(`could not save the colour: ${(e as Error).message}`);
+        }
+      case "addSubtask":
+      case "setSubtaskAssignee":
+      case "setSubtaskLane":
+        try {
+          const task = (await loadBoard(o.dir)).columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+          if (!task) throw new Error("task not found");
+          if (m.type === "addSubtask") {
+            await addSubtask(task, m.text, { assignee: m.assignee, lane: m.lane }, { commit });
+          } else {
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            if (m.type === "setSubtaskAssignee") await setSubtaskAssignee(task, m.index, m.assignee ?? undefined, { commit });
+            else await setSubtaskLane(task, m.index, m.lane ?? undefined, { commit });
+          }
+          return { status: 200, changed: true };
+        } catch (e) {
+          return err(`could not update ${basename(m.path)}: ${(e as Error).message}`);
         }
       case "toggleSubtask":
         try {
