@@ -21,7 +21,11 @@ export type WebviewMessage =
   | { type: "deleteTask"; path: string }
   | { type: "deleteColumn"; column: string }
   | { type: "setOwner"; path: string; person: string | null }
-  | { type: "addPerson"; name: string; path?: string };
+  | { type: "addPerson"; name: string; path?: string }
+  /** Dry run: ask what a GitHub sync would do. Never sends anything to GitHub. */
+  | { type: "githubPlan" }
+  /** Apply the sync. The host recomputes the plan itself and holds the token; the webview sends none. */
+  | { type: "githubSync" };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -29,7 +33,26 @@ export type HostMessage =
   | { type: "taskBody"; path: string; text?: string; error?: string }
   | { type: "reportPreview"; html: string; error?: string }
   | { type: "reportExported"; ok: boolean; path?: string; error?: string }
+  | { type: "githubPlanResult"; plan?: GithubPlanView; error?: string }
+  | { type: "githubSyncResult"; ok: boolean; summary?: string; warnings?: string[]; error?: string }
   | { type: "error"; message: string };
+
+/** What the webview sees of a sync plan: titles, actions and GitHub names only (no paths, bodies or tokens). */
+export interface GithubPlanView {
+  repo: string;
+  project?: number;
+  issues: {
+    taskId: string;
+    title: string;
+    action: "create" | "update";
+    issue?: number;
+    state: "open" | "closed";
+    assignees: string[];
+    subIssues: { title: string; state: "open" | "closed"; assignees: string[] }[];
+  }[];
+  notify: { login: string; name: string; tasks: string[] }[];
+  warnings: string[];
+}
 
 /** What the webview may ask for in a report. The host builds the report itself from these validated values. */
 export interface ReportRequest {
@@ -241,6 +264,10 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       const path = taskPathInside(raw.path, ctx);
       return path ? { ok: true, message: { type: "addPerson", name, path } } : fail("path is not a task file in the Tasks dir");
     }
+    case "githubPlan":
+      return { ok: true, message: { type: "githubPlan" } };
+    case "githubSync":
+      return { ok: true, message: { type: "githubSync" } };
     default:
       return fail(`unknown message type`);
   }

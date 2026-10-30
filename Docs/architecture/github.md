@@ -13,6 +13,13 @@ Opt-in, one-way push of tasks to GitHub Issues so that assigning in GITASK notif
 - Local files change only after an issue exists. A failure leaves untouched every task whose issue was not created; an issue already created keeps its `Issue:` line so a retry does not duplicate it. `Issue:` lines are committed by pathspec; a file with uncommitted edits is written but not committed.
 - Not done: two-way sync, deleting issues, pagination beyond 100 sub-issues, automatic retry after a rate limit.
 
+## In the UI
+The **Sync to GitHub** dialog (`packages/ui/src/components/github-dialog.tsx`; screen description in `Docs/requirements/views.md`) asks the host for the dry run with `githubPlan`; the host answers `githubPlanResult` with `toPlanView(plan)` (`packages/vscode/src/github-plan.ts`: titles, actions, GitHub names, warnings; no paths or bodies). The confirm button sends `githubSync`. The host recomputes the plan itself (the message carries nothing) and applies it:
+- VS Code (`syncFromDialog`): token from the `vscode.authentication` session; no second modal because the dialog is the confirmation.
+- `gitask serve` (`handler.ts`): token only from `GITHUB_TOKEN` in the server process environment, never from the browser. Without it the dialog shows how to set it and nothing is sent.
+- Replies hold counts and warnings only; errors pass through `GithubError` messages, which never contain the token, and the serve handler scrubs the token from any other error text.
+- Not verified: that GitHub actually notifies the assignees (needs the manual throwaway-repo proof).
+
 ## Endpoints used
 Base `https://api.github.com`, headers `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`.
 
@@ -46,4 +53,4 @@ Classic token / OAuth ([scopes](https://docs.github.com/en/apps/oauth-apps/build
 - Token sources: VS Code GitHub session (`vscode.authentication.getSession('github', scopes, {createIfNone: true})`, requested only after the user confirms the dry run) or `GITHUB_TOKEN` in the CLI. Never read from `gitask.json` or any repo file.
 - The token is used only in the `Authorization` header, sent only to the base URL (default `api.github.com`; redirects are refused). It is not logged, stored, written to a task file or git, or sent to the UI. Error messages are built from the status and GitHub's message with the token scrubbed; network errors are replaced by a fixed message.
 - The repo name is validated (`owner/name`), logins are validated, and paths are URL-encoded.
-- Consent: nothing is sent without an explicit step. CLI `plan` is the default and `sync` needs `--yes`; VS Code shows a modal listing issues to create or update and who may be notified.
+- Consent: nothing is sent without an explicit step. UI dialog: preview first, then a confirm button. CLI `plan` is the default and `sync` needs `--yes`; VS Code shows a modal listing issues to create or update and who may be notified.

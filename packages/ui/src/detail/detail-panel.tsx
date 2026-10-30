@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Progress } from "@/components/ui/progress";
 import type { BoardData, Host } from "@/host/index.ts";
 import { SubtasksSection } from "@/components/subtasks.tsx";
+import { hideSubtaskSection } from "@host-src/body-logic.ts";
 import { Markdown, type SubtaskBinding } from "./markdown.tsx";
 
 const SHOW_NONE = (v: unknown): string | null => (v === undefined || v === null || v === "" || String(v).toLowerCase() === "none" ? null : String(v));
@@ -115,7 +116,7 @@ export function DetailPanel({ host, board, path, onOpenTask, onClose }: {
               ) : text.text.trim() === "" ? (
                 <p className="opacity-75">This task has no body.</p>
               ) : (
-                <Markdown text={text.text} subtasks={subtasks} />
+                <Markdown text={hideSubtaskSection(text.text)} subtasks={subtasks} />
               )}
             </div>
           </>
