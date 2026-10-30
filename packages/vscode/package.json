@@ -45,7 +45,8 @@
         "gitask.tasksDir": {
           "type": "string",
           "default": "Tasks",
-          "description": "Tasks folder, relative to the workspace root."
+          "scope": "machine-overridable",
+          "description": "Tasks folder, relative to the workspace root. A path outside the workspace is ignored."
         },
         "gitask.staleDays": {
           "type": "number",

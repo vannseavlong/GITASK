@@ -8,6 +8,7 @@ import { uiHtml } from "./html.ts";
 import { handleAddPerson, handleSetOwner } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
+import { resolveTasksDir } from "./tasks-dir.ts";
 import { buildReportFile } from "./report-request.ts";
 import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
 
@@ -17,10 +18,18 @@ let log: vscode.OutputChannel | undefined;
 let panel: vscode.WebviewPanel | undefined;
 let idsAssigned = false;
 
+let tasksDirErrorShown = false;
+
 function tasksDir(): string | undefined {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!root) return undefined;
-  return join(root, vscode.workspace.getConfiguration("gitask").get<string>("tasksDir", "Tasks"));
+  const r = resolveTasksDir(root, vscode.workspace.getConfiguration("gitask").get<string>("tasksDir", "Tasks"));
+  if (r.ok) return r.dir;
+  if (!tasksDirErrorShown) {
+    tasksDirErrorShown = true;
+    vscode.window.showErrorMessage(`GITASK: ${r.error}`);
+  }
+  return undefined;
 }
 
 function send(msg: HostMessage): void {
