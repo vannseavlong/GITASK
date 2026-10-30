@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · opens a local network port that can write to the repo, new endpoints (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-serve/` · **Branch:** `feat/serve`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** Ext-ui-foundation
 - **Touches:** packages/cli/src/serve.ts (new), main.ts (one case), packages/core/src/protocol.ts (moved from vscode), packages/ui/src/host/http-host.ts, packages/cli/package.json

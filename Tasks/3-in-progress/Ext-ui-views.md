@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · ports four views to the new UI package, edits shared UI (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-ui-views/` · **Branch:** `feat/ui-views`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** Ext-ui-foundation
 - **Touches:** packages/ui/src/views/{list,timeline,overview,detail}/**, packages/vscode/src/{html,detail,markdown}.ts and views/*.ts (removed)
