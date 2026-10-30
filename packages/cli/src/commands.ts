@@ -2,12 +2,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import {
   addSubtask, buildReport, listPeople, readPeople, renderCsv, renderHtml, renderMarkdown, repoRoot,
-  setOwner, setSubtaskAssignee, UNASSIGNED_KEY, planSync, applySync, readGithubConfig,
+  setOwner, setSubtaskAssignee, UNASSIGNED_KEY, planSync, applySync, readGithubConfig, readOriginRepo,
 } from "gitask-core";
 import type { Board, Person, ReportDateField, Task } from "gitask-core";
 
 /** Flags that take a value; everything else starting with `--` is a switch. */
-const VALUE_FLAGS = new Set(["dir", "from", "to", "people", "date", "format", "out", "assign", "lane"]);
+const VALUE_FLAGS = new Set(["dir", "from", "to", "people", "date", "format", "out", "assign", "lane", "allow-repo"]);
 
 export interface Parsed {
   positional: string[];
@@ -148,7 +148,10 @@ export async function githubCmd(dir: string, board: Board, p: Parsed): Promise<v
   if (sub !== "plan" && sub !== "sync") throw new Error("usage: gitask github plan|sync [--yes] [task...]");
   const config = await readGithubConfig(dir);
   if (!config) throw new Error('No GitHub link. Add {"github": {"repo": "owner/name"}} to Tasks/gitask.json first; nothing was sent.');
-  const plan = planSync(board, config, await knownPeople(dir), tasks.length ? { tasks } : {});
+  const plan = planSync(board, config, await knownPeople(dir), { ...(tasks.length ? { tasks } : {}), origin: await readOriginRepo(dir) });
+  if (plan.repoMismatch) {
+    console.log(`\n!!! WARNING: ${plan.repoMismatch.message}\n!!! Origin: ${plan.repoMismatch.origin ?? "(none on github.com)"}   Configured: ${plan.repoMismatch.configured}\n`);
+  }
   console.log(`GitHub repo ${plan.repo}${plan.project ? `, project #${plan.project}` : ""}`);
   for (const i of plan.issues) {
     console.log(`  ${i.action === "create" ? "create" : `update #${i.issue}`}  ${i.taskId}  [${i.state}]${i.assignees.length ? `  assign ${i.assignees.map((a) => "@" + a).join(", ")}` : ""}${i.status ? `  status ${i.status}` : ""}`);
@@ -158,9 +161,13 @@ export async function githubCmd(dir: string, board: Board, p: Parsed): Promise<v
   for (const w of plan.warnings) console.log(`warning: ${w}`);
   if (sub === "plan") return console.log("\nDry run: nothing was sent. Run `gitask github sync --yes` to apply.");
   if (!p.has("yes")) throw new Error("Refusing to send without --yes. Review the plan above, then add --yes.");
+  const allow = p.value("allow-repo");
+  if (plan.repoMismatch && allow?.toLowerCase() !== plan.repo.toLowerCase()) {
+    throw new Error(`Refusing to send: ${plan.repo} is not your origin remote. If you really mean it, add --allow-repo ${plan.repo}. Nothing was sent.`);
+  }
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error("Set GITHUB_TOKEN to a GitHub token first (see Docs/architecture/github.md).");
-  const r = await applySync(plan, token, { commit: !p.has("no-commit") });
+  const r = await applySync(plan, token, { commit: !p.has("no-commit"), ...(allow ? { allowRepo: allow } : {}) });
   for (const i of r.issues) console.log(`${i.action}  ${i.taskId}  #${i.number}  ${i.url}`);
   for (const w of r.warnings) console.log(`warning: ${w}`);
 }

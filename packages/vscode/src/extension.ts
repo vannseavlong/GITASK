@@ -248,7 +248,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "githubSync": {
         // The dialog showed the plan and the user pressed its confirm button. Token comes from the VS Code session.
         try {
-          const r = await syncFromDialog(dir);
+          const r = await syncFromDialog(dir, m);
           for (const w of r.warnings) log?.appendLine(`GitHub sync: ${w}`);
           send(syncResultMessage(r, r.repo));
         } catch (e) {

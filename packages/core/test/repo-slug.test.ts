@@ -15,7 +15,7 @@ test("repo slug: dot segments, .git suffix, extra segments and bad owners are re
 test("request URLs are built under /repos/<owner>/<name> for any accepted repo", async () => {
   const urls: string[] = [];
   const fetch = (async (u: string) => { urls.push(String(u)); return new Response("{}", { status: 200 }); }) as unknown as typeof globalThis.fetch;
-  await applySync({ repo: cfg("Acme-1/.github")!.repo, issues: [{ taskId: "t", path: "/x", title: "T", body: "", state: "open", assignees: [], action: "update", issue: 5, subIssues: [] }], notify: [], warnings: [] }, "tok", { fetch, baseUrl: "https://api.example.test" }).catch(() => undefined);
+  await applySync({ repo: cfg("Acme-1/.github")!.repo, issues: [{ taskId: "t", path: "/x", title: "T", body: "", state: "open", assignees: [], action: "update", issue: 5, subIssues: [] }], notify: [], warnings: [], hash: "x" }, "tok", { fetch, baseUrl: "https://api.example.test" }).catch(() => undefined);
   assert.ok(urls.length && urls.every((u) => u.startsWith("https://api.example.test/repos/Acme-1/.github/issues/")), urls.join());
   assert.ok(urls.every((u) => new URL(u).pathname === u.replace("https://api.example.test", "")), "no path normalisation");
 });

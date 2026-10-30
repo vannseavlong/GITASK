@@ -9,6 +9,15 @@ async function git(cwd: string, args: string[]): Promise<string> {
   return stdout.trim();
 }
 
+/** URL of the `origin` remote (read-only), or undefined when there is none or `cwd` is not in a repo. */
+export async function originUrl(cwd: string): Promise<string | undefined> {
+  try {
+    return (await git(cwd, ["remote", "get-url", "origin"])) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Repo root containing `cwd`, or undefined when not inside a git repo. */
 export async function repoRoot(cwd: string): Promise<string | undefined> {
   try {

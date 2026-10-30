@@ -110,8 +110,20 @@ test("github: no config means no call; plan is a dry run; sync needs --yes and a
   const noYes = cli(root, "github", "sync");
   assert.equal(noYes.code, 1);
   assert.match(noYes.err, /--yes/);
-  const r = spawnSync(process.execPath, [MAIN, "github", "sync", "--yes"], { cwd: root, encoding: "utf8", env: { ...process.env, GITHUB_TOKEN: "" } });
+  const run = (...a: string[]) => spawnSync(process.execPath, [MAIN, "github", "sync", "--yes", ...a], { cwd: root, encoding: "utf8", env: { ...process.env, GITHUB_TOKEN: "" } });
+  // the repo in gitask.json is not the origin remote (there is none): a second acknowledgement is required
+  assert.match(plan.out, /WARNING: .*acme\/app/);
+  const noAllow = run();
+  assert.equal(noAllow.status, 1);
+  assert.match(noAllow.stderr, /--allow-repo acme\/app/);
+  assert.equal(run("--allow-repo", "other/repo").status, 1);
+  assert.match(run("--allow-repo", "other/repo").stderr, /--allow-repo acme\/app/);
+  const r = run("--allow-repo", "acme/app");
   assert.equal(r.status, 1);
   assert.match(r.stderr, /GITHUB_TOKEN/);
+  // origin == configured repo: no warning and no --allow-repo needed
+  execFileSync("git", ["remote", "add", "origin", "https://github.com/acme/app.git"], { cwd: root });
+  assert.doesNotMatch(cli(root, "github", "plan").out, /WARNING/);
+  assert.match(run().stderr, /GITHUB_TOKEN/);
   assert.equal(readFileSync(join(root, "Tasks/2-todo/A-one.md"), "utf8"), before);
 });

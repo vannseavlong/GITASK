@@ -3,7 +3,7 @@
 import { basename } from "node:path";
 import { applySync, guardMessagePath, readGithubConfig, addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readPeople, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
-import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
+import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
 
@@ -161,7 +161,9 @@ export function createHandler(o: HandlerOptions) {
         try {
           const built = await buildPlan(o.dir);
           if (!built.ok) return { status: 200, reply: { type: "githubSyncResult", ok: false, error: built.error }, changed: false };
-          const r = await applySync(built.plan, token, { commit, ...o.github });
+          const bad = confirmProblem(built.plan, m);
+          if (bad) return { status: 200, reply: { type: "githubSyncResult", ok: false, error: bad }, changed: false };
+          const r = await applySync(built.plan, token, { commit, allowRepo: m.confirmRepo, ...o.github });
           return { status: 200, reply: syncResultMessage(r, built.plan.repo), changed: true };
         } catch (e) {
           return { status: 200, reply: syncErrorMessage(e, token), changed: true };

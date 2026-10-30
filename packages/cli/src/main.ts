@@ -19,7 +19,8 @@ const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
   gitask report --format html|md|csv [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--people a,b]
                 [--date done|due|updated] [--no-subtasks] [--out file]   done report by person (stdout without --out)
   gitask github plan [task...]      dry run: what a GitHub sync would create/update and who is notified
-  gitask github sync --yes [task...]   apply it (token from GITHUB_TOKEN; needs "github" in Tasks/gitask.json)
+  gitask github sync --yes [--allow-repo owner/name] [task...]   apply it (token from GITHUB_TOKEN; needs "github" in
+                                    Tasks/gitask.json; --allow-repo is required when that repo is not your origin remote)
   gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   the board in your browser (local, token-protected)
 
 Options: --dir <path>  tasks folder (default ./Tasks)   --no-commit  move without committing`;

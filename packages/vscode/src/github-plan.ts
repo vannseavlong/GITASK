@@ -1,6 +1,6 @@
 // Dry-run side of GitHub sync, shared by the VS Code extension and `gitask serve`. No vscode import and no
 // network: it only reads the board, people and config. The token is never touched here.
-import { listPeople, loadBoard, planSync, readGithubConfig, readPeople, repoRoot } from "gitask-core";
+import { listPeople, loadBoard, planSync, readGithubConfig, readOriginRepo, readPeople, repoRoot } from "gitask-core";
 import type { Person, SyncPlan, SyncResult } from "gitask-core";
 import type { GithubPlanView, HostMessage } from "./protocol.ts";
 
@@ -18,13 +18,15 @@ export async function buildPlan(dir: string): Promise<PlanOutcome> {
     if (!have) people.push(g);
     else have.github ??= g.github;
   }
-  return { ok: true, plan: planSync(await loadBoard(dir), config, people) };
+  return { ok: true, plan: planSync(await loadBoard(dir), config, people, { origin: await readOriginRepo(dir) }) };
 }
 
 /** What the webview may see of a plan: no file paths, no issue bodies. */
 export function toPlanView(plan: SyncPlan): GithubPlanView {
   return {
     repo: plan.repo,
+    hash: plan.hash,
+    repoMismatch: plan.repoMismatch,
     project: plan.project,
     issues: plan.issues.map((i) => ({
       taskId: i.taskId, title: i.title, action: i.action, issue: i.issue, state: i.state, assignees: i.assignees,
@@ -33,6 +35,16 @@ export function toPlanView(plan: SyncPlan): GithubPlanView {
     notify: plan.notify.map((n) => ({ login: n.login, name: n.name, tasks: n.tasks })),
     warnings: plan.warnings,
   };
+}
+
+/**
+ * Why a `githubSync` must not run, or undefined when it may: the user confirmed another repo than the one the host
+ * would use, or the plan changed since the user saw it. Nothing has been sent at this point.
+ */
+export function confirmProblem(plan: SyncPlan, m: { confirmRepo: string; planHash: string }): string | undefined {
+  if (m.confirmRepo.toLowerCase() !== plan.repo.toLowerCase()) return `You confirmed ${m.confirmRepo}, but the sync would go to ${plan.repo} (Tasks/gitask.json changed). Nothing was sent; review the preview again.`;
+  if (m.planHash !== plan.hash) return "The tasks or settings changed since you opened the preview. Nothing was sent; review the preview again.";
+  return undefined;
 }
 
 /** The reply for a finished sync. Counts and warnings only. */
