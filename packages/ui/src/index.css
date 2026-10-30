@@ -90,7 +90,6 @@ body.vscode-dark, body.vscode-high-contrast:not(.vscode-high-contrast-light) {
   --input: #171717; --input-foreground: #fafafa; --input-border: #333333; --ring: #737373; --badge: #262626;
   --badge-foreground: #fafafa; --progress: #e5e5e5;
 }
-}
 
 @theme inline {
   --color-background: var(--background);
