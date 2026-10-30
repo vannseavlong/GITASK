@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
 import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
+import { syncGithub } from "./github.ts";
 import { uiHtml, webviewHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
@@ -200,6 +201,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("gitask.openClassicBoard", () => openBoard(ctx, true)),
     vscode.commands.registerCommand("gitask.newTask", () => newTask()),
     vscode.commands.registerCommand("gitask.initTasks", () => initTasksFolder(ctx)),
+    vscode.commands.registerCommand("gitask.syncGithub", () => syncGithub(tasksDir(), log)),
   );
 }
 
