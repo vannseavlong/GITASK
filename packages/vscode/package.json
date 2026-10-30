@@ -1,14 +1,14 @@
 {
   "name": "gitask-vscode",
   "displayName": "GITASK",
-  "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed.",
+  "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed. Assign people, sub-tasks, reports.",
   "version": "0.5.0",
   "publisher": "vannseavlong",
   "license": "MIT",
   "icon": "media/icon.png",
   "homepage": "https://github.com/vannseavlong/GITASK#readme",
   "bugs": { "url": "https://github.com/vannseavlong/GITASK/issues" },
-  "keywords": ["kanban", "tasks", "git", "markdown", "board"],
+  "keywords": ["kanban", "tasks", "git", "markdown", "board", "assignee", "sub-tasks", "report"],
   "galleryBanner": { "color": "#1e293b", "theme": "dark" },
   "engines": {
     "vscode": "^1.85.0"

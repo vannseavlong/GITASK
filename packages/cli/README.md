@@ -13,7 +13,14 @@ gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>]
 gitask subtask assign <task> <index> <person|none>    # index from `gitask subtask list <task>`
 gitask report --format html|md|csv [--from YYYY-MM-DD] [--to YYYY-MM-DD] \
               [--people a,b] [--date done|due|updated] [--no-subtasks] [--out file]
+gitask github plan [task...]                          # dry run of a GitHub Issues sync
+gitask github sync --yes [task...]                    # apply it (token in GITHUB_TOKEN)
+gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   # the board in your browser
 ```
+
+`serve` listens on `127.0.0.1` only and every request needs the random token in the printed URL; requests from other web pages are rejected. Using `--host 0.0.0.0` leaves the token as the only protection over plain HTTP. Details: [serve.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/serve.md).
+
+`github` is off until `Tasks/gitask.json` has `{"github": {"repo": "owner/name"}}`. `plan` sends nothing; `sync` needs `--yes`. Try it on a throwaway repo first. Details and token permissions: [github.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/github.md).
 
 `report` prints to stdout without `--out`. Unknown tasks, people, columns, bad dates or formats exit non-zero with a message. `--no-commit` skips the commit for `assign` and `subtask`.
 
