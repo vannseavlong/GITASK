@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · one-line UI change, no logic (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-tab-icon/` · **Branch:** `feat/tab-icon`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** none
 - **Touches:** packages/vscode/src/extension.ts (`createWebviewPanel` block), packages/vscode/media/

@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · edits shared parser and Subtask type, new feature (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-subtask-assignee/` · **Branch:** `feat/subtask-assignee`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** none
 - **Touches:** packages/core/src/parse.ts, toggle.ts, types.ts, new subtasks.ts, tests

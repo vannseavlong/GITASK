@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new core module, adds Task/config fields, reads git history (names only are stored) (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-people/` · **Branch:** `feat/people`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** none
 - **Touches:** packages/core/src/people.ts (new), config.ts, types.ts, index.ts, core/test/people.test.ts

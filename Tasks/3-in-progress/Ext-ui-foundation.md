@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new workspace package, new build, changes the webview CSP, edits shared shell (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-ui-foundation/` · **Branch:** `feat/ui-foundation`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** none
 - **Touches:** packages/ui/** (new), packages/vscode/src/html.ts, extension.ts, protocol.ts (no change to messages), root package.json scripts, esbuild/vite config
