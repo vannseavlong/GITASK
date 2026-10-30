@@ -47,6 +47,11 @@ An **Export** button in the filter bar opens a dialog that turns the current fil
 - Live preview: the real HTML report in a sandboxed iframe (`sandbox=""`, no scripts), built by the host. Names only (GitHub name), never email addresses.
 - Messages `previewReport {options}` -> `reportPreview {html}`, and `exportReport {options, format}` -> `reportExported`. The host validates the options (`validateReportRequest`: real `YYYY-MM-DD` dates, from <= to, date field and format enums, person id charset, at most 200 people) and builds the report itself; it never uses HTML from the webview. VS Code asks for a file name with a save dialog (default `gitask-report-<from>_<to>.<ext>`), writes it and offers to open it. The browser download route belongs to `gitask serve`.
 
+## People and assignee
+The task owner is picked, not typed. On a Board card (click the owner or "+ Assign") and in the detail panel an assignee combobox lists the contributors (searchable; avatar with initials, name, GitHub login) and "Unassigned"; picking one sends `setOwner`, which writes the person's name into `- **Owner:**` and commits that file by pathspec when tracked and `autoCommit` is on. People come from `Tasks/gitask.json` (`people`), filled from git history when a board opens; the board carries ids, names, GitHub login and role, never emails. With no contributors yet the picker says so, and typing a name offers "Add <name>" (`addPerson`: saved to `gitask.json`, and assigned to that task). The host accepts `setOwner` only for a task on the board and a null or saved person id. Owners show with an avatar on Board cards, List rows and the detail panel.
+
+The shared filter bar has a **People** multi-select (plus "Unassigned") that works in all four views and combines with the date range and text filter (all must match). An owner text matches a person by name, id or GitHub login, case-insensitive. The selection is remembered with the other filters; the bar shows "N of M match".
+
 ## Rules
 - Task text is untrusted: render it without raw HTML; links only http(s).
 - Every view works with an empty board, one column, and 500 tasks.

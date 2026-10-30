@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Trash2, Palette } from "lucide-react";
-import type { Column, Task } from "gitask-core";
+import type { Column, Person, Task } from "gitask-core";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ import type { Host } from "@/host/index.ts";
 import { AvatarStack, SubtaskRows } from "@/components/subtasks.tsx";
 import { involvedPeople, listSubtasks, toggleExpanded } from "@host-src/subtask-logic.ts";
 import { ChevronRight } from "lucide-react";
-import type { Person } from "gitask-core";
+import { Assignee } from "@/components/assignee-avatar.tsx";
+import { AssigneePicker } from "@/components/assignee-picker.tsx";
 import type { ViewProps } from "./registry.tsx";
 
 const PRESETS = ["#3794ff", "#b180d7", "#cca700", "#d18616", "#89d185", "#e5534b", "#2aa198", "#8b949e"];
@@ -94,12 +95,9 @@ function TaskCard({ t, color, host, people, expanded, onToggle, openTask, onDrag
         {t.prefix && <Badge>{t.prefix}</Badge>}
         {t.tier && <Badge variant={t.tier === "T3" ? "destructive" : "default"}>{t.tier}</Badge>}
         {involvedPeople(t).length > 1 && <AvatarStack task={t} people={people} />}
-        {t.owner && (
-          <span className="inline-flex items-center gap-1 opacity-85">
-            <Avatar className="size-4"><AvatarFallback>{t.owner.slice(0, 2)}</AvatarFallback></Avatar>
-            {t.owner}
-          </span>
-        )}
+        <AssigneePicker path={t.path} owner={t.owner} people={people} host={host}>
+          {t.owner ? <Assignee owner={t.owner} people={people} /> : <span className="opacity-60">+ Assign</span>}
+        </AssigneePicker>
         {t.claimedBy && t.claimedBy.toLowerCase() !== "none" && <Badge>claimed: {t.claimedBy}</Badge>}
       </div>
       {t.progress && t.progress.total > 0 && (

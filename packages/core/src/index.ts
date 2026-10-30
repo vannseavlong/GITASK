@@ -17,7 +17,7 @@ export { assignIds, setIdField, nextDisplayId, formatDisplayId, DISPLAY_ID, ASSI
 export type { AssignIdsOptions, AssignIdsResult } from "./ids.ts";
 export { deleteTask, deleteColumn, deleteImpact, DELETE_TASK_MESSAGE, DELETE_COLUMN_MESSAGE } from "./delete.ts";
 export type { DeleteOptions, DeleteResult, DeleteImpact } from "./delete.ts";
-export { listPeople, readPeople, parsePeople, syncPeople, setOwner, setOwnerField, personId, PEOPLE_MESSAGE, OWNER_MESSAGE } from "./people.ts";
+export { addPerson, listPeople, readPeople, parsePeople, syncPeople, setOwner, setOwnerField, personId, PEOPLE_MESSAGE, OWNER_MESSAGE } from "./people.ts";
 export type { Person, PeopleOptions, OwnerResult } from "./people.ts";
 export { addSubtask, setSubtaskAssignee, setSubtaskLane, SUBTASK_MESSAGE } from "./subtasks.ts";
 export type { SubtaskOptions, SubtaskResult } from "./subtasks.ts";

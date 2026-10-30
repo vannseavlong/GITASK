@@ -2,6 +2,8 @@ import * as React from "react";
 import { ChevronRight } from "lucide-react";
 import type { ListRow } from "@host-src/views/list-logic.ts";
 import { LIST_COLUMNS, listOptions, listView } from "virtual:gitask-list-logic";
+import type { Person } from "gitask-core";
+import { Assignee } from "@/components/assignee-avatar.tsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -45,8 +47,10 @@ function ListFilterSelect({ field, label, value, options, onChange }: { field: s
   );
 }
 
-function Cell({ r, k, color }: { r: ListRow; k: string; color?: string }) {
+function Cell({ r, k, color, people }: { r: ListRow; k: string; color?: string; people?: Person[] }) {
   switch (k) {
+    case "owner":
+      return <TableCell>{r.owner ? <Assignee owner={r.owner} people={people} /> : null}</TableCell>;
     case "displayId":
       return <TableCell className="whitespace-nowrap font-mono opacity-80">{r.displayId}</TableCell>;
     case "title":
@@ -78,7 +82,7 @@ function Cell({ r, k, color }: { r: ListRow; k: string; color?: string }) {
   }
 }
 
-export function ListView({ board, ui, update, host, openTask }: ViewProps) {
+export function ListView({ board, full, ui, update, host, openTask }: ViewProps) {
   const st = ui.list ?? {};
   const set = (patch: Partial<NonNullable<typeof ui.list>>) => update({ list: { ...st, ...patch } });
   const expandedList = st.expanded ?? [];
@@ -180,7 +184,7 @@ export function ListView({ board, ui, update, host, openTask }: ViewProps) {
                         </button>
                       )}
                     </TableCell>
-                    {LIST_COLUMNS.map((c) => <Cell key={c.key} r={r} k={c.key} color={color[r.status]} />)}
+                    {LIST_COLUMNS.map((c) => <Cell key={c.key} r={r} k={c.key} color={color[r.status]} people={full.people} />)}
                     <TableCell>
                       <Button
                         variant="secondary"

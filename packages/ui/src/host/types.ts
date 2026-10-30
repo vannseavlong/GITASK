@@ -12,6 +12,8 @@ export interface UiState {
   filter?: string;
   hiddenStatuses?: string[];
   range?: { from?: string; to?: string; field?: string };
+  /** Selected person ids in the People filter (`UNASSIGNED` for tasks without an owner). */
+  people?: string[];
   /** Per-view state, remembered across tab switches. */
   list?: { q?: string; status?: string; tier?: string; owner?: string; sort?: string; dir?: string; /** Task paths whose sub-tasks are open. */ expanded?: string[] };
   board?: { expanded?: string[] };

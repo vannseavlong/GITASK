@@ -1,8 +1,9 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readPeople, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
 import type { HostMessage } from "gitask-core";
+import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
 
 export interface HandlerOptions {
@@ -30,7 +31,8 @@ export function createHandler(o: HandlerOptions) {
 
   async function board() {
     const b = await loadBoard(o.dir);
-    return { ...b, settings: { staleDays: o.staleDays ?? 14 } };
+    // People: names, ids, GitHub login and role only (core never returns emails).
+    return { ...b, people: await readPeople(o.dir).catch(() => []), settings: { staleDays: o.staleDays ?? 14 } };
   }
 
   const err = (message: string): HandlerResult => ({ status: 200, reply: { type: "error", message }, changed: true });
@@ -100,6 +102,15 @@ export function createHandler(o: HandlerOptions) {
           return { status: 200, changed: true };
         } catch (e) {
           return err(`could not save the colour: ${(e as Error).message}`);
+        }
+      case "setOwner":
+      case "addPerson":
+        try {
+          const b = await loadBoard(o.dir);
+          await (m.type === "setOwner" ? handleSetOwner(o.dir, b, m, { commit }) : handleAddPerson(o.dir, b, m, { commit }));
+          return { status: 200, changed: true };
+        } catch (e) {
+          return err(`could not set the owner: ${(e as Error).message}`);
         }
       case "previewReport":
         try {

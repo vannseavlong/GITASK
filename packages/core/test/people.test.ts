@@ -129,3 +129,14 @@ test("setOwnerField keeps CRLF and rejects nothing else", () => {
   assert.equal(setOwnerField(crlf, "Ann"), crlf.replace("Sam", "Ann"));
   assert.equal(setOwnerField(task("Sam"), "A\nB"), task("A B"));
 });
+
+test("addPerson adds a slug id, keeps other keys, dedupes and rejects empty names", async () => {
+  const { tasks } = repo();
+  writeFileSync(join(tasks, "gitask.json"), JSON.stringify({ columns: { "2-todo": "#112233" } }));
+  const { addPerson } = await import("../src/index.ts");
+  const p = await addPerson(tasks, "  Sam   Lee ", { commit: false });
+  assert.deepEqual(p, [{ id: "sam-lee", name: "Sam Lee" }]);
+  assert.equal((await addPerson(tasks, "sam lee", { commit: false })).length, 1);
+  assert.equal(JSON.parse(readFileSync(join(tasks, "gitask.json"), "utf8")).columns["2-todo"], "#112233");
+  await assert.rejects(() => addPerson(tasks, "!!!"));
+});

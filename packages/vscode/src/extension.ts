@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { syncGithub } from "./github.ts";
 import { uiHtml } from "./html.ts";
+import { handleAddPerson, handleSetOwner } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
 import { buildReportFile } from "./report-request.ts";
@@ -30,6 +31,7 @@ async function post(): Promise<void> {
   try {
     const board = await loadBoard(dir);
     const staleDays = vscode.workspace.getConfiguration("gitask").get<number>("staleDays", 14);
+    // People: names, ids, GitHub login and role only (core never returns emails).
     const people = await readPeople(dir).catch(() => []);
     send({ type: "board", board: { ...board, settings: { staleDays }, people } });
   } catch (e) {
@@ -109,6 +111,11 @@ function openBoard(ctx: vscode.ExtensionContext): void {
             await assignIds(dir, { commit: cfg.get<boolean>("autoCommit", true) });
           } catch (e) {
             log?.appendLine(`Could not assign task IDs: ${(e as Error).message}`);
+          }
+          try {
+            await syncPeople(dir, { commit: cfg.get<boolean>("autoCommit", true) }); // contributors from git history
+          } catch (e) {
+            log?.appendLine(`Could not read contributors: ${(e as Error).message}`);
           }
         }
         return post();
@@ -211,6 +218,15 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         }
         return post();
       }
+      case "setOwner":
+      case "addPerson":
+        try {
+          const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+          await (m.type === "setOwner" ? handleSetOwner(dir, board, m, opts) : handleAddPerson(dir, board, m, opts));
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not set the owner: ${(e as Error).message}`);
+        }
+        return post();
       case "toggleSubtask": {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {

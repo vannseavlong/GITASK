@@ -19,7 +19,9 @@ export type WebviewMessage =
   | { type: "exportReport"; options: ReportRequest; format: ReportFormat }
   | { type: "setColumnColor"; column: string; color: string | null }
   | { type: "deleteTask"; path: string }
-  | { type: "deleteColumn"; column: string };
+  | { type: "deleteColumn"; column: string }
+  | { type: "setOwner"; path: string; person: string | null }
+  | { type: "addPerson"; name: string; path?: string };
 
 /** Messages the extension sends to the webview. */
 export type HostMessage =
@@ -45,7 +47,7 @@ export const REPORT_FORMATS: readonly ReportFormat[] = ["html", "markdown", "csv
 export const REPORT_DATE_FIELDS = ["done", "due", "updated"] as const;
 export const MAX_REPORT_PEOPLE = 200;
 // Person ids: slugs, plus `name:<free text>` keys for owners not in the people list (report.ts). No `@`, `/`, `<`.
-const PERSON_ID = /^(name:)?[A-Za-z0-9][A-Za-z0-9 ._-]{0,63}$/;
+const REPORT_PERSON_ID = /^(name:)?[A-Za-z0-9][A-Za-z0-9 ._-]{0,63}$/;
 
 function realDay(v: string): boolean {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
@@ -69,7 +71,7 @@ export function validateReportRequest(raw: unknown): { ok: true; options: Report
   if (!Array.isArray(o.people) || o.people.length > MAX_REPORT_PEOPLE) return { ok: false, reason: "too many people" };
   const seen = new Set<string>();
   for (const p of o.people) {
-    if (typeof p !== "string" || !PERSON_ID.test(p)) return { ok: false, reason: "bad person id" };
+    if (typeof p !== "string" || !REPORT_PERSON_ID.test(p)) return { ok: false, reason: "bad person id" };
     seen.add(p);
   }
   return { ok: true, options: { from, to, dateField: o.dateField as ReportRequest["dateField"], people: [...seen], includeSubtasks: o.includeSubtasks } };
@@ -99,6 +101,10 @@ function indexLine(raw: Record<string, unknown>): { index: number; line: number 
   if (typeof line !== "number" || !Number.isInteger(line) || line < 1 || line > MAX_INDEX) return "bad sub-task line";
   return { index: i, line };
 }
+
+/** A person id is a slug: lower-case letters and digits with single dashes (core `personId`). */
+export const PERSON_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_NAME = 64;
 
 /**
  * A task file path: absolute, ends in `.md`, and resolves to `<tasksDir>/<existing column>/<file>.md`.
@@ -220,6 +226,20 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (!r.ok) return fail(r.reason);
       if (typeof raw.format !== "string" || !(REPORT_FORMATS as readonly string[]).includes(raw.format)) return fail("unknown report format");
       return { ok: true, message: { type: "exportReport", options: r.options, format: raw.format as ReportFormat } };
+    }
+    case "setOwner": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      if (raw.person === null) return { ok: true, message: { type: "setOwner", path, person: null } };
+      if (typeof raw.person !== "string" || raw.person.length > MAX_NAME || !PERSON_ID.test(raw.person)) return fail("bad person id");
+      return { ok: true, message: { type: "setOwner", path, person: raw.person } };
+    }
+    case "addPerson": {
+      const name = typeof raw.name === "string" ? raw.name.replace(/\s+/g, " ").trim() : "";
+      if (!name || name.length > MAX_NAME || /[\u0000-\u001f\u007f]/.test(name)) return fail("bad person name");
+      if (raw.path === undefined) return { ok: true, message: { type: "addPerson", name } };
+      const path = taskPathInside(raw.path, ctx);
+      return path ? { ok: true, message: { type: "addPerson", name, path } } : fail("path is not a task file in the Tasks dir");
     }
     default:
       return fail(`unknown message type`);
