@@ -127,3 +127,25 @@ test("github: no config means no call; plan is a dry run; sync needs --yes and a
   assert.match(run().stderr, /GITHUB_TOKEN/);
   assert.equal(readFileSync(join(root, "Tasks/2-todo/A-one.md"), "utf8"), before);
 });
+
+test("serve-style commands find Tasks/ from a subfolder, and fail with a fix when there is none", () => {
+  const { root } = repo();
+  mkdirSync(join(root, "deep", "er"), { recursive: true });
+  const up = cli(join(root, "deep", "er"), "board");
+  assert.equal(up.code, 0);
+  assert.match(up.out, /A-one/);
+  const empty = mkdtempSync(join(tmpdir(), "gitask-none-"));
+  const none = cli(empty, "board");
+  assert.equal(none.code, 1);
+  assert.match(none.err, /No Tasks\/ folder found/);
+  assert.match(none.err, /gitask-cli init/);
+});
+
+test("init scaffolds Tasks/ in the current folder and is idempotent", () => {
+  const empty = mkdtempSync(join(tmpdir(), "gitask-init-"));
+  const first = cli(empty, "init");
+  assert.equal(first.code, 0);
+  assert.match(readFileSync(join(empty, "Tasks", "_TEMPLATE.md"), "utf8"), /Done when/);
+  assert.equal(cli(empty, "board").code, 0);
+  assert.match(cli(empty, "init").out, /already set up/);
+});

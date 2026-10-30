@@ -25,3 +25,17 @@ gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   # the board in your 
 `report` prints to stdout without `--out`. Unknown tasks, people, columns, bad dates or formats exit non-zero with a message. `--no-commit` skips the commit for `assign` and `subtask`.
 
 Run it from the repo root that contains `Tasks/`. GITASK never pushes.
+
+## Start the board
+
+```bash
+npx gitask-cli serve            # no install needed
+pnpm dlx gitask-cli serve
+yarn dlx gitask-cli serve
+bunx gitask-cli serve
+npm i -g gitask-cli             # global install
+gitask serve                    # after global install
+gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   # the board in your browser
+```
+
+Inside this monorepo you can also run `pnpm gitask serve` or `pnpm serve` (the root script builds the CLI first if `dist` is missing).

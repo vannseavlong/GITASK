@@ -1,12 +1,14 @@
 import { join, resolve } from "node:path";
 import { hostWarning, startServer } from "./serve.ts";
 import { openBrowser } from "./open.ts";
-import { appendChangelog, createTask, loadBoard, moveTask, repoRoot } from "gitask-core";
+import { appendChangelog, createTask, initTasks, loadBoard, moveTask, repoRoot } from "gitask-core";
 import type { Board, Task } from "gitask-core";
+import { findTasksDir, noTasksMessage } from "./find-tasks.ts";
 import { assignCmd, githubCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
 
 const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
 
+  gitask init                       create a Tasks/ folder (six status folders + template) in the current folder
   gitask board                      print the board
   gitask move <task> <column>       move a task (git mv + commit); column = 2-todo or todo
   gitask new <id> [column]          create a task from _TEMPLATE.md (default column: backlog)
@@ -23,7 +25,7 @@ const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
                                     Tasks/gitask.json; --allow-repo is required when that repo is not your origin remote)
   gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   the board in your browser (local, token-protected)
 
-Options: --dir <path>  tasks folder (default ./Tasks)   --no-commit  move without committing`;
+Options: --dir <path>  tasks folder (default: nearest Tasks/ in this or a parent folder)   --no-commit  move without committing`;
 
 function resolveColumn(board: Board, name: string): string {
   const hit = board.columns.find((c) => c.id === name || c.label === name || c.id.startsWith(`${name}-`));
@@ -38,16 +40,24 @@ function findTask(board: Board, id: string): Task {
   return hits[0];
 }
 
+const cmd0 = (argv: string[]) => argv.find((a) => !a.startsWith("--"));
+
 async function main(argv: string[]) {
   const args = argv.filter((a) => !a.startsWith("--"));
   const flag = (n: string) => argv.includes(`--${n}`);
   const di = argv.indexOf("--dir");
   const dirArg = di >= 0 ? argv[di + 1] : undefined;
-  const dir = resolve(dirArg ?? "Tasks");
+  const dir = dirArg ? resolve(dirArg) : (cmd0(argv) === "init" ? resolve("Tasks") : findTasksDir(process.cwd()));
   const positional = args.filter((a) => a !== dirArg);
   const [cmd, a, b] = positional;
 
   if (!cmd || cmd === "help") return console.log(USAGE);
+  if (cmd === "init") {
+    const r = await initTasks(dir!);
+    console.log(r.created.length ? `Created ${dir}\n${r.created.length} item(s). Next: gitask serve` : `${dir} already set up. Nothing changed.`);
+    return;
+  }
+  if (!dir) throw new Error(noTasksMessage(process.cwd()));
   const board = await loadBoard(dir);
 
   switch (cmd) {

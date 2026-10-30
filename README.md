@@ -58,7 +58,7 @@ pnpm package     # .vsix in packages/vscode/
 
 Try the extension: open this folder in VS Code, press F5 on `packages/vscode` (Run Extension), then run **GITASK: Open Board**.
 
-CLI: `node packages/cli/dist/gitask.js board --dir Tasks`
+CLI: `pnpm gitask serve` (builds first if `dist` is missing), or `npx gitask-cli serve` / `pnpm dlx gitask-cli serve` / `yarn dlx gitask-cli serve` / `bunx gitask-cli serve`, or `npm i -g gitask-cli` then `gitask serve`.
 
 ## Release
 

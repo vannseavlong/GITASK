@@ -8,6 +8,8 @@
     "test": "node --test packages/core/test/*.test.ts packages/cli/test/*.test.ts packages/vscode/test/*.test.ts",
     "build": "pnpm --workspace-concurrency=1 --filter gitask-cli --filter gitask-vscode run build",
     "package": "pnpm --filter gitask-vscode run package",
+    "gitask": "node scripts/gitask.mjs",
+    "serve": "node scripts/gitask.mjs serve",
     "bump": "node scripts/bump.mjs",
     "deploy:pro": "pnpm --filter gitask-web run deploy"
   },
