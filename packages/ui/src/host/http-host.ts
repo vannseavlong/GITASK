@@ -51,6 +51,25 @@ export function createHttpHost(base = ""): Host {
     }
   }
 
+  /** Browsers have no save dialog: fetch the report and hand it to the download manager. */
+  async function download(m: Extract<WebviewMessage, { type: "exportReport" }>): Promise<void> {
+    try {
+      const r = await fetch(`${base}/api/report`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(m) });
+      if (!r.ok) {
+        const body = (await r.json().catch(() => ({}))) as { error?: string };
+        return emitMsg({ type: "reportExported", ok: false, error: body.error ?? `request failed (${r.status})` });
+      }
+      const name = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") ?? "")?.[1] ?? "gitask-report";
+      const url = URL.createObjectURL(await r.blob());
+      const a = document.createElement("a");
+      a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      emitMsg({ type: "reportExported", ok: true, path: name });
+    } catch (e) {
+      emitMsg({ type: "reportExported", ok: false, error: `Cannot reach the GITASK server: ${(e as Error).message}` });
+    }
+  }
+
   return {
     async getBoard() {
       connect();
@@ -63,6 +82,7 @@ export function createHttpHost(base = ""): Host {
     send(m) {
       if (m.type === "view") return; // remembered in localStorage (saveState)
       if (m.type === "ready") { connect(); if (last) queueMicrotask(() => emitBoard(last!)); }
+      if (m.type === "exportReport") return void download(m);
       if (m.type === "open") return emitMsg({ type: "error", message: `Open ${m.path} in your editor: a browser cannot open files.` });
       void post(m);
     },

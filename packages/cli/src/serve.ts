@@ -155,6 +155,23 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
       if (r.changed) await push(true);
       return json(res, r.status, { ok: r.status === 200, reply: r.reply });
     }
+    if (req.method === "POST" && path === "/api/report") {
+      if (!/^application\/json\b/i.test(req.headers["content-type"] ?? "")) return json(res, 415, { error: "content-type must be application/json" });
+      let raw: unknown;
+      try { raw = JSON.parse(await readBody(req)); } catch (e) {
+        const status = (e as { status?: number }).status ?? 400;
+        return json(res, status, { error: status === 413 ? "body too large" : "malformed JSON" });
+      }
+      const r = await handler.report(raw);
+      if (!r.file) return json(res, r.status, { error: r.error });
+      res.writeHead(200, {
+        "Content-Type": r.file.mime,
+        "Content-Disposition": `attachment; filename="${r.file.name.replace(/[^\w.-]/g, "_")}"`,
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "no-store",
+      });
+      return void res.end(r.file.content);
+    }
     return json(res, 404, { error: "not found" });
   }
 

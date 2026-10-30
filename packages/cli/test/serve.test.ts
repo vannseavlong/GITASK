@@ -152,3 +152,19 @@ test("readTask returns the body over GET /api/taskBody", async () => {
   assert.equal(r.status, 200);
   assert.match(JSON.parse(r.body).text, /# Core-demo/);
 });
+
+test("report download: needs the token, validates the request, never leaks an email", async () => {
+  const { tasks } = workspace();
+  const s = await boot(tasks);
+  const body = JSON.stringify({ type: "exportReport", format: "csv", options: { from: "2020-01-01", to: "2030-12-31", dateField: "updated", includeSubtasks: true, people: [] } });
+  const h = { "Content-Type": "application/json" };
+  assert.equal((await call(s, "POST", "/api/report", { token: null, headers: h, body })).status, 401);
+  const ok = await call(s, "POST", "/api/report", { headers: h, body });
+  assert.equal(ok.status, 200);
+  assert.match(String(ok.headers["content-disposition"]), /^attachment; filename="gitask-report-[\w.-]+\.csv"$/);
+  assert.doesNotMatch(ok.body, /@/);
+  const bad = await call(s, "POST", "/api/report", { headers: h, body: JSON.stringify({ type: "exportReport", format: "pdf", options: {} }) });
+  assert.equal(bad.status, 400);
+  const wrongType = await call(s, "POST", "/api/report", { headers: h, body: '{"type":"ready"}' });
+  assert.equal(wrongType.status, 400);
+});

@@ -3,6 +3,7 @@
 import { basename } from "node:path";
 import { addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
 import type { HostMessage } from "gitask-core";
+import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
 
 export interface HandlerOptions {
   /** Absolute Tasks directory. */
@@ -100,6 +101,16 @@ export function createHandler(o: HandlerOptions) {
         } catch (e) {
           return err(`could not save the colour: ${(e as Error).message}`);
         }
+      case "previewReport":
+        try {
+          const f = await buildReportFile(o.dir, m.options, "html");
+          return { status: 200, reply: { type: "reportPreview", html: f.content }, changed: false };
+        } catch (e) {
+          return { status: 200, reply: { type: "reportPreview", html: "", error: (e as Error).message }, changed: false };
+        }
+      case "exportReport":
+        // A browser cannot be handed a save dialog; the UI downloads through POST /api/report instead.
+        return { status: 200, reply: { type: "reportExported", ok: false, error: "Use the download route" }, changed: false };
       case "addSubtask":
       case "setSubtaskAssignee":
       case "setSubtaskLane":
@@ -130,5 +141,17 @@ export function createHandler(o: HandlerOptions) {
     }
   }
 
-  return { board, handle };
+  /** Build a downloadable report from a raw `exportReport` message (validated like every other message). */
+  async function report(raw: unknown): Promise<{ status: number; file?: ReportFile; error?: string }> {
+    const v = validateMessage(raw, { tasksDir: o.dir, columns: [], views: [] });
+    if (!v.ok) return { status: 400, error: `Rejected: ${v.reason}` };
+    if (v.message.type !== "exportReport") return { status: 400, error: "Rejected: not an exportReport message" };
+    try {
+      return { status: 200, file: await buildReportFile(o.dir, v.message.options, v.message.format) };
+    } catch (e) {
+      return { status: 500, error: (e as Error).message };
+    }
+  }
+
+  return { board, handle, report };
 }
