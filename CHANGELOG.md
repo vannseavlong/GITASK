@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-30 · [Ext] feat(ui): new task dialog matches edit dialogs with more info input
+- Owner: SNLRLONG
+- Branch/PR: feat/new-task-dialog-v2 · merged to main (a6ea4f9)
+- What changed: the new task dialog now mirrors the edit dialog look (Field labels, grid form, DialogFooter) and collects title, due date, tier, owner and claimed by when creating a task, in the browser and in VS Code. The `new` message carries the optional fields and both hosts apply them via `updateTask` after creation. Protocol validation added for the new fields; tests cover accepted and rejected values.
+- Needs: none
+
 ## 2026-10-30 · [Ext] feat(ui): new-task dialog and always-visible GitHub sync button
 - Owner: SNLRLONG
 - Branch/PR: feat/new-task-dialog · merged to main (dfb8d8c)
