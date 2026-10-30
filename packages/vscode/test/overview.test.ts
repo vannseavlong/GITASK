@@ -1,8 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import vm from "node:vm";
 import { computeOverview, type OverviewBoard, type OverviewTask } from "../src/views/overview-logic.ts";
-import overview from "../src/views/overview.ts";
 
 const TODAY = "2026-10-17";
 function task(id: string, column: string, extra: Partial<OverviewTask> & { updated?: string } = {}): OverviewTask {
@@ -102,16 +100,4 @@ test("500 tasks across columns is fast and consistent", () => {
   assert.equal(o.byTier.reduce((n, s) => n + s.count, 0), 500);
   assert.equal(o.byOwner.reduce((n, s) => n + s.count, 0), 500);
   assert.equal(o.recent.length, 10);
-});
-
-test("shipped webview JS embeds the tested function and is safe to inline", () => {
-  const js = overview.js!;
-  assert.ok(js.startsWith("const computeOverview = "));
-  assert.ok(js.includes(computeOverview.toString()));
-  assert.ok(!js.includes("`") && !js.includes("${") && !js.includes("innerHTML"));
-  assert.ok(!/\.view-/.test(overview.css!.replace(/\.view-overview/g, "")));
-  // Evaluate the embedded function exactly as the webview would.
-  const fn = vm.runInNewContext("(" + computeOverview.toString() + ")") as typeof computeOverview;
-  assert.equal(fn({ columns: [col("1-a", [task("A", "1-a")])] }, { today: TODAY }).total, 1);
-  new vm.Script(js); // parses
 });

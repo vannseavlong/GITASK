@@ -1,6 +1,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
+import { assertRegularFile } from "./taskfile.ts";
 
 export const CONFIG_FILE = "gitask.json";
 export const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
@@ -72,13 +74,54 @@ export async function setColumnColor(dir: string, column: string, color: string 
   if (Object.keys(entry).length) columns.set(column, entry);
   else columns.delete(column);
   json.columns = Object.fromEntries(columns);
+  await assertRegularFile(file, dir, { missingOk: true });
   await writeFile(file, JSON.stringify(json, null, 2) + "\n");
 
   const root = await repoRoot(dir);
   if (root && opts.commit !== false && (await isTracked(dir, file))) {
     await gitAdd(root, file);
-    await gitCommitPaths(root, COLOR_MESSAGE.replace("{column}", column), file);
+    await gitCommitPaths(root, fillTemplate(COLOR_MESSAGE, { column }), file);
     return { committed: true };
   }
   return { committed: false };
+}
+
+/** Opt-in GitHub link: `github: { repo: "owner/name", project?: number }` in `Tasks/gitask.json`. */
+export interface GithubConfig {
+  repo: string;
+  /** Projects v2 number (the number in the project URL). */
+  project?: number;
+}
+
+const OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
+const NAME_RE = /^(?!\.{1,2}$)[A-Za-z0-9_.-]{1,100}$/;
+
+/** `owner/name` as GitHub allows it: no `.`/`..` segments (a URL would normalise them away), no `.git` suffix. */
+export function isRepoSlug(v: string): boolean {
+  const [owner, name, ...rest] = v.split("/");
+  return !rest.length && name !== undefined && OWNER_RE.test(owner) && NAME_RE.test(name) && !/\.git$/i.test(name);
+}
+
+/** Parse the `github` block. Missing or malformed input yields `undefined` (then no GitHub call is ever made). */
+export function parseGithubConfig(text: string): GithubConfig | undefined {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+  const g = isRecord(json) ? json.github : undefined;
+  if (!isRecord(g) || typeof g.repo !== "string" || !isRepoSlug(g.repo.trim())) return undefined;
+  const out: GithubConfig = { repo: g.repo.trim() };
+  if (typeof g.project === "number" && Number.isInteger(g.project) && g.project > 0) out.project = g.project;
+  return out;
+}
+
+/** The `github` block of `<dir>/gitask.json`; `undefined` when absent or malformed. */
+export async function readGithubConfig(dir: string): Promise<GithubConfig | undefined> {
+  try {
+    return parseGithubConfig(await readFile(join(dir, CONFIG_FILE), "utf8"));
+  } catch {
+    return undefined;
+  }
 }

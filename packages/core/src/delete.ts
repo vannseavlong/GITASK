@@ -1,6 +1,7 @@
 import { readdir, rm, rmdir, unlink } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { gitCommitPaths, gitRm, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 
 export interface DeleteOptions {
   /** Commit the removal (default true). Without it a tracked file is just unlinked. */
@@ -20,6 +21,13 @@ export const DELETE_COLUMN_MESSAGE = "status({id}): delete";
 const COLUMN = /^\d+-[^\\/]+$/;
 
 export type DeleteImpact = "recoverable" | "permanent" | "loses-local-edits";
+
+/** The sentence shown in the delete confirmation (VS Code modal and browser dialog), one wording for both. */
+export function describeDeleteImpact(impact: DeleteImpact): string {
+  return impact === "recoverable" ? "The file is removed and the removal is committed, so it can be restored from git history."
+    : impact === "loses-local-edits" ? "This file has uncommitted edits. They will be lost; only the last committed version stays in git history."
+    : "This file is not committed (untracked, or auto-commit is off). It will be permanently removed and cannot be restored.";
+}
 
 /**
  * What deleting this task would cost, for the confirm dialog. `recoverable`: tracked, clean and
@@ -47,7 +55,7 @@ export async function deleteTask(tasksDir: string, taskPath: string, opts: Delet
   if (root && opts.commit !== false && (await isTracked(cwd, taskPath))) {
     await gitRm(root, taskPath);
     const id = basename(taskPath, ".md");
-    await gitCommitPaths(root, (opts.message ?? DELETE_TASK_MESSAGE).replace(/\{id\}/g, () => id), taskPath);
+    await gitCommitPaths(root, fillTemplate(opts.message ?? DELETE_TASK_MESSAGE, { id }), taskPath);
     return { path: taskPath, committed: true };
   }
   await unlink(taskPath);
@@ -74,7 +82,7 @@ export async function deleteColumn(tasksDir: string, column: string, opts: Delet
   if (entries.includes(".gitkeep")) {
     if (root && opts.commit !== false && (await isTracked(dir, keep))) {
       await gitRm(root, keep);
-      await gitCommitPaths(root, (opts.message ?? DELETE_COLUMN_MESSAGE).replace(/\{id\}/g, () => column), keep);
+      await gitCommitPaths(root, fillTemplate(opts.message ?? DELETE_COLUMN_MESSAGE, { id: column }), keep);
       committed = true;
     } else await unlink(keep);
   }

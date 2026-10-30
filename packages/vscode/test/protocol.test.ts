@@ -106,3 +106,63 @@ test("deleteTask and deleteColumn validate path and column", () => {
   assert.equal(validateMessage({ type: "deleteColumn", column: "../2-todo" }, ctx).ok, false);
   assert.equal(validateMessage({ type: "deleteColumn", column: 5 }, ctx).ok, false);
 });
+
+test("addSubtask / setSubtaskAssignee / setSubtaskLane validation", () => {
+  const v = (m: unknown) => validateMessage(m, ctx);
+  assert.deepEqual(v({ type: "addSubtask", path: ok, text: "  Do it " }), { ok: true, message: { type: "addSubtask", path: ok, text: "Do it" } });
+  assert.deepEqual(v({ type: "addSubtask", path: ok, text: "x", assignee: "ann", lane: "ux-ui" }), { ok: true, message: { type: "addSubtask", path: ok, text: "x", assignee: "ann", lane: "ux-ui" } });
+  for (const bad of [
+    { type: "addSubtask", path: "/etc/passwd.md", text: "x" },
+    { type: "addSubtask", path: ok },
+    { type: "addSubtask", path: ok, text: "   " },
+    { type: "addSubtask", path: ok, text: "a\nb" },
+    { type: "addSubtask", path: ok, text: "x".repeat(201) },
+    { type: "addSubtask", path: ok, text: "x", assignee: "a b" },
+    { type: "addSubtask", path: ok, text: "x", assignee: "@ann" },
+    { type: "addSubtask", path: ok, text: "x", assignee: 5 },
+    { type: "addSubtask", path: ok, text: "x", lane: "1x" },
+    { type: "addSubtask", path: ok, text: "x", lane: "a b" },
+  ]) assert.equal(v(bad).ok, false, JSON.stringify(bad));
+
+  assert.deepEqual(v({ type: "setSubtaskAssignee", path: ok, index: 1, line: 9, assignee: "bob" }), { ok: true, message: { type: "setSubtaskAssignee", path: ok, index: 1, line: 9, assignee: "bob" } });
+  assert.deepEqual(v({ type: "setSubtaskAssignee", path: ok, index: 0, line: 1, assignee: null }), { ok: true, message: { type: "setSubtaskAssignee", path: ok, index: 0, line: 1, assignee: null } });
+  assert.deepEqual(v({ type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: "backend" }), { ok: true, message: { type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: "backend" } });
+  assert.deepEqual(v({ type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: null }), { ok: true, message: { type: "setSubtaskLane", path: ok, index: 1, line: 9, lane: null } });
+  for (const t of ["setSubtaskAssignee", "setSubtaskLane"]) {
+    const key = t === "setSubtaskLane" ? "lane" : "assignee";
+    for (const bad of [
+      { type: t, path: ok, index: -1, line: 1, [key]: null },
+      { type: t, path: ok, index: 1.5, line: 1, [key]: null },
+      { type: t, path: ok, index: 0, line: 0, [key]: null },
+      { type: t, path: ok, index: 0, line: 1 },
+      { type: t, path: ok, index: 0, line: 1, [key]: "bad value!" },
+      { type: t, path: "/x/y.md", index: 0, line: 1, [key]: null },
+    ]) assert.equal(v(bad).ok, false, JSON.stringify(bad));
+  }
+});
+
+test("github messages: accepted, extra fields (a token, a plan) dropped", () => {
+  assert.deepEqual(validateMessage({ type: "githubPlan" }, ctx), { ok: true, message: { type: "githubPlan" } });
+  const planHash = "a".repeat(64);
+  assert.deepEqual(validateMessage({ type: "githubSync", confirmRepo: "acme/app", planHash, token: "ghp_x", plan: { repo: "evil/repo" } }, ctx), { ok: true, message: { type: "githubSync", confirmRepo: "acme/app", planHash } });
+  for (const bad of [{}, { confirmRepo: "acme/app" }, { planHash }, { confirmRepo: "../x", planHash }, { confirmRepo: "acme/app", planHash: "zz" }, { confirmRepo: 5, planHash }]) {
+    assert.equal(validateMessage({ type: "githubSync", ...bad }, ctx).ok, false, JSON.stringify(bad));
+  }
+});
+
+test("deleteImpact request and the confirmed flag on deletes", () => {
+  assert.deepEqual(validateMessage({ type: "deleteImpact", path: ok }, ctx), { ok: true, message: { type: "deleteImpact", path: ok } });
+  assert.equal(validateMessage({ type: "deleteImpact", path: "/etc/passwd" }, ctx).ok, false);
+  assert.deepEqual(validateMessage({ type: "deleteTask", path: ok }, ctx), { ok: true, message: { type: "deleteTask", path: ok } });
+  assert.deepEqual(validateMessage({ type: "deleteTask", path: ok, confirmed: true }, ctx), { ok: true, message: { type: "deleteTask", path: ok, confirmed: true } });
+  assert.deepEqual(validateMessage({ type: "deleteColumn", column: "2-todo", confirmed: true }, ctx), { ok: true, message: { type: "deleteColumn", column: "2-todo", confirmed: true } });
+  for (const bad of [false, "yes", 1, null]) {
+    assert.equal(validateMessage({ type: "deleteTask", path: ok, confirmed: bad }, ctx).ok, false, String(bad));
+    assert.equal(validateMessage({ type: "deleteColumn", column: "2-todo", confirmed: bad }, ctx).ok, false, String(bad));
+  }
+});
+
+test("addSubtask text may not contain checkbox syntax", () => {
+  assert.equal(validateMessage({ type: "addSubtask", path: ok, text: "fine [link](x) and a[0]" }, ctx).ok, true);
+  for (const text of ["a [ ] b", "x [x] y", "[X]"]) assert.equal(validateMessage({ type: "addSubtask", path: ok, text }, ctx).ok, false, text);
+});

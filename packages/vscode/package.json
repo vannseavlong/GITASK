@@ -1,14 +1,14 @@
 {
   "name": "gitask-vscode",
   "displayName": "GITASK",
-  "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed.",
-  "version": "0.4.0",
+  "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed. Assign people, sub-tasks, reports.",
+  "version": "0.5.0",
   "publisher": "vannseavlong",
   "license": "MIT",
   "icon": "media/icon.png",
   "homepage": "https://github.com/vannseavlong/GITASK#readme",
   "bugs": { "url": "https://github.com/vannseavlong/GITASK/issues" },
-  "keywords": ["kanban", "tasks", "git", "markdown", "board"],
+  "keywords": ["kanban", "tasks", "git", "markdown", "board", "assignee", "sub-tasks", "report"],
   "galleryBanner": { "color": "#1e293b", "theme": "dark" },
   "engines": {
     "vscode": "^1.85.0"
@@ -33,6 +33,10 @@
       {
         "command": "gitask.initTasks",
         "title": "GITASK: Initialize Tasks Folder"
+      },
+      {
+        "command": "gitask.syncGithub",
+        "title": "GITASK: Sync to GitHub"
       }
     ],
     "configuration": {
@@ -41,7 +45,8 @@
         "gitask.tasksDir": {
           "type": "string",
           "default": "Tasks",
-          "description": "Tasks folder, relative to the workspace root."
+          "scope": "machine-overridable",
+          "description": "Tasks folder, relative to the workspace root. A path outside the workspace is ignored."
         },
         "gitask.staleDays": {
           "type": "number",
@@ -63,7 +68,7 @@
     }
   },
   "scripts": {
-    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
+    "build": "pnpm --filter gitask-ui run build && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
     "package": "pnpm run build && vsce package --no-dependencies"
   },
   "devDependencies": {

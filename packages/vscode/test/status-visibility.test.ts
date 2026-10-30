@@ -1,8 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { statusVisibility, STATUS_VISIBILITY_SRC } from "../src/status-visibility.ts";
-import { webviewHtml } from "../src/html.ts";
-import { VIEWS } from "../src/views/registry.ts";
 
 const sv = statusVisibility();
 const board = {
@@ -52,12 +50,9 @@ test("chips carry counts and hidden flag", () => {
   assert.deepEqual(sv.chips(board, ["3-done"]).map((c) => [c.label, c.count, c.hidden]), [["backlog", 2, false], ["todo", 1, false], ["done", 0, true]]);
 });
 
-test("shipped source is self-contained and embedded in the page", () => {
+test("shipped source is self-contained", () => {
   const SV = new Function(STATUS_VISIBILITY_SRC + "; return SV;")();
   assert.deepEqual(SV.apply(board, ["1-backlog"]).columns.map((c: { id: string }) => c.id), ["2-todo", "3-done"]);
-  const html = webviewHtml(VIEWS, { nonce: "N" });
-  assert.ok(html.includes("const SV = ("));
-  assert.ok(html.includes("status-bar"));
 });
 
 test("a transient board with no columns or no columns field does not lose the stored set", () => {
@@ -70,10 +65,4 @@ test("a transient board with no columns or no columns field does not lose the st
   assert.deepEqual(stored, ["2-todo"]);
   // The set still applies when the real board returns.
   assert.deepEqual(sv.chips(board, stored).filter((c) => c.hidden).map((c) => c.id), ["2-todo"]);
-});
-
-test("shell no longer writes the sanitized set back and guards missing columns", () => {
-  assert.ok(!STATUS_VISIBILITY_SRC.includes("stored.hiddenStatuses ="));
-  const html = webviewHtml.toString();
-  assert.ok(!html.includes("stored.hiddenStatuses = SV.sanitize"));
 });

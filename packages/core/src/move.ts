@@ -1,8 +1,10 @@
 import { localDate } from "./date.ts";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { assertRegularFile } from "./taskfile.ts";
 import { basename, join } from "node:path";
 import { columnLabel } from "./board.ts";
 import { gitAdd, gitCommitPaths, gitMv, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 
 export interface MoveOptions {
   /** Commit the move (default true). Ignored when the task is not in a git repo. */
@@ -41,6 +43,8 @@ export async function moveTask(
   const to = join(tasksDir, toColumn, basename(taskPath));
   if (fromColumn === toColumn) return { from, to, committed: false };
 
+  await assertRegularFile(from, tasksDir);
+  if (await lstat(to).then(() => true, () => false)) throw new Error(`${basename(to)} already exists in ${columnLabel(toColumn)}`);
   const id = basename(taskPath, ".md");
   const cwd = join(taskPath, "..");
   const root = await repoRoot(cwd);
@@ -56,10 +60,7 @@ export async function moveTask(
   let committed = false;
   if (useGit && opts.commit !== false) {
     await gitAdd(root!, to);
-    const msg = (opts.message ?? DEFAULT_MESSAGE)
-      .replaceAll("{id}", id)
-      .replaceAll("{from}", columnLabel(fromColumn))
-      .replaceAll("{to}", columnLabel(toColumn));
+    const msg = fillTemplate(opts.message ?? DEFAULT_MESSAGE, { id, from: columnLabel(fromColumn), to: columnLabel(toColumn) });
     await gitCommitPaths(root!, msg, from, to);
     committed = true;
   }
