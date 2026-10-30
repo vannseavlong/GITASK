@@ -2,10 +2,10 @@ import * as vscode from "vscode";
 import { basename, join } from "node:path";
 import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
 import { syncGithub } from "./github.ts";
-import { uiHtml, webviewHtml } from "./html.ts";
+import { uiHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
-import { DEFAULT_VIEW, VIEWS } from "./views/registry.ts";
+import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
 
 const VIEW_KEY = "gitask.lastView";
 let log: vscode.OutputChannel | undefined;
@@ -67,20 +67,18 @@ async function initTasksFolder(ctx: vscode.ExtensionContext): Promise<void> {
   await post();
 }
 
-/** The React UI (packages/ui, built into dist/ui). `classic` opens the old string-built page instead. */
-function openBoard(ctx: vscode.ExtensionContext, classic = false): void {
+/** The React UI (packages/ui, built into dist/ui). */
+function openBoard(ctx: vscode.ExtensionContext): void {
   if (panel) return panel.reveal();
   const initialView = ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW);
-  panel = vscode.window.createWebviewPanel("gitask", classic ? "GITASK (classic)" : "GITASK", vscode.ViewColumn.Active, {
+  panel = vscode.window.createWebviewPanel("gitask", "GITASK", vscode.ViewColumn.Active, {
     enableScripts: true,
     localResourceRoots: [vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui")],
   });
   panel.iconPath = { light: vscode.Uri.joinPath(ctx.extensionUri, "media", "tab-light.svg"), dark: vscode.Uri.joinPath(ctx.extensionUri, "media", "tab-dark.svg") };
   const wv = panel.webview;
   const asset = (name: string) => wv.asWebviewUri(vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui", name)).toString();
-  wv.html = classic
-    ? webviewHtml(VIEWS, { initialView })
-    : uiHtml(VIEWS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });
+  wv.html = uiHtml(VIEW_IDS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });
   idsAssigned = false;
   panel.onDidDispose(() => (panel = undefined), undefined, ctx.subscriptions);
 
@@ -94,7 +92,7 @@ function openBoard(ctx: vscode.ExtensionContext, classic = false): void {
     } catch (e) {
       return send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
     }
-    const v = validateMessage(raw, { tasksDir: dir, columns: board.columns.map((c) => c.id), views: VIEWS.map((x) => x.id) });
+    const v = validateMessage(raw, { tasksDir: dir, columns: board.columns.map((c) => c.id), views: VIEW_IDS });
     if (!v.ok) {
       log?.appendLine(`Rejected webview message: ${v.reason}`);
       return;
@@ -198,7 +196,6 @@ export function activate(ctx: vscode.ExtensionContext): void {
   ctx.subscriptions.push(log);
   ctx.subscriptions.push(
     vscode.commands.registerCommand("gitask.openBoard", () => openBoard(ctx)),
-    vscode.commands.registerCommand("gitask.openClassicBoard", () => openBoard(ctx, true)),
     vscode.commands.registerCommand("gitask.newTask", () => newTask()),
     vscode.commands.registerCommand("gitask.initTasks", () => initTasksFolder(ctx)),
     vscode.commands.registerCommand("gitask.syncGithub", () => syncGithub(tasksDir(), log)),

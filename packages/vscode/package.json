@@ -27,10 +27,6 @@
         "title": "GITASK: Open Board"
       },
       {
-        "command": "gitask.openClassicBoard",
-        "title": "GITASK: Open Classic Board"
-      },
-      {
         "command": "gitask.newTask",
         "title": "GITASK: New Task"
       },

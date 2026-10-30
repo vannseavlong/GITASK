@@ -9,3 +9,12 @@ declare module "virtual:gitask-filter-logic" {
   export const filterBoard: FilterLogic["filterBoard"];
   export const countTasks: FilterLogic["countTasks"];
 }
+declare module "virtual:gitask-list-logic" {
+  import type { ListLogic } from "@host-src/views/list-logic.ts";
+  export const LIST_COLUMNS: ListLogic["LIST_COLUMNS"];
+  export const listRows: ListLogic["listRows"];
+  export const listSort: ListLogic["listSort"];
+  export const listFilter: ListLogic["listFilter"];
+  export const listOptions: ListLogic["listOptions"];
+  export const listView: ListLogic["listView"];
+}

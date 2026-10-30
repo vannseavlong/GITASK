@@ -3,8 +3,10 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { FILTER_SRC } from "../vscode/src/filter-logic.ts";
+import { LOGIC_SRC as LIST_SRC } from "../vscode/src/views/list-logic.ts";
 
 const FILTER_ID = "virtual:gitask-filter-logic";
+const LIST_ID = "virtual:gitask-list-logic";
 
 /**
  * The date-range logic is tested as a plain-JS string (filter-logic.ts). The webview CSP forbids eval,
@@ -13,11 +15,13 @@ const FILTER_ID = "virtual:gitask-filter-logic";
 function filterLogic(): Plugin {
   return {
     name: "gitask-filter-logic",
-    resolveId: (id) => (id === FILTER_ID ? "\0" + FILTER_ID : undefined),
+    resolveId: (id) => (id === FILTER_ID || id === LIST_ID ? "\0" + id : undefined),
     load: (id) =>
       id === "\0" + FILTER_ID
         ? FILTER_SRC + "\nexport { rangeDate, rangeNorm, rangeActive, taskDate, inRange, filterBoard, countTasks };\n"
-        : undefined,
+        : id === "\0" + LIST_ID
+          ? LIST_SRC + "\nexport { LIST_COLUMNS, listRows, listSort, listFilter, listOptions, listView };\n"
+          : undefined,
   };
 }
 

@@ -1,9 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { logic, LOGIC_SRC } from "../src/views/list-logic.ts";
-import list from "../src/views/list.ts";
-import { VIEWS } from "../src/views/registry.ts";
-import { webviewHtml } from "../src/html.ts";
+import { logic } from "../src/views/list-logic.ts";
 
 const { listRows, listSort, listFilter, listOptions, listView } = logic;
 
@@ -132,16 +129,4 @@ test("malformed tasks do not throw", () => {
   const r = listRows({ columns: [{ id: "a", label: "a", tasks: [{ id: "q", path: "/p", fields: { "started / updated": 5 }, progress: undefined }] }] });
   assert.equal(r.length, 1);
   assert.equal(r[0].title, "q");
-});
-
-test("shipped view embeds the tested logic verbatim and is safe for the webview", () => {
-  assert.ok(list.js!.includes(LOGIC_SRC));
-  assert.ok(!/`|\$\{/.test(list.js!), "no backticks or ${ in view js");
-  assert.ok(!/innerHTML|insertAdjacentHTML|outerHTML/.test(list.js!));
-  assert.ok(list.css!.split("}").filter((b) => b.trim()).every((b) => b.trim().startsWith(".view-list")));
-  assert.ok(list.js!.includes("GITASK.openDetail &&"));
-  const html = webviewHtml(VIEWS, { nonce: "N" });
-  assert.ok(html.includes('id: "list"'));
-  const script = html.match(/<script nonce="N">([\s\S]*?)<\/script>/)![1];
-  assert.doesNotThrow(() => new Function("acquireVsCodeApi", "document", "window", script));
 });

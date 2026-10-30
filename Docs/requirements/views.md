@@ -9,7 +9,7 @@ Source of data: only the `Tasks/` folder. No server, no account.
 | View | Shows | Must have |
 |---|---|---|
 | Board | Columns from numbered folders (exists) | Card shows owner, tier, claimed-by and sub-task progress `done/total` |
-| Task detail | One task, rendered | Title, header fields, each section rendered, sub-task checkboxes you can toggle, link "Open file" |
+| Task detail | One task, rendered (side panel, opens from a card, list row, calendar chip, timeline bar or overview item) | Title, header fields, each section rendered, sub-task checkboxes you can toggle, link "Open file" |
 | List | All tasks as rows | Columns: title, status, tier, owner, claimed by, updated, due, progress; sort by any column; filter by status, tier, owner; text search |
 | Overview | Project health | Counts per status, per tier and per owner; tasks not updated for N days (setting, default 14); tasks claimed; last 10 moves; overdue count |
 | Timeline | Calendar and waterfall | Month calendar with due dates; waterfall bars Started to Due; arrows for `Depends on`; today line; open-ended bar when no due date |
@@ -33,6 +33,6 @@ A bar under the tabs lists every status as a chip with its task count. Clicking 
 One bar under the tabs filters Board, List, Timeline and Overview alike: `From`, `To` (both optional, inclusive, `YYYY-MM-DD`) and which date, `Due` or `Updated`. Counts, bars and totals use only the tasks in range. While a range is active, tasks without a usable date are hidden. "No tasks in range." shows when nothing matches. The range is remembered per view (webview state, not committed). It combines with the Board and List text filters.
 
 ## Rules
-- Task text is untrusted: render it without raw HTML.
+- Task text is untrusted: render it without raw HTML; links only http(s).
 - Every view works with an empty board, one column, and 500 tasks.
 - Respects VS Code light, dark and high-contrast themes; keyboard reachable.

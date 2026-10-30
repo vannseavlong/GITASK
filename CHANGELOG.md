@@ -2,6 +2,13 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-30 · [Ext] feat(ui): List, Timeline, Overview and task detail in React
+- Owner: SNLRLONG
+- Task: Tasks/3-in-progress/Ext-ui-views.md
+- Branch/PR: feat/ui-views
+- What changed: the three views and the task detail panel (react-markdown, no raw HTML) moved to `packages/ui` with shadcn; List keeps a chevron column and expandable row slot for sub-tasks. Removed the string-built views, `detail.ts`, `markdown.ts`, `webviewHtml` and the `GITASK: Open Classic Board` command.
+- Needs: none
+
 ## 2026-10-21 · [Ext] feat(board): task ID, delete task or empty status
 - Owner: SNLRLONG
 - Task: Tasks/6-deploy/Ext-task-id-delete.md
