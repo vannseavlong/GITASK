@@ -13,8 +13,20 @@ export const FIXTURE_PEOPLE = [
   { id: "bob-ng", name: "Bob Ng" },
 ];
 
+/** Deterministic fake git activity for the last year, so the Overview heatmap has something to show. */
+function fixtureActivity(): { date: string; count: number }[] {
+  const out: { date: string; count: number }[] = [];
+  for (let i = 0; i < 365; i++) {
+    const v = (i * 7919 + (i % 13) * 31) % 11;
+    const dow = new Date(Date.now() - i * 86400000).getUTCDay();
+    if (dow === 0 || dow === 6 ? v > 8 : v > 3) out.push({ date: new Date(Date.now() - i * 86400000).toISOString().slice(0, 10), count: v - 2 + (i < 14 ? 3 : 0) });
+  }
+  return out.reverse();
+}
+
 export const FIXTURE: BoardData = {
   dir: "/fixture/Tasks",
+  activity: fixtureActivity(),
   people: FIXTURE_PEOPLE,
   github: { repo: "acme/app", project: 3 },
   settings: { staleDays: 14 },
