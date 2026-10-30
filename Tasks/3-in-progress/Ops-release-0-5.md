@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · release and version files, docs, marketplace listing (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-release-0-5/` · **Branch:** `feat/release-0-5`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** all tasks above merged
 - **Touches:** package versions via `pnpm bump`, CHANGELOG.md, Docs/architecture/ui.md, Docs/requirements/views.md, READMEs, packages/web/docs, Marketplace screenshots
