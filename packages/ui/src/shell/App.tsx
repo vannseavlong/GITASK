@@ -53,7 +53,7 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
             {VIEWS.map((v) => <TabsTrigger key={v.id} value={v.id}>{v.label}</TabsTrigger>)}
           </TabsList>
           {error && <div role="alert" className="shrink-0 px-3 pt-1 text-destructive">{error}</div>}
-          <FilterBar ui={ui} range={d.range} board={d.visible} onChange={update} extra={<span className="ml-auto flex gap-1.5">{!hasVsCodeApi() && <ThemeControls />}{raw?.github && <Button variant="outline" size="sm" onClick={() => setGithubOpen(true)}>Sync to GitHub</Button>}<Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>Export</Button></span>} />
+          <FilterBar ui={ui} range={d.range} board={d.visible} onChange={update} extra={<span className="ml-auto flex gap-1.5">{!hasVsCodeApi() && <ThemeControls />}<Button variant="outline" size="sm" onClick={() => setGithubOpen(true)}>Sync to GitHub</Button><Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>Export</Button></span>} />
           <StatusBar raw={raw} ui={ui} onChange={update} />
           {raw && d.shown && d.visible ? (SV.summary(raw, ui.hiddenStatuses).allHidden ? null : (
             VIEWS.map((v) => (
@@ -68,7 +68,7 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
         <DeleteConfirm host={host} />
         <EditDialogs host={host} board={raw} />
         <ExportDialog host={host} board={raw} ui={ui} open={exportOpen} onOpenChange={setExportOpen} />
-        {raw?.github && <GithubDialog host={host} github={raw.github} open={githubOpen} onOpenChange={setGithubOpen} />}
+        <GithubDialog host={host} github={raw?.github ?? undefined} open={githubOpen} onOpenChange={setGithubOpen} />
         <DetailPanel host={host} board={raw} path={detailPath} onOpenTask={setDetailPath} onClose={closeDetail} />
       </div>
     </TooltipProvider>

@@ -75,7 +75,7 @@ export function createHandler(o: HandlerOptions) {
         return { status: 200, changed: false }; // a browser cannot open a file in an editor
       case "new":
         try {
-          const id = `New-task-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}`;
+          const id = m.id ?? `New-task-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}`;
           await createTask(o.dir, m.column ?? "1-backlog", id, { owner: o.owner });
           return { status: 200, changed: true };
         } catch (e) {

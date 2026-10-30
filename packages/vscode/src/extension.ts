@@ -54,14 +54,16 @@ async function post(): Promise<void> {
   }
 }
 
-async function newTask(column?: string): Promise<void> {
+async function newTask(id?: string, column?: string): Promise<void> {
   const dir = tasksDir();
   if (!dir) return;
-  const id = await vscode.window.showInputBox({
-    prompt: "Task id, e.g. Web-login-page",
-    validateInput: (v) => (/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v) ? undefined : "Letters, digits, . _ - only"),
-  });
-  if (!id) return;
+  if (!id) {
+    id = await vscode.window.showInputBox({
+      prompt: "Task id, e.g. Web-login-page",
+      validateInput: (v) => (/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v) ? undefined : "Letters, digits, . _ - only"),
+    });
+    if (!id) return;
+  }
   try {
     const owner = vscode.workspace.getConfiguration("git").get<string>("userName");
     const file = await createTask(dir, column ?? "1-backlog", id, { owner });
@@ -146,7 +148,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "open":
         return void vscode.window.showTextDocument(vscode.Uri.file(m.path));
       case "new":
-        return newTask(m.column);
+        return newTask(m.id, m.column);
       case "move":
         try {
           await moveTask(dir, m.path, m.to, {
