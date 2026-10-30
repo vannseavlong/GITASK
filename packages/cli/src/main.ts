@@ -1,6 +1,6 @@
-import { execFile } from "node:child_process";
 import { join, resolve } from "node:path";
-import { startServer } from "./serve.ts";
+import { hostWarning, startServer } from "./serve.ts";
+import { openBrowser } from "./open.ts";
 import { appendChangelog, createTask, loadBoard, moveTask, repoRoot } from "gitask-core";
 import type { Board, Task } from "gitask-core";
 import { assignCmd, githubCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
@@ -36,11 +36,6 @@ function findTask(board: Board, id: string): Task {
   const hits = board.columns.flatMap((c) => c.tasks).filter((t) => t.id === name);
   if (hits.length !== 1) throw new Error(hits.length ? `Ambiguous task: ${name}` : `Task not found: ${name}`);
   return hits[0];
-}
-
-function openBrowser(url: string): void {
-  const [cmd, ...a] = process.platform === "darwin" ? ["open", url] : process.platform === "win32" ? ["cmd", "/c", "start", "", url] : ["xdg-open", url];
-  try { execFile(cmd, a, () => undefined).unref(); } catch { /* print-only is fine */ }
 }
 
 async function main(argv: string[]) {
@@ -99,8 +94,10 @@ async function main(argv: string[]) {
       if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("--port must be 0-65535");
       const { assets } = await import("./ui-assets.ts"); // lazy: only serve needs the bundled UI
       const srv = await startServer({ dir, port, host: val("host") ?? "127.0.0.1", commit: !flag("no-commit"), owner: process.env.GIT_AUTHOR_NAME, assets });
+      const warn = hostWarning(srv.host);
+      if (warn) console.error(`\n!!! ${warn}\n`);
       console.log(`GITASK board: ${srv.url}\nServing ${dir}. Ctrl+C to stop.`);
-      if (!flag("no-open")) openBrowser(srv.url);
+      if (!flag("no-open")) openBrowser(srv.openUrl()); // one-time code, not the token: argv shows up in `ps`
       const stop = () => void srv.close().then(() => process.exit(0));
       process.on("SIGINT", stop); process.on("SIGTERM", stop);
       return new Promise<void>(() => undefined); // run until signalled

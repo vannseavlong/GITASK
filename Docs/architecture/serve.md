@@ -10,17 +10,20 @@ The server can write to the repo (move, delete, commit), so it is closed by defa
 
 - **Bind:** `127.0.0.1` unless `--host` is passed. `--port 0` picks a free port; a busy port stops with a clear message.
 - **Token:** 32 random bytes (hex), printed in the URL (`/?token=...`). Every `/api/*` request needs it, in header `X-Gitask-Token` (query `token` only for `/api/events`, since `EventSource` cannot set headers). Compared in constant time (hash then `timingSafeEqual`). The page removes it from the address bar and keeps it in `sessionStorage`.
+- **Browser launch:** the URL printed for you carries the token, but the URL passed to `open`/`xdg-open` does not (argv is visible to every local user in `ps`). It carries `?code=<one-time>` instead; the page exchanges it with `POST /api/auth {code}` for the token. A code works once and expires after 60 s (`401` otherwise); the page then strips it from the address bar.
+- **Limits:** at most 128 open connections (`server.maxConnections`), 20 concurrent SSE clients (`503` beyond), and a request body must arrive within 10 s (`408`, connection dropped).
 - **Host and Origin:** `Host` must be the bound address (plus `localhost` for loopback); `Origin`, when sent, must be `http://<that address>`. Blocks DNS rebinding and other web pages. No CORS headers are sent, and `POST` needs `Content-Type: application/json`, so a cross-site page cannot even preflight.
 - **Validation:** every message goes through `validateMessage` from `gitask-core` (`packages/core/src/protocol.ts`), the same function the VS Code extension uses; paths must be `<Tasks>/<existing column>/<file>.md`.
 - **Body cap:** 64 KiB, then `413`. Malformed JSON is `400`.
 - **Static files:** a fixed map (`/`, `/ui.js`, `/ui.css`) served from memory, never from the file system, so there is no path to traverse. Strict CSP (`default-src 'none'`, nonce'd script and style, `connect-src 'self'`, `frame-ancestors 'none'`), `nosniff`, `no-referrer`, `no-store`.
-- With `--host 0.0.0.0` the token is the only protection on the network and traffic is plain HTTP: use only on trusted networks.
+- With a non-loopback `--host` (e.g. `0.0.0.0`) the token is the only protection on the network and traffic is plain HTTP: use only on trusted networks. `gitask serve` prints a `WARNING` line at startup in that case.
 
 ## Endpoints
 
 | Method and path | Purpose |
 |---|---|
 | `GET /` , `/ui.js`, `/ui.css` | the app (no token; contains no data) |
+| `POST /api/auth` | exchange a one-time `code` for the token (no token needed; `401` when spent, expired or wrong) |
 | `GET /api/board` | the board JSON |
 | `POST /api/message` | one `WebviewMessage`; answers `{ ok, reply? }` (`reply` is a `taskBody` or `error` host message). `400` when validation rejects it |
 | `GET /api/taskBody?path=` | task file text (`readTask`) |

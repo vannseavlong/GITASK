@@ -7,6 +7,15 @@ import type { AddressInfo } from "node:net";
 import { createHandler } from "./handler.ts";
 
 export const MAX_BODY_BYTES = 64 * 1024;
+export const MAX_SSE_CLIENTS = 20;
+export const MAX_CONNECTIONS = 128;
+export const BODY_TIMEOUT_MS = 10_000;
+
+/** A warning line when `host` is reachable from other machines; undefined for loopback. */
+export function hostWarning(host: string): string | undefined {
+  const loop = host === "localhost" || host === "::1" || host === "[::1]" || /^127(\.\d{1,3}){3}$/.test(host);
+  return loop ? undefined : `WARNING: --host ${host} makes this board reachable from your network over plain HTTP. Anyone who sees the URL or token can move, edit and delete tasks and make commits. Use only on a network you trust.`;
+}
 
 export interface UiAssets {
   js: string;
@@ -23,10 +32,19 @@ export interface ServeOptions {
   /** Fixed token for tests; random 32 bytes (hex) otherwise. */
   token?: string;
   debounceMs?: number;
+  /** How long a one-time browser code stays valid (default 60 s). */
+  codeTtlMs?: number;
+  /** Limits (defaults above); tests lower them. */
+  maxSseClients?: number;
+  maxConnections?: number;
+  bodyTimeoutMs?: number;
 }
 
 export interface RunningServer {
+  /** Printed for the user (contains the token). Never hand it to another process: it would show up in `ps`. */
   url: string;
+  /** URL for launching a browser: carries a one-time code (`?code=`), not the token. Valid once, for `codeTtlMs`. */
+  openUrl(): string;
   token: string;
   port: number;
   host: string;
@@ -58,17 +76,20 @@ function indexHtml(nonce: string): string {
 <script type="module" nonce="${nonce}" src="/ui.js"></script></body></html>`;
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
+function readBody(req: IncomingMessage, timeoutMs = BODY_TIMEOUT_MS): Promise<string> {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks: Buffer[] = [];
+    // A client that stalls mid-body must not hold the connection open forever (slow-loris).
+    const timer = setTimeout(() => { reject(Object.assign(new Error("body timeout"), { status: 408 })); }, timeoutMs);
+    req.on("close", () => clearTimeout(timer));
     req.on("data", (c: Buffer) => {
       size += c.length;
       if (size > MAX_BODY_BYTES) { reject(Object.assign(new Error("body too large"), { status: 413 })); req.destroy(); return; }
       chunks.push(c);
     });
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-    req.on("error", reject);
+    req.on("end", () => { clearTimeout(timer); resolve(Buffer.concat(chunks).toString("utf8")); });
+    req.on("error", (e) => { clearTimeout(timer); reject(e); });
   });
 }
 
@@ -77,14 +98,31 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
   const token = o.token ?? randomBytes(32).toString("hex");
   const handler = createHandler({ dir: o.dir, commit: o.commit, owner: o.owner });
   const clients = new Set<ServerResponse>();
+  const codes = new Map<string, number>(); // one-time code -> expiry (ms)
+  const issueCode = (): string => {
+    const now = Date.now();
+    for (const [c, exp] of codes) if (exp <= now) codes.delete(c);
+    if (codes.size >= 8) codes.delete(codes.keys().next().value!);
+    const code = randomBytes(18).toString("base64url");
+    codes.set(code, now + (o.codeTtlMs ?? 60_000));
+    return code;
+  };
+  /** True once for a live code; the code is spent either way. */
+  const spendCode = (given: string): boolean => {
+    let hit = false;
+    for (const [c, exp] of codes) if (safeEqual(c, given) && exp > Date.now()) hit = true;
+    for (const c of [...codes.keys()]) if (safeEqual(c, given)) codes.delete(c);
+    return hit;
+  };
   let lastBoard = "";
   let hosts = new Set<string>();
   let origins = new Set<string>();
 
   const baseHeaders = { "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "Cache-Control": "no-store" };
   const json = (res: ServerResponse, status: number, body: unknown) => {
-    res.writeHead(status, { ...baseHeaders, "Content-Type": "application/json; charset=utf-8" });
+    res.writeHead(status, { ...baseHeaders, "Content-Type": "application/json; charset=utf-8", ...(status === 408 ? { Connection: "close" } : {}) });
     res.end(JSON.stringify(body));
+    if (status === 408) res.on("finish", () => res.socket?.destroy()); // the client stalled mid-body: drop the connection
   };
 
   async function push(force = false): Promise<void> {
@@ -124,6 +162,16 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
       return json(res, 404, { error: "not found" });
     }
 
+    // Exchange a one-time code (from the URL handed to the browser launcher) for the token. Code is spent on use.
+    if (req.method === "POST" && path === "/api/auth") {
+      if (!/^application\/json\b/i.test(req.headers["content-type"] ?? "")) return json(res, 415, { error: "content-type must be application/json" });
+      let body: unknown;
+      try { body = JSON.parse(await readBody(req, o.bodyTimeoutMs)); } catch { return json(res, 400, { error: "malformed JSON" }); }
+      const code = typeof (body as { code?: unknown } | null)?.code === "string" ? (body as { code: string }).code : "";
+      if (!code || !spendCode(code)) return json(res, 401, { error: "bad or expired code" });
+      return json(res, 200, { token });
+    }
+
     // 2. Every API request needs the token (header; query only for SSE, which cannot set headers).
     if (!path.startsWith("/api/")) return json(res, 404, { error: "not found" });
     const given = (req.headers["x-gitask-token"] as string | undefined) ?? (path === "/api/events" ? url.searchParams.get("token") ?? "" : "");
@@ -137,6 +185,7 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
       return json(res, r.status === 400 ? 400 : 200, r.reply ?? { error: "no reply" });
     }
     if (req.method === "GET" && path === "/api/events") {
+      if (clients.size >= (o.maxSseClients ?? MAX_SSE_CLIENTS)) return json(res, 503, { error: "too many open boards; close one and retry" });
       res.writeHead(200, { ...baseHeaders, "Content-Type": "text/event-stream; charset=utf-8", Connection: "keep-alive" });
       res.write("retry: 2000\n\n");
       clients.add(res);
@@ -147,9 +196,9 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
     if (req.method === "POST" && path === "/api/message") {
       if (!/^application\/json\b/i.test(req.headers["content-type"] ?? "")) return json(res, 415, { error: "content-type must be application/json" });
       let raw: unknown;
-      try { raw = JSON.parse(await readBody(req)); } catch (e) {
+      try { raw = JSON.parse(await readBody(req, o.bodyTimeoutMs)); } catch (e) {
         const status = (e as { status?: number }).status ?? 400;
-        return json(res, status, { error: status === 413 ? "body too large" : "malformed JSON" });
+        return json(res, status, { error: status === 413 ? "body too large" : status === 408 ? "request timeout" : "malformed JSON" });
       }
       const r = await handler.handle(raw);
       if (r.changed) await push(true);
@@ -158,9 +207,9 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
     if (req.method === "POST" && path === "/api/report") {
       if (!/^application\/json\b/i.test(req.headers["content-type"] ?? "")) return json(res, 415, { error: "content-type must be application/json" });
       let raw: unknown;
-      try { raw = JSON.parse(await readBody(req)); } catch (e) {
+      try { raw = JSON.parse(await readBody(req, o.bodyTimeoutMs)); } catch (e) {
         const status = (e as { status?: number }).status ?? 400;
-        return json(res, status, { error: status === 413 ? "body too large" : "malformed JSON" });
+        return json(res, status, { error: status === 413 ? "body too large" : status === 408 ? "request timeout" : "malformed JSON" });
       }
       const r = await handler.report(raw);
       if (!r.file) return json(res, r.status, { error: r.error });
@@ -179,6 +228,7 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
     onRequest(req, res).catch((e) => { if (!res.headersSent) json(res, 500, { error: (e as Error).message }); else res.end(); });
   });
   server.headersTimeout = 10_000;
+  server.maxConnections = o.maxConnections ?? MAX_CONNECTIONS;
   server.requestTimeout = 0; // SSE streams stay open; bodies are capped instead
 
   let watcher: FSWatcher | undefined;
@@ -206,6 +256,7 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
       const shown = host === "0.0.0.0" || host === "::" ? "127.0.0.1" : host.includes(":") ? `[${host}]` : host;
       resolve({
         url: `http://${shown}:${port}/?token=${token}`, token, port, host,
+        openUrl: () => `http://${shown}:${port}/?code=${issueCode()}`,
         close: () => new Promise<void>((done) => {
           clearTimeout(timer); clearInterval(keepAlive); watcher?.close();
           for (const c of clients) c.end();

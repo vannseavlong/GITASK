@@ -2,14 +2,26 @@ import type { BoardData, Host, HostMessage, UiState, WebviewMessage } from "./ty
 
 type Other = Exclude<HostMessage, { type: "board" }>;
 
-/** The token from the page URL (`/?token=...`), remembered for the tab and then removed from the address bar. */
-function readToken(): string {
+/**
+ * The token for this tab. The URL may carry `?token=` (the one `gitask serve` prints) or `?code=` (a one-time code from
+ * the browser launcher, exchanged here via POST /api/auth). Either is removed from the address bar; the token is
+ * remembered for the tab only.
+ */
+async function readToken(base: string): Promise<string> {
   let t = "";
   try {
-    t = new URLSearchParams(location.search).get("token") ?? "";
+    const q = new URLSearchParams(location.search);
+    t = q.get("token") ?? "";
+    const code = q.get("code") ?? "";
+    if (t || code) history.replaceState(null, "", location.pathname);
+    if (!t && code) {
+      try {
+        const r = await fetch(`${base}/api/auth`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+        if (r.ok) t = ((await r.json()) as { token?: string }).token ?? "";
+      } catch { /* getBoard reports the 401 */ }
+    }
     if (t) {
       try { sessionStorage.setItem("gitask.token", t); } catch { /* blocked */ }
-      history.replaceState(null, "", location.pathname);
     } else {
       t = sessionStorage.getItem("gitask.token") ?? "";
     }
@@ -22,7 +34,8 @@ function readToken(): string {
  * Same Host interface as VS Code; the server validates every message.
  */
 export function createHttpHost(base = ""): Host {
-  const token = readToken();
+  let token = "";
+  const ready = readToken(base).then((t) => { token = t; });
   const boardSubs = new Set<(b: BoardData) => void>();
   const msgSubs = new Set<(m: Other) => void>();
   let es: EventSource | undefined;
@@ -30,9 +43,10 @@ export function createHttpHost(base = ""): Host {
 
   const emitMsg = (m: Other) => { for (const cb of msgSubs) cb(m); };
   const emitBoard = (b: BoardData) => { last = b; for (const cb of boardSubs) cb(b); };
-  const headers = { "X-Gitask-Token": token };
+  const headers = (): Record<string, string> => ({ "X-Gitask-Token": token });
 
-  function connect(): void {
+  async function connect(): Promise<void> {
+    await ready;
     if (es || typeof EventSource === "undefined") return;
     es = new EventSource(`${base}/api/events?token=${encodeURIComponent(token)}`);
     es.addEventListener("board", (ev) => { try { emitBoard(JSON.parse((ev as MessageEvent<string>).data) as BoardData); } catch { /* ignore a bad frame */ } });
@@ -41,8 +55,9 @@ export function createHttpHost(base = ""): Host {
   }
 
   async function post(m: WebviewMessage): Promise<void> {
+    await ready;
     try {
-      const r = await fetch(`${base}/api/message`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(m) });
+      const r = await fetch(`${base}/api/message`, { method: "POST", headers: { ...headers(), "Content-Type": "application/json" }, body: JSON.stringify(m) });
       const body = (await r.json().catch(() => ({}))) as { reply?: HostMessage; error?: string };
       if (body.reply && body.reply.type !== "board") emitMsg(body.reply);
       else if (!r.ok) emitMsg({ type: "error", message: body.error ?? `request failed (${r.status})` });
@@ -53,8 +68,9 @@ export function createHttpHost(base = ""): Host {
 
   /** Browsers have no save dialog: fetch the report and hand it to the download manager. */
   async function download(m: Extract<WebviewMessage, { type: "exportReport" }>): Promise<void> {
+    await ready;
     try {
-      const r = await fetch(`${base}/api/report`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(m) });
+      const r = await fetch(`${base}/api/report`, { method: "POST", headers: { ...headers(), "Content-Type": "application/json" }, body: JSON.stringify(m) });
       if (!r.ok) {
         const body = (await r.json().catch(() => ({}))) as { error?: string };
         return emitMsg({ type: "reportExported", ok: false, error: body.error ?? `request failed (${r.status})` });
@@ -72,8 +88,9 @@ export function createHttpHost(base = ""): Host {
 
   return {
     async getBoard() {
-      connect();
-      const r = await fetch(`${base}/api/board`, { headers });
+      void connect();
+      await ready;
+      const r = await fetch(`${base}/api/board`, { headers: headers() });
       if (!r.ok) throw new Error(r.status === 401 ? "Missing or wrong token: open the URL printed by `gitask serve`." : `server answered ${r.status}`);
       const b = (await r.json()) as BoardData;
       emitBoard(b);
@@ -81,7 +98,7 @@ export function createHttpHost(base = ""): Host {
     },
     send(m) {
       if (m.type === "view") return; // remembered in localStorage (saveState)
-      if (m.type === "ready") { connect(); if (last) queueMicrotask(() => emitBoard(last!)); }
+      if (m.type === "ready") { void connect(); if (last) queueMicrotask(() => emitBoard(last!)); }
       if (m.type === "exportReport") return void download(m);
       if (m.type === "open") return emitMsg({ type: "error", message: `Open ${m.path} in your editor: a browser cannot open files.` });
       void post(m);
