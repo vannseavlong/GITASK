@@ -25,6 +25,7 @@ export function createVsCodeHost(): Host {
   });
 
   const host: Host = {
+    confirmsDelete: false, // the extension asks with its own modal
     getBoard() {
       return new Promise((resolve) => {
         const off = host.onBoard((b) => {

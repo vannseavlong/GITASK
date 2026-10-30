@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { requestDelete } from "@/lib/delete-flow.ts";
 import { cn } from "@/lib/utils";
 import type { Host } from "@/host/index.ts";
 import { AvatarStack, SubtaskRows } from "@/components/subtasks.tsx";
@@ -84,7 +85,7 @@ function TaskCard({ t, color, host, people, expanded, onToggle, openTask, onDrag
           title="Delete task"
           aria-label={`Delete task ${t.id}`}
           className="rounded-sm p-0.5 opacity-50 outline-none hover:text-destructive hover:opacity-100 focus-visible:text-destructive focus-visible:opacity-100"
-          onClick={(e) => { e.stopPropagation(); host.send({ type: "deleteTask", path: t.path }); }}
+          onClick={(e) => { e.stopPropagation(); requestDelete(host, { kind: "task", path: t.path, label: t.id }); }}
           onKeyDown={(e) => e.stopPropagation()}
         >
           <Trash2 className="size-3.5" />
@@ -167,7 +168,7 @@ export function BoardView({ board, full, host, ui, update, openTask }: ViewProps
             </h3>
             {col.tasks.length === 0 && <div className="p-1 text-xs opacity-50">empty</div>}
             {(total.get(col.id) ?? 0) === 0 && (
-              <Button size="sm" variant="secondary" className="mb-1.5 text-[11px]" onClick={() => host.send({ type: "deleteColumn", column: col.id })}>
+              <Button size="sm" variant="secondary" className="mb-1.5 text-[11px]" onClick={() => requestDelete(host, { kind: "column", column: col.id, label: col.label })}>
                 Delete status
               </Button>
             )}
