@@ -71,12 +71,14 @@ export function createHttpHost(base = ""): Host {
   }
 
   return {
+    confirmsDelete: true,
     async getBoard() {
       connect();
       const r = await fetch(`${base}/api/board`, { headers });
       if (!r.ok) throw new Error(r.status === 401 ? "Missing or wrong token: open the URL printed by `gitask serve`." : `server answered ${r.status}`);
       const b = (await r.json()) as BoardData;
       emitBoard(b);
+      void post({ type: "ready" }); // the server backfills task ids and contributors once, then pushes a fresh board
       return b;
     },
     send(m) {

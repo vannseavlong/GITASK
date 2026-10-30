@@ -57,6 +57,7 @@ export function createMockHost(): Host {
   const emit = () => { for (const cb of subs) cb(structuredClone(board)); };
   let state: UiState = {};
   return {
+    confirmsDelete: true,
     getBoard: () => Promise.resolve(structuredClone(board)),
     send(m) {
       if (m.type === "ready") queueMicrotask(emit);
@@ -106,6 +107,7 @@ export function createMockHost(): Host {
         if (t) t.owner = m.name;
         emit();
       }
+      if (m.type === "deleteImpact") for (const cb of msgSubs) cb({ type: "deleteImpact", path: m.path, impact: "recoverable", detail: "The file is removed and the removal is committed, so it can be restored from git history." });
       if (m.type === "deleteTask") { for (const c of board.columns) c.tasks = c.tasks.filter((t) => t.path !== m.path); emit(); }
       if (m.type === "deleteColumn") { board.columns = board.columns.filter((c) => c.id !== m.column); emit(); }
       if (m.type === "setColumnColor") { const c = board.columns.find((x) => x.id === m.column); if (c) { c.color = m.color ?? undefined; emit(); } }

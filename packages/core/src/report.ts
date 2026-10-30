@@ -8,7 +8,8 @@ import type { Board, Task } from "./types.ts";
 /** Which date the period applies to: when it was done (default for reports), its `Due`, or its last `updated`. */
 export type ReportDateField = "done" | "due" | "updated";
 export type DateSource = "git" | "updated" | "none";
-export type Timeliness = "on-time" | "late" | "no-due";
+/** `unknown`: a Due date exists but no done date could be found, so it cannot be judged. */
+export type Timeliness = "on-time" | "late" | "no-due" | "unknown";
 
 export interface ReportOptions {
   /** Inclusive `YYYY-MM-DD`; empty or invalid is an open end (same rule as the board's date filter). */
@@ -179,8 +180,13 @@ async function gitDoneDate(task: Task): Promise<string> {
   const changes = await fileHistory(dirname(task.path), task.path);
   for (const c of changes) {
     if (!DONE_PATH.test(c.to)) continue;
-    if (c.from && DONE_PATH.test(c.from)) continue;
-    return c.date;
+    // Only a move into done (R/C from outside done) or the commit that created the file there counts;
+    // a later plain edit (M) of a task already in done is not the done date.
+    if (c.status === "R" || c.status === "C") {
+      if (c.from && DONE_PATH.test(c.from)) continue;
+      return c.date;
+    }
+    if (c.status === "A") return c.date;
   }
   return "";
 }
@@ -236,7 +242,7 @@ export async function buildReport(board: Board, opts: ReportOptions): Promise<Re
       started,
       due,
       tier: tierOf(task),
-      timeliness: !due || !doneDate ? "no-due" : doneDate <= due ? "on-time" : "late",
+      timeliness: !due ? "no-due" : !doneDate ? "unknown" : doneDate <= due ? "on-time" : "late",
       ...(dayCount >= 0 ? { days: dayCount } : {}),
       subtasks,
     });
@@ -265,7 +271,7 @@ export async function buildReport(board: Board, opts: ReportOptions): Promise<Re
       e.row.tasksDone++;
       if (t.timeliness === "on-time") e.row.onTime++;
       else if (t.timeliness === "late") e.row.late++;
-      else e.row.noDue++;
+      else if (t.timeliness === "no-due") e.row.noDue++;
       e.row.tiers[t.tier] = (e.row.tiers[t.tier] ?? 0) + 1;
       if (t.days !== undefined) e.days.push(t.days);
     }
@@ -283,14 +289,14 @@ export async function buildReport(board: Board, opts: ReportOptions): Promise<Re
     avgDays: avg(owned.flatMap((t) => (t.days === undefined ? [] : [t.days]))),
     people: people.filter((p) => p.key !== UNASSIGNED_KEY).length,
     unassignedTasks: owned.filter((t) => t.personKey === UNASSIGNED_KEY).length,
-    fromGit: tasks.filter((t) => t.doneSource === "git").length,
-    fromUpdated: tasks.filter((t) => t.doneSource === "updated").length,
-    undated: tasks.filter((t) => t.doneSource === "none").length,
+    fromGit: owned.filter((t) => t.doneSource === "git").length,
+    fromUpdated: owned.filter((t) => t.doneSource === "updated").length,
+    undated: owned.filter((t) => t.doneSource === "none").length,
   };
 
   const notes = [
     "Done date: the date of the commit that moved the task into 5-done or 6-deploy (git log --follow). A task moved out and back counts from the last move in.",
-    `${summary.fromGit} of ${tasks.length} tasks used the git date; ${summary.fromUpdated} fell back to the "Started / updated" date (no git history for the move); ${summary.undated} had no usable date.`,
+    `${summary.fromGit} of ${owned.length} tasks used the git date; ${summary.fromUpdated} fell back to the "Started / updated" date (no git history for the move); ${summary.undated} had no usable date.`,
     "On time means done on or before Due. Tasks without a Due date are listed separately, not counted as on time.",
     "Days to done: whole days from the Started date to the done date; tasks missing either date are left out of the average.",
   ];

@@ -197,6 +197,25 @@ test("apply twice: second sync updates, never duplicates", async () => {
   }
 });
 
+test("apply: a plan without an assignee never clears assignees already on the issue", async () => {
+  const { tasks } = repo();
+  const srv = await fake();
+  try {
+    await applySync(await plan(tasks), TOKEN, { fetch, baseUrl: srv.base });
+    assert.deepEqual(srv.issues[0].assignees, [{ login: "samlee" }]);
+    writeFileSync(join(tasks, "2-todo", "A-one.md"), readFileSync(join(tasks, "2-todo", "A-one.md"), "utf8").replace("Sam Lee", "Nobody Known"));
+    const p = await plan(tasks);
+    assert.deepEqual(p.issues[0].assignees, []);
+    const before = srv.reqs.filter((q) => q.method === "PATCH").length;
+    const r = await applySync(p, TOKEN, { fetch, baseUrl: srv.base });
+    assert.equal(r.issues[0].action, "unchanged");
+    assert.equal(srv.reqs.filter((q) => q.method === "PATCH").length, before);
+    assert.deepEqual(srv.issues[0].assignees, [{ login: "samlee" }]);
+  } finally {
+    await srv.close();
+  }
+});
+
 async function failure(status: number, headers: Record<string, string> = {}, body: unknown = { message: `bad ${TOKEN}` }, match = /POST \/repos\/acme\/app\/issues$/) {
   const { tasks, g } = repo();
   const srv = await fake();

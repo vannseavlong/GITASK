@@ -151,3 +151,28 @@ test("refuses bad input and stale reads", async () => {
   writeFileSync(path, BODY.replace("Plain one", "Changed"));
   await assert.rejects(setSubtaskLane(task, i, "x"), /changed since/);
 });
+
+
+test("addSubtask keeps each line's own ending in a mixed LF/CRLF file", async () => {
+  const text = "# T\r\n\r\n- **Owner:** Sam\n\n## Sub-tasks\n- [ ] one\r\n- [ ] two\n\n## Notes\r\nend\n";
+  const r = repo(text);
+  await addSubtask(parseTask(r.path, "2-todo", readFileSync(r.path, "utf8")), "three");
+  assert.equal(readFileSync(r.path, "utf8"), "# T\r\n\r\n- **Owner:** Sam\n\n## Sub-tasks\n- [ ] one\r\n- [ ] two\n- [ ] three\n\n## Notes\r\nend\n");
+});
+
+test("addSubtask: new section and no final newline keep the file's style", async () => {
+  const r1 = repo("# T\r\n\r\nbody\r\n");
+  await addSubtask(parseTask(r1.path, "2-todo", readFileSync(r1.path, "utf8")), "a");
+  assert.equal(readFileSync(r1.path, "utf8"), "# T\r\n\r\nbody\r\n\r\n## Sub-tasks\r\n\r\n- [ ] a\r\n");
+  const r2 = repo("# T\n\n## Sub-tasks\n- [ ] one");
+  await addSubtask(parseTask(r2.path, "2-todo", readFileSync(r2.path, "utf8")), "two");
+  assert.equal(readFileSync(r2.path, "utf8"), "# T\n\n## Sub-tasks\n- [ ] one\n- [ ] two");
+});
+
+test("addSubtask rejects checkbox syntax in the text", async () => {
+  const r = repo("# T\n\n## Sub-tasks\n- [ ] one\n");
+  const t = parseTask(r.path, "2-todo", readFileSync(r.path, "utf8"));
+  for (const bad of ["a [ ] b", "do [x] this", "[X] sneaky"]) await assert.rejects(addSubtask(t, bad), /\[ \]/);
+  assert.equal(readFileSync(r.path, "utf8"), "# T\n\n## Sub-tasks\n- [ ] one\n");
+  await addSubtask(t, "array[0] is fine");
+});

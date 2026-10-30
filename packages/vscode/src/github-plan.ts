@@ -47,3 +47,8 @@ export function syncErrorMessage(e: unknown, token?: string): Extract<HostMessag
   if (token) msg = msg.split(token).join("***");
   return { type: "githubSyncResult", ok: false, error: msg };
 }
+
+/** Options for `applySync` from the `gitask.autoCommit` setting (default on): off means issue numbers are written but never committed. */
+export function applyOptions(autoCommit: boolean | undefined): { commit: boolean } {
+  return { commit: autoCommit !== false };
+}

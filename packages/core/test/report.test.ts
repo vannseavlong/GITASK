@@ -188,7 +188,10 @@ test("CSV: formula prefixes are defused, quotes doubled, commas and newlines saf
   const csv = renderCsv(await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true }));
   assert.ok(csv.includes(`"'=HYPERLINK(""http://e.x"")"`));
   assert.ok(csv.includes(`"'+1,2"`));
-  for (const line of csv.split("\r\n")) assert.ok(!/(^|,)"?[=+@-]/.test(line.replace(/^"[^"]*"/, "")) || line.includes("'"), line);
+  // Every cell that starts with a formula character must carry the leading apostrophe.
+  for (const line of csv.split("\r\n").slice(1)) {
+    for (const cell of line.match(/"(?:[^"]|"")*"/g) ?? []) assert.ok(!/^"[=+\-@\t\r]/.test(cell), `unneutralised cell ${cell}`);
+  }
 });
 
 test("filter parity with the board's date filter rule", async () => {
@@ -197,4 +200,52 @@ test("filter parity with the board's date filter rule", async () => {
   assert.equal(inReportRange("", "", ""), true);
   assert.equal(inReportRange("2026-01-01", "2026-01-01", "2026-01-01"), true);
   assert.equal(inReportRange("2026-01-02", "", "2026-01-01"), false);
+});
+
+test("done date is the move commit, not a later edit; born-in-done and non-ASCII names", async () => {
+  const r = repo();
+  r.put("3-in-progress", "A-e", body("E", { owner: "Sam Lee", due: "2026-01-10" }));
+  r.commit("2026-01-02", "init");
+  r.g("mv", "Tasks/3-in-progress/A-e.md", "Tasks/5-done/A-e.md");
+  r.commit("2026-01-05", "done");
+  r.put("5-done", "A-e", body("E", { owner: "Ann Roe", due: "2026-01-10" }));
+  r.commit("2026-02-20", "owner changed later");
+  const unique = (o: string) => `# Born\n\n- **Owner:** ${o}\n- **Started / updated:** 2026-01-01 / 2026-01-01\n\n${Array.from({ length: 30 }, (_, i) => `distinct line ${i * 7919}`).join("\n")}\n`;
+  r.put("5-done", "A-born", unique("Sam Lee"));
+  r.commit("2026-03-01", "born in done");
+  r.put("5-done", "A-born", unique("Ann Roe"));
+  r.commit("2026-03-09", "edit");
+  r.put("3-in-progress", "A-é", body("Accent", { owner: "Sam Lee" }));
+  r.commit("2026-04-01", "accent");
+  r.g("mv", "Tasks/3-in-progress/A-é.md", "Tasks/5-done/A-é.md");
+  r.commit("2026-04-05", "accent done");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: false });
+  const by = (id: string) => rep.tasks.find((t) => t.id === id)!;
+  assert.equal(by("A-e").doneDate, "2026-01-05");
+  assert.equal(by("A-e").timeliness, "on-time");
+  assert.equal(by("A-born").doneDate, "2026-03-01");
+  assert.equal(by("A-é").doneDate, "2026-04-05");
+  assert.equal(by("A-é").doneSource, "git");
+});
+
+test("a Due date with no usable done date is not reported as no-due", async () => {
+  const r = repo(false);
+  r.put("5-done", "A-n", body("N", { owner: "Sam Lee", due: "2026-03-10" }).replace(/- \*\*Started.*\n/, ""));
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: false });
+  assert.equal(rep.tasks[0].doneSource, "none");
+  assert.notEqual(rep.tasks[0].timeliness, "no-due");
+  assert.equal(rep.summary.noDue, 0);
+});
+
+test("git-date note counts owned tasks only", async () => {
+  const r = repo();
+  r.put("3-in-progress", "A-a", body("A", { owner: "Sam Lee" }));
+  r.put("3-in-progress", "A-b", body("B", { owner: "Ann Roe", subs: ["- [x] x @sam-lee"] }));
+  r.commit("2026-01-02", "init");
+  r.move("A-a", "3-in-progress", "5-done");
+  r.move("A-b", "3-in-progress", "5-done");
+  r.commit("2026-01-05", "done");
+  const rep = await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true, only: ["sam-lee"] });
+  assert.equal(rep.tasks.length, 2);
+  assert.ok(rep.notes.some((n) => n.startsWith("1 of 1 tasks used the git date")), rep.notes.join("\n"));
 });

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 import { isSubtaskSection, parseSubtasks, splitTokens } from "./parse.ts";
 import type { Task } from "./types.ts";
 
@@ -35,7 +36,7 @@ async function commitFile(task: Task, text: string, opts: SubtaskOptions): Promi
   const root = await repoRoot(cwd);
   if (!root || opts.commit === false || !(await isTracked(cwd, task.path))) return false;
   const short = text.length > 60 ? `${text.slice(0, 57)}...` : text;
-  const msg = (opts.message ?? SUBTASK_MESSAGE).replaceAll("{id}", basename(task.path, ".md")).replaceAll("{text}", `"${short}"`);
+  const msg = fillTemplate(opts.message ?? SUBTASK_MESSAGE, { id: basename(task.path, ".md"), text: `"${short}"` });
   await gitAdd(root, task.path);
   await gitCommitPaths(root, msg, task.path);
   return true;
@@ -88,14 +89,18 @@ export async function addSubtask(
 ): Promise<SubtaskResult & { line: number }> {
   const clean = text.trim();
   if (!clean || /[\r\n]/.test(clean)) throw new Error("Sub-task text must be one non-empty line");
+  if (/\[[ xX]\]/.test(clean)) throw new Error("Sub-task text must not contain [ ] or [x]");
   check(extra.assignee, extra.lane);
   const entry = line("- [ ] ", clean, extra.assignee, extra.lane);
 
   const raw = await readFile(task.path, "utf8");
-  const nl = raw.includes("\r\n") ? "\r\n" : "\n";
-  const lines = raw.split(/\r?\n/);
-  const finalNl = /\n$/.test(raw);
-  if (lines[lines.length - 1] === "") lines.pop();
+  // Each line keeps its own ending; a file may mix LF and CRLF.
+  const pieces = raw.split("\n");
+  const finalNl = pieces[pieces.length - 1] === "";
+  if (finalNl) pieces.pop();
+  const lines = pieces.map((p, i) => (p.endsWith("\r") && (i < pieces.length - 1 || finalNl) ? p.slice(0, -1) : p));
+  const eols = pieces.map((p, i) => (i === pieces.length - 1 && !finalNl ? "" : p.endsWith("\r") ? "\r\n" : "\n"));
+  const dominant = eols.find((e) => e) ?? "\n";
 
   let fence = "";
   let start = -1;
@@ -117,18 +122,28 @@ export async function addSubtask(
     if (isSubtaskSection(h[1])) start = i;
   }
 
+  // Insert new lines after index `after`; they take the ending of the line before them.
+  const insert = (after: number, add: string[], keepNoFinalNl: boolean) => {
+    const wasLast = after === lines.length - 1;
+    const eol = eols[after] || dominant;
+    if (eols[after] === "") eols[after] = eol; // the old last line now needs a terminator
+    lines.splice(after + 1, 0, ...add);
+    eols.splice(after + 1, 0, ...add.map(() => eol));
+    if (wasLast && !finalNl && keepNoFinalNl) eols[eols.length - 1] = "";
+  };
+
   let at: number;
   if (start < 0) {
-    if (lines.length && lines[lines.length - 1].trim()) lines.push("");
-    lines.push(HEADING, "", entry);
+    const tailBlank = lines.length && lines[lines.length - 1].trim();
+    insert(lines.length - 1, tailBlank ? ["", HEADING, "", entry] : [HEADING, "", entry], false);
     at = lines.length;
   } else {
     let last = end - 1;
     while (last > start && !lines[last].trim()) last--;
-    if (last === start) lines.splice(start + 1, 0, "", entry), (at = start + 3);
-    else lines.splice(last + 1, 0, entry), (at = last + 2);
+    if (last === start) (insert(start, ["", entry], true), (at = start + 3));
+    else (insert(last, [entry], true), (at = last + 2));
   }
-  await writeFile(task.path, lines.join(nl) + (finalNl || start < 0 ? nl : ""));
+  await writeFile(task.path, lines.map((l, i) => l + eols[i]).join(""));
   return { path: task.path, committed: await commitFile(task, clean, opts), line: at };
 }
 

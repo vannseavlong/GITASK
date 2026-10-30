@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, describeDeleteImpact, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
@@ -16,6 +16,7 @@ let log: vscode.OutputChannel | undefined;
 
 let panel: vscode.WebviewPanel | undefined;
 let idsAssigned = false;
+const queue = serialQueue(); // webview messages are handled one at a time so two quick writes never race on one file
 
 function tasksDir(): string | undefined {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -89,7 +90,9 @@ function openBoard(ctx: vscode.ExtensionContext): void {
   idsAssigned = false;
   panel.onDidDispose(() => (panel = undefined), undefined, ctx.subscriptions);
 
-  panel.webview.onDidReceiveMessage(async (raw: unknown) => {
+  panel.webview.onDidReceiveMessage((raw: unknown) => queue(() => onWebviewMessage(raw)), undefined, ctx.subscriptions);
+
+  async function onWebviewMessage(raw: unknown): Promise<void> {
     const dir = tasksDir();
     if (!dir) return;
     // Validate before anything touches the filesystem or git. Columns come from the folders on disk.
@@ -102,7 +105,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
     const v = validateMessage(raw, { tasksDir: dir, columns: board.columns.map((c) => c.id), views: VIEW_IDS });
     if (!v.ok) {
       log?.appendLine(`Rejected webview message: ${v.reason}`);
-      return;
+      return send({ type: "error", message: `Rejected: ${v.reason}` }); // visible in the UI, not a silent no-op
     }
     const m = v.message;
     const cfg = vscode.workspace.getConfiguration("gitask");
@@ -138,13 +141,15 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not move ${basename(m.path)}: ${(e as Error).message}`);
         }
         return post(); // always resync so the UI reflects what is on disk
+      case "deleteImpact": {
+        const impact = await deleteImpact(m.path, { commit: cfg.get<boolean>("autoCommit", true) });
+        return send({ type: "deleteImpact", path: m.path, impact, detail: describeDeleteImpact(impact) });
+      }
       case "deleteTask": {
         const name = basename(m.path, ".md");
         const commit = cfg.get<boolean>("autoCommit", true);
         const impact = await deleteImpact(m.path, { commit });
-        const detail = impact === "recoverable" ? "The file is removed and the removal is committed, so it can be restored from git history."
-          : impact === "loses-local-edits" ? "This file has uncommitted edits. They will be lost; only the last committed version stays in git history."
-          : "This file is not committed (untracked, or auto-commit is off). It will be permanently removed and cannot be restored.";
+        const detail = describeDeleteImpact(impact);
         const ok = await vscode.window.showWarningMessage(`Delete task "${name}"?`, { modal: true, detail }, "Delete");
         if (ok !== "Delete") return;
         try {
@@ -264,7 +269,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         return post();
       }
     }
-  }, undefined, ctx.subscriptions);
+  }
 
   const root = vscode.workspace.workspaceFolders?.[0];
   if (root) {

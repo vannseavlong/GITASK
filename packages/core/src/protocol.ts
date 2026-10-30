@@ -1,6 +1,7 @@
 // Pure message protocol between a UI host (VS Code webview or `gitask serve`) and its backend. No `vscode` import,
 // so node:test can run it. Every webview message goes through `validateMessage` before it
 // touches the filesystem or git.
+import type { DeleteImpact } from "./delete.ts";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 
 /** Messages the webview may send. */
@@ -18,8 +19,11 @@ export type WebviewMessage =
   | { type: "previewReport"; options: ReportRequest }
   | { type: "exportReport"; options: ReportRequest; format: ReportFormat }
   | { type: "setColumnColor"; column: string; color: string | null }
-  | { type: "deleteTask"; path: string }
-  | { type: "deleteColumn"; column: string }
+  /** Ask what deleting this task would cost (for a confirm dialog). The host answers with `deleteImpact`. */
+  | { type: "deleteImpact"; path: string }
+  /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` refuses a delete without it. */
+  | { type: "deleteTask"; path: string; confirmed?: true }
+  | { type: "deleteColumn"; column: string; confirmed?: true }
   | { type: "setOwner"; path: string; person: string | null }
   | { type: "addPerson"; name: string; path?: string }
   /** Dry run: ask what a GitHub sync would do. Never sends anything to GitHub. */
@@ -31,6 +35,7 @@ export type WebviewMessage =
 export type HostMessage =
   | { type: "board"; board: unknown }
   | { type: "taskBody"; path: string; text?: string; error?: string }
+  | { type: "deleteImpact"; path: string; impact: DeleteImpact; detail: string }
   | { type: "reportPreview"; html: string; error?: string }
   | { type: "reportExported"; ok: boolean; path?: string; error?: string }
   | { type: "githubPlanResult"; plan?: GithubPlanView; error?: string }
@@ -116,6 +121,8 @@ const MAX_SUBTASK_TEXT = 200;
 // Same charsets as core subtasks.ts (PERSON, LANE).
 const PERSON = /^[A-Za-z0-9_](?:[\w.-]*\w)?$/;
 const LANE = /^[A-Za-z][\w-]*$/;
+/** Checkbox syntax inside a sub-task would be read back as another sub-task. */
+export const CHECKBOX = /\[[ xX]\]/;
 
 function indexLine(raw: Record<string, unknown>): { index: number; line: number } | string {
   const i = raw.index;
@@ -189,6 +196,7 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (typeof raw.text !== "string") return fail("bad sub-task text");
       const text = raw.text.trim();
       if (!text || text.length > MAX_SUBTASK_TEXT || /[\r\n\0]/.test(text)) return fail("sub-task text must be one line of 1-200 characters");
+      if (CHECKBOX.test(text)) return fail("sub-task text must not contain [ ] or [x]");
       const message: Extract<WebviewMessage, { type: "addSubtask" }> = { type: "addSubtask", path, text };
       if (raw.assignee !== undefined) {
         if (typeof raw.assignee !== "string" || raw.assignee.length > 100 || !PERSON.test(raw.assignee)) return fail("bad assignee");
@@ -232,13 +240,20 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (typeof raw.color !== "string" || !/^#[0-9a-fA-F]{6}$/.test(raw.color)) return fail("colour must be #rrggbb");
       return { ok: true, message: { type: "setColumnColor", column: raw.column, color: raw.color } };
     }
+    case "deleteImpact": {
+      const path = taskPathInside(raw.path, ctx);
+      return path ? { ok: true, message: { type: "deleteImpact", path } } : fail("path is not a task file in the Tasks dir");
+    }
     case "deleteTask": {
       const path = taskPathInside(raw.path, ctx);
-      return path ? { ok: true, message: { type: "deleteTask", path } } : fail("path is not a task file in the Tasks dir");
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      if (raw.confirmed !== undefined && raw.confirmed !== true) return fail("confirmed must be true");
+      return { ok: true, message: raw.confirmed ? { type: "deleteTask", path, confirmed: true } : { type: "deleteTask", path } };
     }
     case "deleteColumn": {
       if (typeof raw.column !== "string" || !ctx.columns.includes(raw.column)) return fail("unknown column");
-      return { ok: true, message: { type: "deleteColumn", column: raw.column } };
+      if (raw.confirmed !== undefined && raw.confirmed !== true) return fail("confirmed must be true");
+      return { ok: true, message: raw.confirmed ? { type: "deleteColumn", column: raw.column, confirmed: true } : { type: "deleteColumn", column: raw.column } };
     }
     case "previewReport": {
       const r = validateReportRequest(raw.options);

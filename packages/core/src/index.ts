@@ -15,7 +15,7 @@ export { parseColors, colorOf, readColors, setColumnColor, isColor, CONFIG_FILE 
 export type { ColorOptions } from "./config.ts";
 export { assignIds, setIdField, nextDisplayId, formatDisplayId, DISPLAY_ID, ASSIGN_IDS_MESSAGE } from "./ids.ts";
 export type { AssignIdsOptions, AssignIdsResult } from "./ids.ts";
-export { deleteTask, deleteColumn, deleteImpact, DELETE_TASK_MESSAGE, DELETE_COLUMN_MESSAGE } from "./delete.ts";
+export { deleteTask, deleteColumn, deleteImpact, describeDeleteImpact, DELETE_TASK_MESSAGE, DELETE_COLUMN_MESSAGE } from "./delete.ts";
 export type { DeleteOptions, DeleteResult, DeleteImpact } from "./delete.ts";
 export { addPerson, listPeople, readPeople, parsePeople, syncPeople, setOwner, setOwnerField, personId, PEOPLE_MESSAGE, OWNER_MESSAGE } from "./people.ts";
 export type { Person, PeopleOptions, OwnerResult } from "./people.ts";
@@ -30,5 +30,7 @@ export { parseGithubConfig, readGithubConfig } from "./config.ts";
 export type { GithubConfig } from "./config.ts";
 export { planSync, applySync, setIssueField, parseIssueNumber, GithubError, ISSUE_MESSAGE } from "./github.ts";
 export type { SyncPlan, SyncIssuePlan, SyncSubPlan, SyncNotify, SyncOptions, ApplyOptions, SyncResult, GithubErrorKind } from "./github.ts";
+export { fillTemplate } from "./template.ts";
+export { serialQueue } from "./queue.ts";
 export * from "./protocol.ts";
 export { readTaskBody, MAX_TASK_BYTES } from "./taskfile.ts";
