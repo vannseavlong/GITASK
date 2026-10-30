@@ -8,6 +8,10 @@ export interface Subtask {
   line: number;
   /** 0-based offset of the checkbox character (the space or `x`) within that line. */
   col: number;
+  /** Person id from a trailing `@id` token (only under `## Sub-tasks`); not checked against the people list. */
+  assignee?: string;
+  /** Lane from a trailing `#lane` token (only under `## Sub-tasks`), e.g. `backend`. */
+  lane?: string;
 }
 
 export interface Progress {
@@ -33,7 +37,7 @@ export interface Task {
   claimedBy?: string;
   /** Every checkbox in the file, in file order. */
   subtasks: Subtask[];
-  /** Checkboxes under `## Done when` only; this is what a card shows. */
+  /** Checkboxes under `## Done when` and `## Sub-tasks`; this is what a card shows. */
   progress: Progress;
   /** `YYYY-MM-DD` from the optional `Due` field; undefined when missing or not a real date. */
   due?: string;

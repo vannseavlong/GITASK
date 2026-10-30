@@ -40,6 +40,33 @@ function unquote(raw: string): string {
   return v.replace(/\s+#.*$/, "").trim();
 }
 
+const SUBTASK_SECTION = /^sub-?tasks\b/i;
+const TOKEN_TAIL = /\s+([@#])([A-Za-z0-9_](?:[\w.-]*\w)?)$/;
+
+/**
+ * Split trailing `@person` / `#lane` tokens off a sub-task text. Only a run of tokens at the very end counts;
+ * an `@name` or `#12` elsewhere stays text. Lanes must start with a letter (`#12` is an issue number, not a lane).
+ * The ids are returned as written; whether a person exists is for the caller to check.
+ */
+export function splitTokens(raw: string): { text: string; assignee?: string; lane?: string } {
+  let text = raw.trim();
+  let assignee: string | undefined;
+  let lane: string | undefined;
+  for (;;) {
+    const m = TOKEN_TAIL.exec(text);
+    if (!m || (m[1] === "#" && !/^[A-Za-z]/.test(m[2]))) break;
+    const rest = text.slice(0, m.index).trimEnd();
+    if (!rest) break; // keep a text that is only tokens
+    if (m[1] === "@") assignee = m[2];
+    else lane = m[2];
+    text = rest;
+  }
+  return { text, assignee, lane };
+}
+
+/** True for the `## Sub-tasks` section title. */
+export const isSubtaskSection = (section: string): boolean => SUBTASK_SECTION.test(section);
+
 /** Checkbox lines, grouped by `##` section. Code fences are skipped; a line may hold several (gate rows). */
 export function parseSubtasks(content: string): Subtask[] {
   const out: Subtask[] = [];
@@ -63,20 +90,25 @@ export function parseSubtasks(content: string): Subtask[] {
     const hits = [...line.matchAll(CHECKBOX)];
     hits.forEach((m, n) => {
       const end = hits[n + 1]?.index ?? line.length;
-      out.push({
+      const raw = line.slice(m.index! + m[0].length, end).trim();
+      const split = hits.length === 1 && isSubtaskSection(section) ? splitTokens(raw) : { text: raw };
+      const sub: Subtask = {
         section,
-        text: line.slice(m.index! + m[0].length, end).trim(),
+        text: split.text,
         checked: m[1] !== " ",
         line: i + 1,
         col: m.index! + m[0].indexOf("[") + 1,
-      });
+      };
+      if ("assignee" in split && split.assignee) sub.assignee = split.assignee;
+      if ("lane" in split && split.lane) sub.lane = split.lane;
+      out.push(sub);
     });
   });
   return out;
 }
 
 export function progressOf(subtasks: Subtask[]): Progress {
-  const items = subtasks.filter((s) => /^done when\b/i.test(s.section));
+  const items = subtasks.filter((s) => /^done when\b/i.test(s.section) || isSubtaskSection(s.section));
   return { done: items.filter((s) => s.checked).length, total: items.length };
 }
 
