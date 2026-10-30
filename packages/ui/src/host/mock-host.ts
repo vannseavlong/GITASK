@@ -40,6 +40,8 @@ export const FIXTURE: BoardData = {
 const BODY = (t: { title: string; subtasks: { text: string; checked: boolean }[] }) =>
   `# ${t.title}\n\n## Goal\nShow **who** works on the repo. See [docs](https://example.com/docs) and [bad](javascript:alert(1)).\n\n<script>alert(1)</script>\n\n## Done when\n${t.subtasks.map((s) => `- [${s.checked ? "x" : " "}] ${s.text}`).join("\n")}\n`;
 
+const REPORT_FIXTURE = (from: string, to: string) => `<!doctype html><html><head><meta charset="utf-8"><title>Report</title><style>body{font:14px sans-serif;margin:16px}th,td{padding:4px 8px;text-align:left}</style></head><body><h1>Done report</h1><p>${from || "start"} to ${to || "end"}</p><table><tr><th>Person</th><th>Tasks</th></tr><tr><td>samlee</td><td>3</td></tr><tr><td>ann</td><td>1</td></tr></table></body></html>`;
+
 export function createMockHost(): Host {
   const board: BoardData = structuredClone(FIXTURE);
   const subs = new Set<(b: BoardData) => void>();
@@ -55,6 +57,8 @@ export function createMockHost(): Host {
         const t = find(m.path);
         for (const cb of msgSubs) cb(t ? { type: "taskBody", path: m.path, text: BODY(t) } : { type: "taskBody", path: m.path, error: "not found" });
       }
+      if (m.type === "previewReport") { const r = m.options; for (const cb of msgSubs) cb({ type: "reportPreview", html: REPORT_FIXTURE(r.from, r.to) }); }
+      if (m.type === "exportReport") for (const cb of msgSubs) cb({ type: "reportExported", ok: true, path: `gitask-report-${m.options.from}_${m.options.to}.${m.format}` });
       if (m.type === "toggleSubtask") { const st = find(m.path)?.subtasks[m.index]; if (st) { st.checked = !st.checked; emit(); } }
       if (m.type === "addSubtask") {
         const t = find(m.path);

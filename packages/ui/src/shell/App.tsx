@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { BoardData, Host, UiState } from "@/host/index.ts";
@@ -6,6 +7,7 @@ import { DEFAULT_VIEW, VIEWS } from "@/views/registry.tsx";
 import { SV, derive } from "./logic.ts";
 import { FilterBar } from "./filter-bar.tsx";
 import { StatusBar } from "./status-bar.tsx";
+import { ExportDialog } from "@/components/export-dialog.tsx";
 import { DetailPanel } from "@/detail/detail-panel.tsx";
 
 export function App({ host, initialView }: { host: Host; initialView: string }) {
@@ -31,6 +33,7 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
 
   const [detailPath, setDetailPath] = React.useState<string | null>(null);
   const closeDetail = React.useCallback(() => setDetailPath(null), []);
+  const [exportOpen, setExportOpen] = React.useState(false);
   const d = React.useMemo(() => derive(raw, ui), [raw, ui]);
 
   return (
@@ -44,7 +47,7 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
             {VIEWS.map((v) => <TabsTrigger key={v.id} value={v.id}>{v.label}</TabsTrigger>)}
           </TabsList>
           {error && <div role="alert" className="shrink-0 px-3 pt-1 text-destructive">{error}</div>}
-          <FilterBar ui={ui} range={d.range} board={d.visible} onChange={update} />
+          <FilterBar ui={ui} range={d.range} board={d.visible} onChange={update} extra={<Button variant="outline" size="sm" className="ml-auto" onClick={() => setExportOpen(true)}>Export</Button>} />
           <StatusBar raw={raw} ui={ui} onChange={update} />
           {raw && d.shown && d.visible ? (SV.summary(raw, ui.hiddenStatuses).allHidden ? null : (
             VIEWS.map((v) => (
@@ -56,6 +59,7 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
             <div className="p-6 text-muted-foreground" role="status">{error ? "" : "Loading…"}</div>
           )}
         </Tabs>
+        <ExportDialog host={host} board={raw} ui={ui} open={exportOpen} onOpenChange={setExportOpen} />
         <DetailPanel host={host} board={raw} path={detailPath} onOpenTask={setDetailPath} onClose={closeDetail} />
       </div>
     </TooltipProvider>
