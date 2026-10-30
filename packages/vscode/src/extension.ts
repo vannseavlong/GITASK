@@ -92,7 +92,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
     enableScripts: true,
     localResourceRoots: [vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui")],
   });
-  panel.iconPath = { light: vscode.Uri.joinPath(ctx.extensionUri, "media", "tab-light.svg"), dark: vscode.Uri.joinPath(ctx.extensionUri, "media", "tab-dark.svg") };
+  panel.iconPath = vscode.Uri.joinPath(ctx.extensionUri, "media", "icon.svg"); // coloured, with its own outline: reads on light and dark tabs
   const wv = panel.webview;
   const asset = (name: string) => wv.asWebviewUri(vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui", name)).toString();
   wv.html = uiHtml(VIEW_IDS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });

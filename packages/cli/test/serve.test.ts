@@ -168,3 +168,23 @@ test("report download: needs the token, validates the request, never leaks an em
   const wrongType = await call(s, "POST", "/api/report", { headers: h, body: '{"type":"ready"}' });
   assert.equal(wrongType.status, 400);
 });
+
+test("favicon: public, right content types, fixed map, CSP unchanged", async () => {
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+  const s = await boot(workspace().tasks, { assets: { js: "1", css: "a{}", icon: { svg: "<svg/>", png } } });
+  const html = await call(s, "GET", "/", { token: null });
+  assert.match(html.body, /rel="icon"[^>]*href="\/favicon\.svg"/);
+  assert.match(String(html.headers["content-security-policy"]), /img-src 'self' data:/);
+  const svg = await call(s, "GET", "/favicon.svg", { token: null });
+  assert.equal(svg.status, 200);
+  assert.equal(svg.headers["content-type"], "image/svg+xml; charset=utf-8");
+  assert.equal(svg.body, "<svg/>");
+  const p = await call(s, "GET", "/favicon.png", { token: null });
+  assert.equal(p.status, 200);
+  assert.equal(p.headers["content-type"], "image/png");
+  assert.equal((await call(s, "GET", "/api/board", { token: null })).status, 401); // only the icon is public
+  for (const q of ["/favicon.svg/../../package.json", "/%2e%2e/favicon.svg/x", "/favicon.svgx", "/favicon.png/x"]) {
+    const r = await call(s, "GET", q, { token: null });
+    assert.ok(r.status === 404 || r.status === 401, `${q} -> ${r.status}`);
+  }
+});

@@ -20,6 +20,8 @@ export function hostWarning(host: string): string | undefined {
 export interface UiAssets {
   js: string;
   css: string;
+  /** Favicon: SVG text and a PNG fallback. Optional so a bare `{js, css}` still serves. */
+  icon?: { svg: string; png: Buffer };
 }
 
 export interface ServeOptions {
@@ -71,7 +73,7 @@ function allowedHosts(host: string, port: number): Set<string> {
 function indexHtml(nonce: string): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GITASK</title>
-<link rel="stylesheet" href="/ui.css"></head>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" href="/favicon.png"><link rel="stylesheet" href="/ui.css"></head>
 <body><div id="root" data-nonce="${nonce}" data-initial-view="board"></div>
 <script type="module" nonce="${nonce}" src="/ui.js"></script></body></html>`;
 }
@@ -159,6 +161,9 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
       }
       if (path === "/ui.js") { res.writeHead(200, { ...baseHeaders, "Content-Type": "text/javascript; charset=utf-8" }); return void res.end(o.assets.js); }
       if (path === "/ui.css") { res.writeHead(200, { ...baseHeaders, "Content-Type": "text/css; charset=utf-8" }); return void res.end(o.assets.css); }
+      // The icon is public (no token): browsers fetch it without credentials, and it holds nothing private.
+      if (o.assets.icon && path === "/favicon.svg") { res.writeHead(200, { ...baseHeaders, "Content-Type": "image/svg+xml; charset=utf-8" }); return void res.end(o.assets.icon.svg); }
+      if (o.assets.icon && (path === "/favicon.png" || path === "/favicon.ico")) { res.writeHead(200, { ...baseHeaders, "Content-Type": "image/png" }); return void res.end(o.assets.icon.png); }
       return json(res, 404, { error: "not found" });
     }
 

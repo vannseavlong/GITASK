@@ -37,7 +37,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm --filter gitask-ui run build && esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --loader:.js=text --loader:.css=text --outfile=dist/gitask.js --banner:js=\"#!/usr/bin/env node\"",
+    "build": "pnpm --filter gitask-ui run build && esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --loader:.js=text --loader:.css=text --loader:.svg=text --loader:.png=dataurl --outfile=dist/gitask.js --banner:js=\"#!/usr/bin/env node\"",
     "prepack": "pnpm run build"
   },
   "devDependencies": {
