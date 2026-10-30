@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
 import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
-import { webviewHtml } from "./html.ts";
+import { uiHtml, webviewHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
 import { DEFAULT_VIEW, VIEWS } from "./views/registry.ts";
@@ -66,11 +66,20 @@ async function initTasksFolder(ctx: vscode.ExtensionContext): Promise<void> {
   await post();
 }
 
-function openBoard(ctx: vscode.ExtensionContext): void {
+/** The React UI (packages/ui, built into dist/ui). `classic` opens the old string-built page instead. */
+function openBoard(ctx: vscode.ExtensionContext, classic = false): void {
   if (panel) return panel.reveal();
-  panel = vscode.window.createWebviewPanel("gitask", "GITASK", vscode.ViewColumn.Active, { enableScripts: true });
+  const initialView = ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW);
+  panel = vscode.window.createWebviewPanel("gitask", classic ? "GITASK (classic)" : "GITASK", vscode.ViewColumn.Active, {
+    enableScripts: true,
+    localResourceRoots: [vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui")],
+  });
   panel.iconPath = { light: vscode.Uri.joinPath(ctx.extensionUri, "media", "tab-light.svg"), dark: vscode.Uri.joinPath(ctx.extensionUri, "media", "tab-dark.svg") };
-  panel.webview.html = webviewHtml(VIEWS, { initialView: ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW) });
+  const wv = panel.webview;
+  const asset = (name: string) => wv.asWebviewUri(vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui", name)).toString();
+  wv.html = classic
+    ? webviewHtml(VIEWS, { initialView })
+    : uiHtml(VIEWS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });
   idsAssigned = false;
   panel.onDidDispose(() => (panel = undefined), undefined, ctx.subscriptions);
 
@@ -188,6 +197,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
   ctx.subscriptions.push(log);
   ctx.subscriptions.push(
     vscode.commands.registerCommand("gitask.openBoard", () => openBoard(ctx)),
+    vscode.commands.registerCommand("gitask.openClassicBoard", () => openBoard(ctx, true)),
     vscode.commands.registerCommand("gitask.newTask", () => newTask()),
     vscode.commands.registerCommand("gitask.initTasks", () => initTasksFolder(ctx)),
   );
