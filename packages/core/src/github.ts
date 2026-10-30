@@ -15,7 +15,13 @@ import type { Board, Task } from "./types.ts";
  */
 
 export const ISSUE_MESSAGE = "task({id}): link GitHub issue #{n}";
-export const MARKER = (id: string): string => `<!-- gitask:${id} -->`;
+/** The id comes from a file name: keep it to harmless characters so it cannot close the comment (`-->`) or inject HTML. */
+export const MARKER = (id: string): string => `<!-- gitask:${id.replace(/[^\w.-]/g, "_")} -->`;
+
+/** Path for a Markdown link target: every segment percent-encoded, including the characters `encodeURIComponent` leaves (`()!'*`). */
+const hrefPath = (rel: string): string => rel.split("/").map((s) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)).join("/");
+/** Link text from a file name: no backtick, bracket, paren, `@`, `<` or `|`, so it cannot end the span or ping anyone. */
+const labelOf = (rel: string): string => rel.replace(/[^\w ./-]/g, "_");
 const DEFAULT_BASE = "https://api.github.com";
 const LOGIN_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const DONE_COLUMN = /^\d+-(done|deploy)\b/i;
@@ -200,7 +206,7 @@ export function planSync(board: Board, config: GithubConfig, people: Person[], o
       taskId: t.id,
       path: t.path,
       title: t.title,
-      body: `Tracked in GITASK: [\`${rel}\`](https://github.com/${config.repo}/blob/HEAD/${rel})\n\n${MARKER(t.id)}`,
+      body: `Tracked in GITASK: [${labelOf(rel)}](https://github.com/${config.repo}/blob/HEAD/${hrefPath(rel)})\n\n${MARKER(t.id)}`,
       state: closed ? "closed" : "open",
       assignees,
       action: linked === undefined ? "create" : "update",
