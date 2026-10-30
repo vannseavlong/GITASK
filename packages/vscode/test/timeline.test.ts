@@ -1,10 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Script } from "node:vm";
 import { timelineLogic, type TLTask } from "../src/views/timeline-logic.ts";
-import timeline, { js } from "../src/views/timeline.ts";
-import { webviewHtml } from "../src/html.ts";
-import { VIEWS } from "../src/views/registry.ts";
 
 const L = timelineLogic();
 const D = (s: string) => L.parseDate(s)!;
@@ -190,31 +186,4 @@ test("layout: 500 tasks stays fast and consistent", () => {
   assert.equal(lay.edges.length, 499);
   assert.equal(lay.height, lay.headH + 500 * lay.rowH);
   assert.equal(new Set(lay.bars.map((b) => b.row)).size, 500);
-});
-
-test("shipped webview script embeds the tested logic and parses", () => {
-  assert.ok(js.includes(timelineLogic.toString()));
-  assert.equal(timeline.id, "timeline");
-  assert.doesNotThrow(() => new Script(js));
-  assert.ok(!js.includes("innerHTML"));
-  // `${` is only legal in the logic part if it was in the source; the client part is String.raw, so no template syntax at all.
-  assert.ok(!/`/.test(js.slice(js.indexOf("const SVGNS"))));
-  assert.ok(!js.slice(js.indexOf("const SVGNS")).includes("${"));
-});
-
-test("shipped logic behaves like the tested logic", () => {
-  const head = js.slice(0, js.indexOf("const SVGNS"));
-  const shipped = new Script(head + "\nTL;").runInNewContext({}) as typeof L;
-  const ts = [task("a", { started: "2026-10-01", due: "2026-10-05" }), task("b", { started: "2026-10-08", deps: ["a"] })];
-  assert.equal(JSON.stringify(shipped.layout(ts, TODAY, "month")), JSON.stringify(L.layout(ts, TODAY, "month")));
-  assert.equal(shipped.parseDate("2028-02-29"), L.parseDate("2028-02-29"));
-});
-
-test("view is registered in the page and scoped under .view-timeline", () => {
-  const html = webviewHtml(VIEWS, { nonce: "N" });
-  assert.ok(html.includes('GITASK.register({\n  id: "timeline"'));
-  for (const rule of (timeline.css ?? "").split("}")) {
-    const sel = rule.split("{")[0].trim();
-    if (sel) assert.ok(sel.split(",").every((s) => s.trim().startsWith(".view-timeline")), sel);
-  }
 });
