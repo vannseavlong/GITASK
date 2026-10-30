@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GITASK</title>
+    <script>(function(){try{var s={};try{s=JSON.parse(localStorage.getItem("gitask.theme"))||{}}catch(e){}var r=document.documentElement,m=s.mode,H=/^#[0-9a-fA-F]{6}$/;if(m!=="light"&&m!=="dark")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";r.setAttribute("data-theme",m);r.classList.toggle("dark",m==="dark");r.style.setProperty("color-scheme",m);var t=s.tokens||{},V={primary:["--primary","--ring","--progress"],accent:["--accent"],background:["--background"],card:["--card","--popover"],border:["--border","--input-border"]};for(var k in V)if(Object.prototype.hasOwnProperty.call(t,k)&&H.test(t[k]))for(var i=0;i<V[k].length;i++)r.style.setProperty(V[k][i],t[k]);}catch(e){}})();</script>
   </head>
   <body>
     <div id="root" data-initial-view="board"></div>

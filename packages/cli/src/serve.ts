@@ -68,10 +68,17 @@ function allowedHosts(host: string, port: number): Set<string> {
   return new Set([...names].map((n) => `${n}:${port}`));
 }
 
+/**
+ * Applies the saved browser theme before first paint (no flash). Inline, so it carries the page nonce.
+ * Mirrors packages/ui/src/theme/logic.ts: same storage key, same #rrggbb check, only setProperty. The primary
+ * foreground and radius are applied by the UI once it loads; the token sets live in index.css.
+ */
+export const THEME_INIT = '(function(){try{var s={};try{s=JSON.parse(localStorage.getItem("gitask.theme"))||{}}catch(e){}var r=document.documentElement,m=s.mode,H=/^#[0-9a-fA-F]{6}$/;if(m!=="light"&&m!=="dark")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";r.setAttribute("data-theme",m);r.classList.toggle("dark",m==="dark");r.style.setProperty("color-scheme",m);var t=s.tokens||{},V={primary:["--primary","--ring","--progress"],accent:["--accent"],background:["--background"],card:["--card","--popover"],border:["--border","--input-border"]};for(var k in V)if(Object.prototype.hasOwnProperty.call(t,k)&&H.test(t[k]))for(var i=0;i<V[k].length;i++)r.style.setProperty(V[k][i],t[k]);}catch(e){}})();';
+
 function indexHtml(nonce: string): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GITASK</title>
-<link rel="stylesheet" href="/ui.css"></head>
+<link rel="stylesheet" href="/ui.css"><script nonce="${nonce}">${THEME_INIT}</script></head>
 <body><div id="root" data-nonce="${nonce}" data-initial-view="board"></div>
 <script type="module" nonce="${nonce}" src="/ui.js"></script></body></html>`;
 }
