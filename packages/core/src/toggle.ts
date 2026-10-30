@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 import { parseSubtasks } from "./parse.ts";
 import type { Subtask, Task } from "./types.ts";
 
@@ -44,10 +45,11 @@ export async function toggleSubtask(task: Task, index: number, opts: ToggleOptio
   const cwd = dirname(task.path);
   const root = await repoRoot(cwd);
   if (root && opts.commit !== false && (await isTracked(cwd, task.path))) {
-    const msg = (opts.message ?? TOGGLE_MESSAGE)
-      .replaceAll("{id}", basename(task.path, ".md"))
-      .replaceAll("{state}", checked ? "checked" : "unchecked")
-      .replaceAll("{text}", `"${sub.text.length > 60 ? `${sub.text.slice(0, 57)}...` : sub.text}"`);
+    const msg = fillTemplate(opts.message ?? TOGGLE_MESSAGE, {
+      id: basename(task.path, ".md"),
+      state: checked ? "checked" : "unchecked",
+      text: `"${sub.text.length > 60 ? `${sub.text.slice(0, 57)}...` : sub.text}"`,
+    });
     await gitAdd(root, task.path);
     await gitCommitPaths(root, msg, task.path);
     committed = true;

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 
 export const CONFIG_FILE = "gitask.json";
 export const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
@@ -77,7 +78,7 @@ export async function setColumnColor(dir: string, column: string, color: string 
   const root = await repoRoot(dir);
   if (root && opts.commit !== false && (await isTracked(dir, file))) {
     await gitAdd(root, file);
-    await gitCommitPaths(root, COLOR_MESSAGE.replace("{column}", column), file);
+    await gitCommitPaths(root, fillTemplate(COLOR_MESSAGE, { column }), file);
     return { committed: true };
   }
   return { committed: false };

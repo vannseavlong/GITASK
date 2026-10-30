@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, sep } from "node:path";
 import type { GithubConfig } from "./config.ts";
 import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 import { isSubtaskSection } from "./parse.ts";
 import type { Person } from "./people.ts";
 import type { Board, Task } from "./types.ts";
@@ -53,7 +54,7 @@ export function setIssueField(content: string, n: number): string {
   const stop = headerEnd < 0 ? lines.length : headerEnd;
   const existing = lines.findIndex((l, k) => k >= i && k < stop && ISSUE_LINE.test(l));
   if (existing >= 0) {
-    lines[existing] = lines[existing].replace(ISSUE_LINE, `$1 #${n}`);
+    lines[existing] = lines[existing].replace(ISSUE_LINE, (_m, head: string) => `${head} #${n}`);
     return lines.join(eol);
   }
   const line = `- **Issue:** #${n}`;
@@ -382,7 +383,7 @@ export async function applySync(plan: SyncPlan, token: string, opts: ApplyOption
           const root = await repoRoot(cwd);
           if (!root) continue;
           await gitAdd(root, f.path);
-          await gitCommitPaths(root, ISSUE_MESSAGE.replace("{id}", f.taskId).replace("{n}", String(f.n)), f.path);
+          await gitCommitPaths(root, fillTemplate(ISSUE_MESSAGE, { id: f.taskId, n: String(f.n) }), f.path);
           result.committed = true;
         }
       } catch {

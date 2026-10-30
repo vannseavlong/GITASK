@@ -4,6 +4,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { CONFIG_FILE } from "./config.ts";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 import type { Task } from "./types.ts";
 
 const run = promisify(execFile);
@@ -169,7 +170,7 @@ export function setOwnerField(content: string, owner: string): string {
   const value = owner.replace(/\s+/g, " ").trim();
   const existing = lines.findIndex((l, n) => n >= i && n < stop && OWNER_LINE.test(l));
   if (existing >= 0) {
-    lines[existing] = lines[existing].replace(OWNER_LINE, value ? `$1 ${value}` : "$1");
+    lines[existing] = lines[existing].replace(OWNER_LINE, (_m, head: string) => (value ? `${head} ${value}` : head));
     return lines.join(eol);
   }
   if (!value) return content;
@@ -213,7 +214,7 @@ export async function setOwner(task: Task, personId: string | null, opts: People
   const root = await repoRoot(cwd);
   if (root && opts.commit !== false && (await isTracked(cwd, task.path))) {
     await gitAdd(root, task.path);
-    await gitCommitPaths(root, OWNER_MESSAGE.replace("{id}", task.id).replace("{owner}", owner || "none"), task.path);
+    await gitCommitPaths(root, fillTemplate(OWNER_MESSAGE, { id: task.id, owner: owner || "none" }), task.path);
     committed = true;
   }
   return { path: task.path, owner, committed };

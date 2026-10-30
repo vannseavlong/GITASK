@@ -39,7 +39,7 @@ export function setIdField(content: string, id: string): string {
   const existing = lines.findIndex((l, n) => n >= i && n < stop && ID_LINE.test(l));
   if (existing >= 0) {
     if (!/\*\*ID:\*\*\s*T-\d+\s*$/i.test(lines[existing]) && /\*\*ID:\*\*\s*[^\s<]/.test(lines[existing])) return content; // user's own ID (e.g. JIRA-123)
-    lines[existing] = lines[existing].replace(ID_LINE, `$1 ${id}`);
+    lines[existing] = lines[existing].replace(ID_LINE, (_m, head: string) => `${head} ${id}`);
     return lines.join(eol);
   }
   const line = `- **ID:** ${id}`;

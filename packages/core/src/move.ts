@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { columnLabel } from "./board.ts";
 import { gitAdd, gitCommitPaths, gitMv, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 
 export interface MoveOptions {
   /** Commit the move (default true). Ignored when the task is not in a git repo. */
@@ -56,10 +57,7 @@ export async function moveTask(
   let committed = false;
   if (useGit && opts.commit !== false) {
     await gitAdd(root!, to);
-    const msg = (opts.message ?? DEFAULT_MESSAGE)
-      .replaceAll("{id}", id)
-      .replaceAll("{from}", columnLabel(fromColumn))
-      .replaceAll("{to}", columnLabel(toColumn));
+    const msg = fillTemplate(opts.message ?? DEFAULT_MESSAGE, { id, from: columnLabel(fromColumn), to: columnLabel(toColumn) });
     await gitCommitPaths(root!, msg, from, to);
     committed = true;
   }

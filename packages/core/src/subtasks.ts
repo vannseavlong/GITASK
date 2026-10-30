@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { fillTemplate } from "./template.ts";
 import { isSubtaskSection, parseSubtasks, splitTokens } from "./parse.ts";
 import type { Task } from "./types.ts";
 
@@ -35,7 +36,7 @@ async function commitFile(task: Task, text: string, opts: SubtaskOptions): Promi
   const root = await repoRoot(cwd);
   if (!root || opts.commit === false || !(await isTracked(cwd, task.path))) return false;
   const short = text.length > 60 ? `${text.slice(0, 57)}...` : text;
-  const msg = (opts.message ?? SUBTASK_MESSAGE).replaceAll("{id}", basename(task.path, ".md")).replaceAll("{text}", `"${short}"`);
+  const msg = fillTemplate(opts.message ?? SUBTASK_MESSAGE, { id: basename(task.path, ".md"), text: `"${short}"` });
   await gitAdd(root, task.path);
   await gitCommitPaths(root, msg, task.path);
   return true;

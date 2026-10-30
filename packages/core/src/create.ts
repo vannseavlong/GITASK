@@ -45,10 +45,10 @@ export async function createTask(
   let body: string;
   try {
     body = (await readFile(join(tasksDir, "_TEMPLATE.md"), "utf8"))
-      .replace(/^#\s+.*$/m, `# ${id}`)
-      .replaceAll("{{OWNER}}", owner)
-      .replace(/^(\s*[-*]\s+\*\*Owner:\*\*\s*).*$/m, `$1${owner}`)
-      .replace(/^(\s*[-*]\s+\*\*Started \/ updated:\*\*\s*).*$/m, `$1${date} / ${date}`);
+      .replace(/^#\s+.*$/m, () => `# ${id}`)
+      .replaceAll("{{OWNER}}", () => owner)
+      .replace(/^(\s*[-*]\s+\*\*Owner:\*\*\s*).*$/m, (_m, head: string) => `${head}${owner}`)
+      .replace(/^(\s*[-*]\s+\*\*Started \/ updated:\*\*\s*).*$/m, (_m, head: string) => `${head}${date} / ${date}`);
   } catch {
     body = FALLBACK(id, owner, date);
   }
