@@ -26,3 +26,7 @@ export type { Report, ReportOptions, ReportTask, ReportSubtask, ReportSummary, P
 export { renderHtml, renderMarkdown, renderCsv, escapeHtml, escapeMd, csvCell, CSV_HEADER } from "./report-render.ts";
 export { fileHistory } from "./git.ts";
 export type { FileChange } from "./git.ts";
+export { parseGithubConfig, readGithubConfig } from "./config.ts";
+export type { GithubConfig } from "./config.ts";
+export { planSync, applySync, setIssueField, parseIssueNumber, GithubError, ISSUE_MESSAGE } from "./github.ts";
+export type { SyncPlan, SyncIssuePlan, SyncSubPlan, SyncNotify, SyncOptions, ApplyOptions, SyncResult, GithubErrorKind } from "./github.ts";

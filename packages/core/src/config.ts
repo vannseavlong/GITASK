@@ -82,3 +82,36 @@ export async function setColumnColor(dir: string, column: string, color: string 
   }
   return { committed: false };
 }
+
+/** Opt-in GitHub link: `github: { repo: "owner/name", project?: number }` in `Tasks/gitask.json`. */
+export interface GithubConfig {
+  repo: string;
+  /** Projects v2 number (the number in the project URL). */
+  project?: number;
+}
+
+const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+
+/** Parse the `github` block. Missing or malformed input yields `undefined` (then no GitHub call is ever made). */
+export function parseGithubConfig(text: string): GithubConfig | undefined {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+  const g = isRecord(json) ? json.github : undefined;
+  if (!isRecord(g) || typeof g.repo !== "string" || !REPO_RE.test(g.repo.trim())) return undefined;
+  const out: GithubConfig = { repo: g.repo.trim() };
+  if (typeof g.project === "number" && Number.isInteger(g.project) && g.project > 0) out.project = g.project;
+  return out;
+}
+
+/** The `github` block of `<dir>/gitask.json`; `undefined` when absent or malformed. */
+export async function readGithubConfig(dir: string): Promise<GithubConfig | undefined> {
+  try {
+    return parseGithubConfig(await readFile(join(dir, CONFIG_FILE), "utf8"));
+  } catch {
+    return undefined;
+  }
+}
