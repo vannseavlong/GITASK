@@ -193,3 +193,13 @@ test("editSubtask and deleteSubtask validate index, line, text, assignee, lane a
     assert.equal(validateMessage({ type: "deleteSubtask", path: ok, index: 0, line: 3, ...bad }, ctx).ok, false, JSON.stringify(bad));
   }
 });
+
+test("editTask rejects checkbox syntax in title and claimed by", () => {
+  const ctx = { tasksDir: "/t/Tasks", columns: ["1-backlog"], views: ["board"] };
+  const path = "/t/Tasks/1-backlog/A.md";
+  for (const patch of [{ title: "- [ ] sneaky" }, { claimedBy: "me - [x] too" }]) {
+    const r = validateMessage({ type: "editTask", path, patch }, ctx);
+    assert.equal(r.ok, false);
+  }
+  assert.equal(validateMessage({ type: "editTask", path, patch: { title: "Fix [x] in docs" } }, ctx).ok, true);
+});

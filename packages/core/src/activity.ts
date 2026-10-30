@@ -33,7 +33,7 @@ export async function taskActivity(dir: string, opts: ActivityOptions = {}): Pro
     const { stdout } = await run(
       "git",
       ["-c", "core.quotepath=false", "log", `--since=${days} days ago`, `--max-count=${max}`, "--name-only", "--relative", `--pretty=format:${MARK}%cs`, "--", "."],
-      { cwd: dir, env: { ...process.env, GIT_LITERAL_PATHSPECS: "1" }, maxBuffer: MAX_BUFFER },
+      { cwd: dir, env: { ...process.env, GIT_LITERAL_PATHSPECS: "1" }, maxBuffer: MAX_BUFFER, timeout: 15_000 },
     );
     const counts = new Map<string, number>();
     let date = "";
@@ -80,6 +80,6 @@ export async function taskActivityCached(dir: string, opts: ActivityOptions = {}
   const hit = cache.get(dir);
   if (hit && hit.key === key) return hit.value;
   const value = await taskActivity(dir, opts);
-  cache.set(dir, { key, value });
+  if (value.length > 0) cache.set(dir, { key, value }); // an empty result may be a failure (timeout, huge output): retry next time
   return value;
 }

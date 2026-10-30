@@ -149,3 +149,25 @@ test("deleteSubtask refuses a line that holds several checkboxes", async () => {
   const r = repo("# T\n\n## Gates\n- [ ] G1  - [x] G2\n");
   await assert.rejects(deleteSubtask(r.task(), 0), /several checkboxes/);
 });
+
+test("review fixes: multi-checkbox lines, non-sub-task checkboxes and checkbox syntax in header values", async () => {
+  const multi = repo(BODY.replace("- [ ] Last one", "- [ ] a - [ ] b"));
+  const t = multi.task();
+  const idx = t.subtasks.findIndex((s) => s.text.startsWith("a"));
+  await assert.rejects(editSubtask(t, idx, { text: "new" }, { commit: false }), /several checkboxes/);
+  await assert.rejects(deleteSubtask(t, idx, { commit: false }), /several checkboxes/);
+  assert.match(readFileSync(multi.path, "utf8"), /- \[ \] a - \[ \] b/);
+
+  // a checkbox outside `## Sub-tasks` (Done when, gate rows) is not deletable as a sub-task
+  const done = repo(BODY + "\n## Done when\n- [ ] Ship it\n");
+  const dt = done.task();
+  const di = dt.subtasks.findIndex((s) => s.text === "Ship it");
+  await assert.rejects(deleteSubtask(dt, di, { commit: false }), /not under/);
+  assert.match(readFileSync(done.path, "utf8"), /- \[ \] Ship it/);
+
+  // header values that look like a checkbox line would become phantom sub-tasks
+  const hdr = repo();
+  await assert.rejects(updateTask(hdr.task(), { claimedBy: "x - [ ] y" }, { commit: false }), /checkbox syntax/);
+  await assert.rejects(updateTask(hdr.task(), { title: "- [x] sneaky" }, { commit: false }), /checkbox syntax/);
+  assert.doesNotMatch(readFileSync(hdr.path, "utf8"), /sneaky|x - \[ \]/);
+});

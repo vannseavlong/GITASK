@@ -54,6 +54,7 @@ async function retoken(task: Task, index: number, change: { assignee?: string | 
   if (!now || now.text !== sub.text || now.checked !== sub.checked || now.assignee !== sub.assignee || now.lane !== sub.lane) {
     throw new Error(`${task.id} changed since it was read; reload and try again`);
   }
+  if (parseSubtasks(raw).filter((s) => s.line === sub.line).length > 1) throw new Error("This line holds several checkboxes; edit the file to change it");
   const lines = raw.split("\n");
   const cr = lines[sub.line - 1].endsWith("\r") ? "\r" : "";
   const body = lines[sub.line - 1].slice(0, lines[sub.line - 1].length - cr.length);
@@ -109,6 +110,7 @@ export async function deleteSubtask(task: Task, index: number, opts: SubtaskOpti
   const now = all.find((s) => s.line === sub.line && s.col === sub.col);
   if (!now || now.text !== sub.text || now.checked !== sub.checked) throw new Error(`${task.id} changed since it was read; reload and try again`);
   if (all.filter((s) => s.line === sub.line).length > 1) throw new Error("This line holds several checkboxes; edit the file to remove it");
+  if (!isSubtaskSection(sub.section)) throw new Error(`Sub-task ${index} of ${task.id} is not under "${HEADING}"`);
   const lines = raw.split("\n");
   lines.splice(sub.line - 1, 1);
   await writeFile(task.path, lines.join("\n"));

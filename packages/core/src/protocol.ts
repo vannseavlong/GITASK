@@ -151,6 +151,8 @@ const PERSON = /^[A-Za-z0-9_](?:[\w.-]*\w)?$/;
 const LANE = /^[A-Za-z][\w-]*$/;
 /** Checkbox syntax inside a sub-task would be read back as another sub-task. */
 export const CHECKBOX = /\[[ xX]\]/;
+/** A header value that looks like a checkbox line would parse as a phantom sub-task. */
+export const HEADER_CHECKBOX = /(^|\s)[-*]\s+\[[ xX]\]/;
 
 function indexLine(raw: Record<string, unknown>): { index: number; line: number } | string {
   const i = raw.index;
@@ -298,6 +300,7 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
         if (typeof p.title !== "string") return fail("bad title");
         const t = p.title.trim();
         if (!t || t.length > MAX_TITLE_LEN || CONTROL.test(t)) return fail("title must be one line of 1-200 characters");
+        if (HEADER_CHECKBOX.test(t)) return fail("title must not contain checkbox syntax");
         patch.title = t;
       }
       if (p.due !== undefined) {
@@ -317,6 +320,7 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
           if (typeof p.claimedBy !== "string") return fail("bad claimed by");
           const c = p.claimedBy.trim();
           if (!c || c.length > MAX_CLAIMED_LEN || CONTROL.test(c)) return fail("claimed by must be one line of 1-120 characters");
+          if (HEADER_CHECKBOX.test(c)) return fail("claimed by must not contain checkbox syntax");
           patch.claimedBy = c;
         } else patch.claimedBy = null;
       }

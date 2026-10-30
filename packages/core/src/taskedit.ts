@@ -47,9 +47,11 @@ export function isRealDay(v: string): boolean {
 }
 
 const CONTROL = /[\u0000-\u001f\u007f\u2028\u2029]/;
+const HEADER_CHECKBOX = /(^|\s)[-*]\s+\[[ xX]\]/; // would parse as a phantom sub-task and shift every index
 const oneLine = (v: string, label: string, max: number): string => {
   const t = v.trim();
   if (!t || t.length > max || CONTROL.test(t)) throw new Error(`${label} must be one line of 1-${max} characters`);
+  if (HEADER_CHECKBOX.test(t)) throw new Error(`${label} must not contain checkbox syntax`);
   return t;
 };
 const FIELD_LINE = /^\s*[-*]\s+\*\*[^*:]+:\*\*/;

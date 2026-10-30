@@ -161,7 +161,7 @@ export function renderCsv(r: Report): string {
   const lines = [CSV_HEADER.map((h) => `"${h}"`).join(",")];
   const row = (cells: (string | number | undefined)[]) => lines.push(cells.map(csvCell).join(","));
   for (const t of r.tasks) {
-    if (selected(t.personKey)) row([t.owner || "Unassigned", t.title, "", t.doneDate, r.includeSubtasks ? t.subtasks.length : ""]);
+    if (selected(t.personKey)) row([t.owner || "Unassigned", t.title, "", t.doneDate, r.includeSubtasks ? t.subtasks.filter((x) => selected(x.personKey)).length : ""]);
     for (const x of t.subtasks) {
       if (selected(x.personKey)) row([x.assignee || "Unassigned", t.title, x.text, t.doneDate, ""]);
     }
