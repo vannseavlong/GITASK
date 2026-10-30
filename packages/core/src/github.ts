@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, sep } from "node:path";
 import type { GithubConfig } from "./config.ts";
 import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
+import { assertTaskFile } from "./taskfile.ts";
 import { isSubtaskSection } from "./parse.ts";
 import type { Person } from "./people.ts";
 import type { Board, Task } from "./types.ts";
@@ -338,6 +339,7 @@ export async function applySync(plan: SyncPlan, token: string, opts: ApplyOption
         if (it.state === "closed") issueObj = { ...issueObj, ...(await call(ctx, "PATCH", `${repoPath}/issues/${issueObj.number}`, { state: "closed" })) };
         action = "created";
         const dirty = (await isTracked(dirname(it.path), it.path)) && (await hasLocalChanges(dirname(it.path), it.path));
+        await assertTaskFile(it.path);
         const raw = await readFile(it.path, "utf8");
         await writeFile(it.path, setIssueField(raw, issueObj.number as number));
         result.written.push(it.path);

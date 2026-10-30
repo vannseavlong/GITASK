@@ -31,4 +31,4 @@ export type { GithubConfig } from "./config.ts";
 export { planSync, applySync, setIssueField, parseIssueNumber, GithubError, ISSUE_MESSAGE } from "./github.ts";
 export type { SyncPlan, SyncIssuePlan, SyncSubPlan, SyncNotify, SyncOptions, ApplyOptions, SyncResult, GithubErrorKind } from "./github.ts";
 export * from "./protocol.ts";
-export { readTaskBody, MAX_TASK_BYTES } from "./taskfile.ts";
+export { readTaskBody, assertRegularFile, assertTaskFile, guardMessagePath, MAX_TASK_BYTES } from "./taskfile.ts";

@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
+import { assertTaskFile } from "./taskfile.ts";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
 import { isSubtaskSection, parseSubtasks, splitTokens } from "./parse.ts";
 import type { Task } from "./types.ts";
@@ -46,6 +47,7 @@ async function retoken(task: Task, index: number, change: { assignee?: string | 
   const sub = task.subtasks[index];
   if (!sub) throw new Error(`No sub-task ${index} in ${task.id}`);
   if (!isSubtaskSection(sub.section)) throw new Error(`Sub-task ${index} of ${task.id} is not under "${HEADING}"`);
+  await assertTaskFile(task.path);
   const raw = await readFile(task.path, "utf8");
   const now = parseSubtasks(raw).find((s) => s.line === sub.line && s.col === sub.col);
   if (!now || now.text !== sub.text || now.checked !== sub.checked || now.assignee !== sub.assignee || now.lane !== sub.lane) {
@@ -91,6 +93,7 @@ export async function addSubtask(
   check(extra.assignee, extra.lane);
   const entry = line("- [ ] ", clean, extra.assignee, extra.lane);
 
+  await assertTaskFile(task.path);
   const raw = await readFile(task.path, "utf8");
   const nl = raw.includes("\r\n") ? "\r\n" : "\n";
   const lines = raw.split(/\r?\n/);

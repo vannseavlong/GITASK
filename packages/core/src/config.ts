@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { assertRegularFile } from "./taskfile.ts";
 
 export const CONFIG_FILE = "gitask.json";
 export const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
@@ -72,6 +73,7 @@ export async function setColumnColor(dir: string, column: string, color: string 
   if (Object.keys(entry).length) columns.set(column, entry);
   else columns.delete(column);
   json.columns = Object.fromEntries(columns);
+  await assertRegularFile(file, dir, { missingOk: true });
   await writeFile(file, JSON.stringify(json, null, 2) + "\n");
 
   const root = await repoRoot(dir);

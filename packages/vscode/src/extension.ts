@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { guardMessagePath, addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
@@ -105,6 +105,11 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       return;
     }
     const m = v.message;
+    const unsafe = await guardMessagePath(m, dir); // a symlink in Tasks/ must never be opened, moved or edited
+    if (unsafe) {
+      log?.appendLine(`Rejected webview message: ${unsafe}`);
+      return;
+    }
     const cfg = vscode.workspace.getConfiguration("gitask");
     switch (m.type) {
       case "ready":

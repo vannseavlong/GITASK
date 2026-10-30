@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { applySync, readGithubConfig, addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readPeople, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
+import { applySync, guardMessagePath, readGithubConfig, addSubtask, assignIds, createTask, deleteColumn, deleteTask, loadBoard, moveTask, readPeople, readTaskBody, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
@@ -55,6 +55,8 @@ export function createHandler(o: HandlerOptions) {
     const v = validateMessage(raw, { tasksDir: o.dir, columns, views: [] });
     if (!v.ok) return { status: 400, reply: { type: "error", message: `Rejected: ${v.reason}` }, changed: false };
     const m = v.message;
+    const unsafe = await guardMessagePath(m, o.dir); // a symlink in Tasks/ must never be opened, moved or edited
+    if (unsafe) return { status: 400, reply: { type: "error", message: `Rejected: ${unsafe}` }, changed: false };
     switch (m.type) {
       case "ready":
         if (!idsAssigned) {
