@@ -76,7 +76,16 @@ export function createHandler(o: HandlerOptions) {
       case "new":
         try {
           const id = m.id ?? `New-task-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}`;
-          await createTask(o.dir, m.column ?? "1-backlog", id, { owner: o.owner });
+          const dest = await createTask(o.dir, m.column ?? "1-backlog", id, { owner: m.owner ?? o.owner });
+          const b = await loadBoard(o.dir);
+          const task = b.columns.flatMap((c) => c.tasks).find((t) => t.path === dest);
+          if (task) {
+            const patch: { due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; claimedBy?: string | null } = {};
+            if (m.due !== undefined) patch.due = m.due;
+            if (m.tier !== undefined) patch.tier = m.tier;
+            if (m.claimedBy !== undefined) patch.claimedBy = m.claimedBy;
+            if (Object.keys(patch).length) await updateTask(task, patch, { commit });
+          }
           return { status: 200, changed: true };
         } catch (e) {
           return err((e as Error).message);

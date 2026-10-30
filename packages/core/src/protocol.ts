@@ -8,7 +8,7 @@ import { isAbsolute, relative, resolve, sep } from "node:path";
 export type WebviewMessage =
   | { type: "ready" }
   | { type: "open"; path: string }
-  | { type: "new"; column?: string; id?: string }
+  | { type: "new"; column?: string; id?: string; title?: string; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null; claimedBy?: string | null }
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "addSubtask"; path: string; text: string; assignee?: string; lane?: string }
@@ -208,6 +208,34 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (raw.id !== undefined) {
         if (typeof raw.id !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(raw.id)) return fail("task id must start with a letter or digit and contain only letters, digits, . _ -");
         message.id = raw.id;
+      }
+      if (raw.title !== undefined) {
+        if (typeof raw.title !== "string") return fail("bad title");
+        const t = raw.title.trim();
+        if (!t || t.length > MAX_TITLE_LEN || CONTROL.test(t)) return fail("title must be one line of 1-200 characters");
+        if (HEADER_CHECKBOX.test(t)) return fail("title must not contain checkbox syntax");
+        message.title = t;
+      }
+      if (raw.due !== undefined) {
+        if (raw.due !== null && (typeof raw.due !== "string" || !realDay(raw.due))) return fail("due must be a real date, YYYY-MM-DD");
+        message.due = raw.due;
+      }
+      if (raw.tier !== undefined) {
+        if (raw.tier !== null && (typeof raw.tier !== "string" || !["T0", "T1", "T2", "T3"].includes(raw.tier))) return fail("tier must be T0, T1, T2 or T3");
+        message.tier = raw.tier as "T0" | "T1" | "T2" | "T3" | null;
+      }
+      if (raw.owner !== undefined) {
+        if (raw.owner !== null && (typeof raw.owner !== "string" || raw.owner.length > MAX_NAME || !PERSON_ID.test(raw.owner))) return fail("bad person id");
+        message.owner = raw.owner;
+      }
+      if (raw.claimedBy !== undefined) {
+        if (raw.claimedBy !== null) {
+          if (typeof raw.claimedBy !== "string") return fail("bad claimed by");
+          const c = raw.claimedBy.trim();
+          if (!c || c.length > MAX_CLAIMED_LEN || CONTROL.test(c)) return fail("claimed by must be one line of 1-120 characters");
+          if (HEADER_CHECKBOX.test(c)) return fail("claimed by must not contain checkbox syntax");
+          message.claimedBy = c;
+        } else message.claimedBy = null;
       }
       return { ok: true, message };
     }

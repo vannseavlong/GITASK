@@ -15,7 +15,7 @@ import { closeEdit, pendingEdit, subscribeEdit } from "@/lib/edit-flow.ts";
 import type { EditRequest } from "@/lib/edit-flow.ts";
 
 const NONE = "__none";
-const TIERS = ["T0", "T1", "T2", "T3"] as const;
+export const TIERS = ["T0", "T1", "T2", "T3"] as const;
 const oneLine = (v: string) => v.replace(/[\r\n\u2028\u2029]+/g, " ");
 
 function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
@@ -26,6 +26,8 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; 
     </div>
   );
 }
+
+export { Field };
 
 function DueField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = React.useState(false);
@@ -43,6 +45,8 @@ function DueField({ value, onChange }: { value: string; onChange: (v: string) =>
     </div>
   );
 }
+
+export { DueField };
 
 function EditTaskForm({ task, host, people }: { task: Task; host: Host; people: BoardData["people"] }) {
   const [title, setTitle] = React.useState(task.title);
