@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new feature in UI over core people API (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-ui-assign/` · **Branch:** `feat/ui-assign`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** Core-people, Ext-ui-views
 - **Touches:** packages/ui/src/components/assignee-*.tsx, board card, detail, filter bar, protocol (`setOwner` message)

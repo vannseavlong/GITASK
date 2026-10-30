@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new feature in UI over core sub-task API (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session (agent), 2026-10-30
 - **Worktree:** `GITASK/GITASK-ui-subtasks/` · **Branch:** `feat/ui-subtasks`
-- **Started / updated:** none / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-10-30
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** Core-subtask-assignee, Ext-ui-views
 - **Touches:** packages/ui/src/components/subtasks-*.tsx, card, detail, protocol (`addSubtask`, `setSubtaskAssignee`)
