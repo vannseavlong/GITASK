@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { ViewProps } from "./registry.tsx";
+import type { BoardData, Host } from "@/host/index.ts";
+import { collapseAll, expandAll, listSubtasks, toggleExpanded } from "@host-src/subtask-logic.ts";
+import { SubtaskRows } from "@/components/subtasks.tsx";
 
 const ALL = "__all";
 const FILTERS = [
@@ -22,8 +25,10 @@ const FILTERS = [
  * that opens under `row`, or null when the task has nothing to expand. The chevron column and the
  * expansion row below already exist; only this function needs a body.
  */
-export function renderRowExpansion(_row: ListRow): React.ReactNode | null {
-  return null;
+export function renderRowExpansion(row: ListRow, ctx?: { board: BoardData; host: Host }): React.ReactNode | null {
+  const task = ctx?.board.columns.flatMap((c) => c.tasks).find((t) => t.path === row.path);
+  if (!task || !ctx || listSubtasks(task).length === 0) return null;
+  return <SubtaskRows task={task} host={ctx.host} people={ctx.board.people} />;
 }
 
 function ListFilterSelect({ field, label, value, options, onChange }: { field: string; label: string; value: string; options: string[]; onChange: (v: string) => void }) {
@@ -76,7 +81,8 @@ function Cell({ r, k, color }: { r: ListRow; k: string; color?: string }) {
 export function ListView({ board, ui, update, host, openTask }: ViewProps) {
   const st = ui.list ?? {};
   const set = (patch: Partial<NonNullable<typeof ui.list>>) => update({ list: { ...st, ...patch } });
-  const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(new Set());
+  const expandedList = st.expanded ?? [];
+  const expanded: ReadonlySet<string> = new Set(expandedList);
   const rowRefs = React.useRef<(HTMLTableRowElement | null)[]>([]);
 
   const { all, shown } = listView(board, st);
@@ -92,12 +98,8 @@ export function ListView({ board, ui, update, host, openTask }: ViewProps) {
     else if (st.dir === "asc") set({ dir: "desc" });
     else set({ sort: "", dir: "" });
   };
-  const toggle = (path: string) =>
-    setExpanded((cur) => {
-      const n = new Set(cur);
-      if (!n.delete(path)) n.add(path);
-      return n;
-    });
+  const toggle = (path: string) => set({ expanded: toggleExpanded(expandedList, path) });
+  const expandable = rows.filter((r) => renderRowExpansion(r, { board, host }) != null).map((r) => r.path);
 
   return (
     <div className="p-3">
@@ -113,6 +115,12 @@ export function ListView({ board, ui, update, host, openTask }: ViewProps) {
         {FILTERS.map(({ key, label, name }) => (
           <ListFilterSelect key={key} field={name} label={label} value={f[key]} options={listOptions(all, key)} onChange={(v) => set({ [key]: v })} />
         ))}
+        {expandable.length > 0 && (
+          <>
+            <Button variant="secondary" size="sm" onClick={() => set({ expanded: expandAll(expandable) })}>Expand all</Button>
+            <Button variant="secondary" size="sm" onClick={() => set({ expanded: collapseAll() })}>Collapse all</Button>
+          </>
+        )}
         <span className="ml-auto opacity-80" aria-live="polite">{rows.length} of {all.length}</span>
       </div>
       {rows.length === 0 ? (
@@ -139,7 +147,7 @@ export function ListView({ board, ui, update, host, openTask }: ViewProps) {
           </TableHeader>
           <TableBody>
             {rows.map((r, i) => {
-              const extra = renderRowExpansion(r);
+              const extra = renderRowExpansion(r, { board, host });
               const isOpen = extra != null && expanded.has(r.path);
               return (
                 <React.Fragment key={r.path}>

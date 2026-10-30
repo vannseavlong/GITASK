@@ -10,14 +10,24 @@ function task(col: string, id: string, title: string, extra: Record<string, unkn
 export const FIXTURE: BoardData = {
   dir: "/fixture/Tasks",
   settings: { staleDays: 14 },
+  people: [{ id: "ann", name: "Ann Lee" }, { id: "bob", name: "Bob Ray" }, { id: "SNLRLONG", name: "Sam Long" }],
   columns: [
     { id: "1-backlog", label: "backlog", tasks: [task("1-backlog", "Ext-dark-mode", "Dark mode polish", { displayId: "T-0004", tier: "T1", owner: "ann", due: "2026-11-20", fields: { "started / updated": "2026-10-01 / 2026-10-12" } })] },
     { id: "2-todo", label: "todo", color: "#3794ff", tasks: [
-      task("2-todo", "Core-people", "Contributors from git history", { displayId: "T-0035", tier: "T2", owner: "SNLRLONG", due: "2026-11-05", progress: { done: 1, total: 2 }, dependsOn: ["CLI-serve"], subtasks: [{ text: "Read authors from git log", checked: true, line: 9 }, { text: "Merge duplicate emails", checked: false, line: 10 }], fields: { "started / updated": "2026-10-20 / 2026-10-28" } }),
+      task("2-todo", "Core-people", "Contributors from git history", { displayId: "T-0035", tier: "T2", owner: "SNLRLONG", due: "2026-11-05", progress: { done: 1, total: 4 }, dependsOn: ["CLI-serve"], subtasks: [
+        { section: "Sub-tasks", text: "Read authors from git log", checked: true, line: 9, col: 3, assignee: "ann", lane: "backend" },
+        { section: "Sub-tasks", text: "Merge duplicate emails", checked: false, line: 10, col: 3, assignee: "bob", lane: "backend" },
+        { section: "Sub-tasks", text: "Contributor list screen", checked: false, line: 11, col: 3, assignee: "SNLRLONG", lane: "frontend" },
+        { section: "Sub-tasks", text: "Empty-state design", checked: false, line: 12, col: 3, lane: "uxui" },
+      ], fields: { "started / updated": "2026-10-20 / 2026-10-28" } }),
       task("2-todo", "CLI-serve", "Local web server", { displayId: "T-0040", tier: "T3", owner: "bob", claimedBy: "agent-7", due: "2026-12-01" }),
     ] },
     { id: "3-in-progress", label: "in-progress", color: "#cca700", tasks: [
-      task("3-in-progress", "Ext-ui-foundation", "React + shadcn shell and Board", { displayId: "T-0037", tier: "T2", owner: "SNLRLONG", due: "2026-11-02", progress: { done: 3, total: 9 }, fields: { "started / updated": "2026-10-30 / 2026-10-30" } }),
+      task("3-in-progress", "Ext-ui-foundation", "React + shadcn shell and Board", { displayId: "T-0037", tier: "T2", owner: "SNLRLONG", due: "2026-11-02", progress: { done: 1, total: 3 }, subtasks: [
+        { section: "Sub-tasks", text: "Shell and tabs", checked: true, line: 8, col: 3, assignee: "ann", lane: "frontend" },
+        { section: "Sub-tasks", text: "Board cards", checked: false, line: 9, col: 3, assignee: "SNLRLONG", lane: "frontend" },
+        { section: "Sub-tasks", text: "Theme tokens", checked: false, line: 10, col: 3, assignee: "bob", lane: "uxui" },
+      ], fields: { "started / updated": "2026-10-30 / 2026-10-30" } }),
     ] },
     { id: "4-testing", label: "testing", tasks: [] },
     { id: "5-done", label: "done", color: "#89d185", tasks: [
@@ -46,6 +56,23 @@ export function createMockHost(): Host {
         for (const cb of msgSubs) cb(t ? { type: "taskBody", path: m.path, text: BODY(t) } : { type: "taskBody", path: m.path, error: "not found" });
       }
       if (m.type === "toggleSubtask") { const st = find(m.path)?.subtasks[m.index]; if (st) { st.checked = !st.checked; emit(); } }
+      if (m.type === "addSubtask") {
+        const t = find(m.path);
+        if (t) {
+          const line = Math.max(7, ...t.subtasks.map((x) => x.line)) + 1;
+          t.subtasks.push({ section: "Sub-tasks", text: m.text, checked: false, line, col: 3, assignee: m.assignee, lane: m.lane });
+          t.progress = { done: t.subtasks.filter((x) => x.checked).length, total: t.subtasks.length };
+          emit();
+        }
+      }
+      if (m.type === "setSubtaskAssignee" || m.type === "setSubtaskLane") {
+        const st = find(m.path)?.subtasks[m.index];
+        if (st && st.line === m.line) {
+          if (m.type === "setSubtaskAssignee") st.assignee = m.assignee ?? undefined;
+          else st.lane = m.lane ?? undefined;
+          emit();
+        }
+      }
       if (m.type === "move") {
         const from = board.columns.find((c) => c.tasks.some((t) => t.path === m.path));
         const to = board.columns.find((c) => c.id === m.to);

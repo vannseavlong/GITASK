@@ -9,6 +9,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { Host } from "@/host/index.ts";
+import { AvatarStack, SubtaskRows } from "@/components/subtasks.tsx";
+import { involvedPeople, listSubtasks, toggleExpanded } from "@host-src/subtask-logic.ts";
+import { ChevronRight } from "lucide-react";
+import type { Person } from "gitask-core";
 import type { ViewProps } from "./registry.tsx";
 
 const PRESETS = ["#3794ff", "#b180d7", "#cca700", "#d18616", "#89d185", "#e5534b", "#2aa198", "#8b949e"];
@@ -54,7 +58,7 @@ function ColorPicker({ col, host }: { col: Column; host: Host }) {
   );
 }
 
-function TaskCard({ t, color, host, openTask, onDragStart, onDragEnd }: { t: Task; color?: string; host: Host; openTask: (path: string) => void; onDragStart: () => void; onDragEnd: () => void }) {
+function TaskCard({ t, color, host, people, expanded, onToggle, openTask, onDragStart, onDragEnd }: { t: Task; color?: string; host: Host; people?: readonly Person[]; expanded: boolean; onToggle: () => void; openTask: (path: string) => void; onDragStart: () => void; onDragEnd: () => void }) {
   const open = () => openTask(t.path);
   const [dragging, setDragging] = React.useState(false);
   const pct = t.progress && t.progress.total > 0 ? Math.round((100 * t.progress.done) / t.progress.total) : 0;
@@ -89,6 +93,7 @@ function TaskCard({ t, color, host, openTask, onDragStart, onDragEnd }: { t: Tas
       <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
         {t.prefix && <Badge>{t.prefix}</Badge>}
         {t.tier && <Badge variant={t.tier === "T3" ? "destructive" : "default"}>{t.tier}</Badge>}
+        {involvedPeople(t).length > 1 && <AvatarStack task={t} people={people} />}
         {t.owner && (
           <span className="inline-flex items-center gap-1 opacity-85">
             <Avatar className="size-4"><AvatarFallback>{t.owner.slice(0, 2)}</AvatarFallback></Avatar>
@@ -105,11 +110,28 @@ function TaskCard({ t, color, host, openTask, onDragStart, onDragEnd }: { t: Tas
           <span>{t.progress.done}/{t.progress.total}</span>
         </div>
       )}
+      {listSubtasks(t).length > 0 && (
+        <div className="mt-1.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            draggable={false}
+            aria-expanded={expanded}
+            aria-label={`${expanded ? "Hide" : "Show"} ${listSubtasks(t).length} sub-tasks of ${t.title}`}
+            className="inline-flex items-center gap-0.5 rounded-sm text-[11px] opacity-80 outline-none hover:opacity-100 focus-visible:ring-1 focus-visible:ring-ring"
+            onClick={onToggle}
+          >
+            <ChevronRight className={cn("size-3.5 transition-transform", expanded && "rotate-90")} />
+            Sub-tasks
+          </button>
+          {expanded && <div className="mt-1"><SubtaskRows task={t} host={host} people={people} /></div>}
+        </div>
+      )}
     </div>
   );
 }
 
-export function BoardView({ board, full, host, openTask }: ViewProps) {
+export function BoardView({ board, full, host, ui, update, openTask }: ViewProps) {
+  const openCards = ui.board?.expanded ?? [];
   const dragging = React.useRef<Task | null>(null);
   const [over, setOver] = React.useState<string | null>(null);
   // A status is only deletable when it has no tasks at all, not merely none that pass the filters.
@@ -152,7 +174,7 @@ export function BoardView({ board, full, host, openTask }: ViewProps) {
               </Button>
             )}
             {col.tasks.map((t) => (
-              <TaskCard key={t.path} t={t} color={col.color} host={host} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
+              <TaskCard key={t.path} t={t} color={col.color} host={host} people={full.people} expanded={openCards.includes(t.path)} onToggle={() => update({ board: { ...ui.board, expanded: toggleExpanded(openCards, t.path) } })} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
             ))}
           </section>
         ))}

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, readPeople, setColumnColor, setSubtaskAssignee, setSubtaskLane, toggleSubtask } from "gitask-core";
 import { syncGithub } from "./github.ts";
 import { uiHtml } from "./html.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
@@ -29,7 +29,8 @@ async function post(): Promise<void> {
   try {
     const board = await loadBoard(dir);
     const staleDays = vscode.workspace.getConfiguration("gitask").get<number>("staleDays", 14);
-    send({ type: "board", board: { ...board, settings: { staleDays } } });
+    const people = await readPeople(dir).catch(() => []);
+    send({ type: "board", board: { ...board, settings: { staleDays }, people } });
   } catch (e) {
     send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
   }
@@ -165,6 +166,26 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not save the colour: ${(e as Error).message}`);
         }
         return post();
+      case "addSubtask":
+      case "setSubtaskAssignee":
+      case "setSubtaskLane": {
+        const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+        const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+        try {
+          if (!task) throw new Error("task not found");
+          if (m.type === "addSubtask") {
+            await addSubtask(task, m.text, { assignee: m.assignee, lane: m.lane }, opts);
+          } else {
+            // The webview's index refers to the board it saw; refuse if the file has shifted since.
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            if (m.type === "setSubtaskAssignee") await setSubtaskAssignee(task, m.index, m.assignee ?? undefined, opts);
+            else await setSubtaskLane(task, m.index, m.lane ?? undefined, opts);
+          }
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+        return post();
+      }
       case "toggleSubtask": {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {
