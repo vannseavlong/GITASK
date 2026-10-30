@@ -5,7 +5,7 @@ Opt-in, one-way push of tasks to GitHub Issues so that assigning in GITASK notif
 ## Behaviour
 - Off unless `Tasks/gitask.json` has `"github": {"repo": "owner/name", "project": 7}` (`project` optional). Without it no request is ever made.
 - `planSync` is a pure dry run (no network, no file access). `applySync` is the only function that sends anything, and only with a token.
-- Per task (default: every task outside the done and deploy columns, plus any already linked): create the issue, or update it when the header has `- **Issue:** #123`. Title is the task title; the body (created once, never overwritten) links back to the task file. Assignee is the `Owner`'s `github` name; state is closed in the done and deploy columns.
+- Per task (default: every task outside the done and deploy columns, plus any already linked): create the issue, or update it when the header has `- **Issue:** #123`. Title is the task title; the body (created once, never overwritten) links back to the task file. Assignee is the `Owner`'s `github` name; state is closed in the done and deploy columns. GITASK only ever sets assignees: when the Owner has no GitHub name the issue's assignees are left alone, never cleared (changing the Owner to another person with a GitHub name replaces them).
 - Sub-tasks under `## Sub-tasks` become sub-issues, matched by title on later runs (no duplicates). `@person` becomes the sub-issue assignee; a ticked box closes it.
 - With `project`, the Project `Status` single-select option whose name matches the column label (case and punctuation ignored) is set; no match is a warning, not an error.
 - A person with no valid `github` name is skipped with a warning, never guessed.

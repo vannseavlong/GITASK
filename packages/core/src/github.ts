@@ -300,7 +300,8 @@ function diff(current: Json, want: { title: string; state: string; assignees: st
   const patch: Json = {};
   if (current.title !== want.title) patch.title = want.title;
   if (current.state !== want.state) patch.state = want.state;
-  if (!sameSet(logins(current.assignees), lower(want.assignees))) patch.assignees = want.assignees;
+  // GITASK never clears assignees: an empty plan list leaves whatever was set by hand on GitHub.
+  if (want.assignees.length && !sameSet(logins(current.assignees), lower(want.assignees))) patch.assignees = want.assignees;
   return Object.keys(patch).length ? patch : undefined;
 }
 
