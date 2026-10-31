@@ -2,10 +2,10 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
-## 2026-10-30 · [Ext] feat(ui): new task dialog matches edit dialogs with more info input
+## 2026-10-30 · [Ext] feat(ui): new task dialog with title, description, start/due, tier, status and member
 - Owner: SNLRLONG
-- Branch/PR: feat/new-task-dialog-v2 · merged to main (a6ea4f9)
-- What changed: the new task dialog now mirrors the edit dialog look (Field labels, grid form, DialogFooter) and collects title, due date, tier, owner and claimed by when creating a task, in the browser and in VS Code. The `new` message carries the optional fields and both hosts apply them via `updateTask` after creation. Protocol validation added for the new fields; tests cover accepted and rejected values.
+- Branch/PR: feat/new-task-dialog-fields · merged to main (c0cff3b)
+- What changed: the new task dialog mirrors the edit dialog look (Field labels, grid form, DialogFooter) and collects title (required), description, start date, due date, tier, status (dropdown of columns) and member (dropdown of contributors) before creating, in the browser and in VS Code. Core gains `createTaskWithFields` writing the full task file (description into `## Goal`, start/due/tier/owner headers). The `new` message carries the validated fields; both hosts create via `createTaskWithFields`. Protocol validation added for title/description/start/due/tier/owner; tests cover accepted and rejected values.
 - Needs: none
 
 ## 2026-10-30 · [Ext] feat(ui): new-task dialog and always-visible GitHub sync button
