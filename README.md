@@ -9,8 +9,10 @@ Built for workspaces installed from [My-Agent-SetUp](https://github.com/vannseav
 | Package | What |
 |---|---|
 | `packages/core` | Parse tasks, build the board, move/create tasks, changelog entries. No VS Code dependency. |
-| `packages/cli` | `gitask board \| move \| new \| changelog` |
-| `packages/vscode` | The Kanban webview extension |
+| `packages/cli` | `gitask board \| move \| new \| changelog \| people \| assign \| subtask \| report \| github \| serve` |
+| `packages/ui` | The React + shadcn UI, shared by VS Code and `gitask serve` |
+| `packages/vscode` | The VS Code extension (loads the UI in a webview) |
+| `packages/web` | The website and user docs |
 
 ## Task format
 
@@ -31,7 +33,20 @@ Tasks/
 
 The H1 is the title; `- **Key:** value` lines above the first `##` are the fields.
 
+## New in 0.5.0
+
+- **People:** assign a task to a repo contributor (from git history, never emails). [Docs](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/people-and-subtasks.md)
+- **Sub-tasks:** Jira-style, with `@person #lane` on each checkbox line under `## Sub-tasks`.
+- **Report:** what was done, by person, as HTML, Markdown or CSV (`gitask report`, or Export in the UI). [Docs](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/report.md)
+- **`gitask serve`:** the same UI in a browser, local and token-protected. Security model: `Docs/architecture/serve.md`.
+- **GitHub sync:** opt-in, dry run first, one-way to Issues. `Docs/architecture/github.md`.
+- **New UI:** React + shadcn, see `Docs/architecture/ui.md`.
+
+<!-- TODO(screenshot): Board with avatars and sub-tasks; Export dialog with preview -->
+
 ## Develop
+
+Needs Node 22.18 or newer and pnpm 11.
 
 ```bash
 pnpm install
@@ -43,7 +58,7 @@ pnpm package     # .vsix in packages/vscode/
 
 Try the extension: open this folder in VS Code, press F5 on `packages/vscode` (Run Extension), then run **GITASK: Open Board**.
 
-CLI: `node packages/cli/dist/gitask.js board --dir Tasks`
+CLI: `pnpm gitask serve` (builds first if `dist` is missing), or `npx gitask-cli serve` / `pnpm dlx gitask-cli serve` / `yarn dlx gitask-cli serve` / `bunx gitask-cli serve`, or `npm i -g gitask-cli` then `gitask serve`.
 
 ## Release
 
@@ -58,7 +73,7 @@ Push a `vX.Y.Z` tag and CI publishes the CLI to npm and the extension to the VS 
 
 ## Status
 
-v0.1: core, CLI and extension are built and the core is tested. The webview has not yet been exercised in a real VS Code window by automated tests. Not published to a marketplace. Roadmap: YAML frontmatter support, filters, cross-repo rollup, read-only Pages dashboard.
+Version 0.5.0: core, CLI, extension and UI are tested (`pnpm test`). Roadmap: sprints and the wider SDLC, cross-repo rollup, direct PDF export.
 
 ## Agent workflow
 

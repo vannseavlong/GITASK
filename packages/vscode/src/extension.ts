@@ -1,21 +1,37 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { assignIds, createTask, deleteColumn, deleteImpact, deleteTask, initTasks, loadBoard, moveTask, setColumnColor, toggleSubtask } from "gitask-core";
-import { webviewHtml } from "./html.ts";
+import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, SUBTASK_DELETE_DETAIL, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { readGithubConfig } from "gitask-core";
+import { taskActivityCached } from "gitask-core";
+import { syncFromDialog, syncGithub } from "./github.ts";
+import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
+import { uiHtml } from "./html.ts";
+import { handleAddPerson, handleSetOwner, ownerName } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
-import { DEFAULT_VIEW, VIEWS } from "./views/registry.ts";
+import { resolveTasksDir } from "./tasks-dir.ts";
+import { buildReportFile } from "./report-request.ts";
+import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
 
 const VIEW_KEY = "gitask.lastView";
 let log: vscode.OutputChannel | undefined;
 
 let panel: vscode.WebviewPanel | undefined;
 let idsAssigned = false;
+const queue = serialQueue(); // webview messages are handled one at a time so two quick writes never race on one file
+
+let tasksDirErrorShown = false;
 
 function tasksDir(): string | undefined {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!root) return undefined;
-  return join(root, vscode.workspace.getConfiguration("gitask").get<string>("tasksDir", "Tasks"));
+  const r = resolveTasksDir(root, vscode.workspace.getConfiguration("gitask").get<string>("tasksDir", "Tasks"));
+  if (r.ok) return r.dir;
+  if (!tasksDirErrorShown) {
+    tasksDirErrorShown = true;
+    vscode.window.showErrorMessage(`GITASK: ${r.error}`);
+  }
+  return undefined;
 }
 
 function send(msg: HostMessage): void {
@@ -28,23 +44,35 @@ async function post(): Promise<void> {
   try {
     const board = await loadBoard(dir);
     const staleDays = vscode.workspace.getConfiguration("gitask").get<number>("staleDays", 14);
-    send({ type: "board", board: { ...board, settings: { staleDays } } });
+    // People: names, ids, GitHub login and role only (core never returns emails).
+    const people = await readPeople(dir).catch(() => []);
+    const github = await readGithubConfig(dir); // repo/project only; the Sync button shows when it exists
+    const activity = await taskActivityCached(dir); // one git log per HEAD, for the Overview heatmap
+    send({ type: "board", board: { ...board, settings: { staleDays }, people, github, activity } });
   } catch (e) {
     send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
   }
 }
 
-async function newTask(column?: string): Promise<void> {
+async function newTask(id?: string, column?: string, fields?: { title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null }): Promise<void> {
   const dir = tasksDir();
   if (!dir) return;
-  const id = await vscode.window.showInputBox({
-    prompt: "Task id, e.g. Web-login-page",
-    validateInput: (v) => (/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v) ? undefined : "Letters, digits, . _ - only"),
-  });
-  if (!id) return;
+  if (!id) {
+    id = await vscode.window.showInputBox({
+      prompt: "Task id, e.g. Web-login-page",
+      validateInput: (v) => (/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v) ? undefined : "Letters, digits, . _ - only"),
+    });
+    if (!id) return;
+  }
   try {
-    const owner = vscode.workspace.getConfiguration("git").get<string>("userName");
-    const file = await createTask(dir, column ?? "1-backlog", id, { owner });
+    const file = await createTaskWithFields(dir, column ?? "1-backlog", id, {
+      title: fields?.title,
+      description: fields?.description,
+      start: fields?.start,
+      due: fields?.due,
+      tier: fields?.tier,
+      owner: await ownerName(dir, fields?.owner),
+    });
     await vscode.window.showTextDocument(vscode.Uri.file(file));
   } catch (e) {
     vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
@@ -66,14 +94,24 @@ async function initTasksFolder(ctx: vscode.ExtensionContext): Promise<void> {
   await post();
 }
 
+/** The React UI (packages/ui, built into dist/ui). */
 function openBoard(ctx: vscode.ExtensionContext): void {
   if (panel) return panel.reveal();
-  panel = vscode.window.createWebviewPanel("gitask", "GITASK", vscode.ViewColumn.Active, { enableScripts: true });
-  panel.webview.html = webviewHtml(VIEWS, { initialView: ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW) });
+  const initialView = ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW);
+  panel = vscode.window.createWebviewPanel("gitask", "GITASK", vscode.ViewColumn.Active, {
+    enableScripts: true,
+    localResourceRoots: [vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui")],
+  });
+  panel.iconPath = vscode.Uri.joinPath(ctx.extensionUri, "media", "icon.svg"); // coloured, with its own outline: reads on light and dark tabs
+  const wv = panel.webview;
+  const asset = (name: string) => wv.asWebviewUri(vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui", name)).toString();
+  wv.html = uiHtml(VIEW_IDS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });
   idsAssigned = false;
   panel.onDidDispose(() => (panel = undefined), undefined, ctx.subscriptions);
 
-  panel.webview.onDidReceiveMessage(async (raw: unknown) => {
+  panel.webview.onDidReceiveMessage((raw: unknown) => queue(() => onWebviewMessage(raw)), undefined, ctx.subscriptions);
+
+  async function onWebviewMessage(raw: unknown): Promise<void> {
     const dir = tasksDir();
     if (!dir) return;
     // Validate before anything touches the filesystem or git. Columns come from the folders on disk.
@@ -83,12 +121,17 @@ function openBoard(ctx: vscode.ExtensionContext): void {
     } catch (e) {
       return send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
     }
-    const v = validateMessage(raw, { tasksDir: dir, columns: board.columns.map((c) => c.id), views: VIEWS.map((x) => x.id) });
+    const v = validateMessage(raw, { tasksDir: dir, columns: board.columns.map((c) => c.id), views: VIEW_IDS });
     if (!v.ok) {
       log?.appendLine(`Rejected webview message: ${v.reason}`);
-      return;
+      return send({ type: "error", message: `Rejected: ${v.reason}` }); // visible in the UI, not a silent no-op
     }
     const m = v.message;
+    const unsafe = await guardMessagePath(m, dir); // a symlink in Tasks/ must never be opened, moved or edited
+    if (unsafe) {
+      log?.appendLine(`Rejected webview message: ${unsafe}`);
+      return;
+    }
     const cfg = vscode.workspace.getConfiguration("gitask");
     switch (m.type) {
       case "ready":
@@ -99,6 +142,11 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           } catch (e) {
             log?.appendLine(`Could not assign task IDs: ${(e as Error).message}`);
           }
+          try {
+            await syncPeople(dir, { commit: cfg.get<boolean>("autoCommit", true) }); // contributors from git history
+          } catch (e) {
+            log?.appendLine(`Could not read contributors: ${(e as Error).message}`);
+          }
         }
         return post();
       case "view":
@@ -106,7 +154,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "open":
         return void vscode.window.showTextDocument(vscode.Uri.file(m.path));
       case "new":
-        return newTask(m.column);
+        return newTask(m.id, m.column, { title: m.title, description: m.description, start: m.start, due: m.due, tier: m.tier, owner: m.owner });
       case "move":
         try {
           await moveTask(dir, m.path, m.to, {
@@ -117,13 +165,15 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not move ${basename(m.path)}: ${(e as Error).message}`);
         }
         return post(); // always resync so the UI reflects what is on disk
+      case "deleteImpact": {
+        const impact = await deleteImpact(m.path, { commit: cfg.get<boolean>("autoCommit", true) });
+        return send({ type: "deleteImpact", path: m.path, impact, detail: describeDeleteImpact(impact) });
+      }
       case "deleteTask": {
         const name = basename(m.path, ".md");
         const commit = cfg.get<boolean>("autoCommit", true);
         const impact = await deleteImpact(m.path, { commit });
-        const detail = impact === "recoverable" ? "The file is removed and the removal is committed, so it can be restored from git history."
-          : impact === "loses-local-edits" ? "This file has uncommitted edits. They will be lost; only the last committed version stays in git history."
-          : "This file is not committed (untracked, or auto-commit is off). It will be permanently removed and cannot be restored.";
+        const detail = describeDeleteImpact(impact);
         const ok = await vscode.window.showWarningMessage(`Delete task "${name}"?`, { modal: true, detail }, "Delete");
         if (ok !== "Delete") return;
         try {
@@ -149,6 +199,30 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         const r = await readTaskBody(m.path, dir);
         return send({ type: "taskBody", path: m.path, ...r });
       }
+      case "previewReport": {
+        try {
+          send({ type: "reportPreview", html: (await buildReportFile(dir, m.options, "html")).content });
+        } catch (e) {
+          send({ type: "reportPreview", html: "", error: (e as Error).message });
+        }
+        return;
+      }
+      case "exportReport": {
+        try {
+          const file = await buildReportFile(dir, m.options, m.format);
+          const root = vscode.workspace.workspaceFolders?.[0]?.uri ?? vscode.Uri.file(dir);
+          const target = await vscode.window.showSaveDialog({ defaultUri: vscode.Uri.joinPath(root, file.name), filters: { Report: [file.name.split(".").pop() ?? "html"] }, saveLabel: "Save report" });
+          if (!target) return send({ type: "reportExported", ok: false });
+          await vscode.workspace.fs.writeFile(target, Buffer.from(file.content, "utf8"));
+          send({ type: "reportExported", ok: true, path: target.fsPath });
+          const open = await vscode.window.showInformationMessage(`GITASK: report saved to ${basename(target.fsPath)}.`, "Open");
+          if (open === "Open") void vscode.env.openExternal(target);
+        } catch (e) {
+          send({ type: "reportExported", ok: false, error: (e as Error).message });
+          vscode.window.showErrorMessage(`GITASK: could not export the report: ${(e as Error).message}`);
+        }
+        return;
+      }
       case "setColumnColor":
         try {
           await setColumnColor(dir, m.column, m.color, { commit: cfg.get<boolean>("autoCommit", true) });
@@ -156,6 +230,79 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not save the colour: ${(e as Error).message}`);
         }
         return post();
+      case "addSubtask":
+      case "setSubtaskAssignee":
+      case "setSubtaskLane": {
+        const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+        const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+        try {
+          if (!task) throw new Error("task not found");
+          if (m.type === "addSubtask") {
+            await addSubtask(task, m.text, { assignee: m.assignee, lane: m.lane }, opts);
+          } else {
+            // The webview's index refers to the board it saw; refuse if the file has shifted since.
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            if (m.type === "setSubtaskAssignee") await setSubtaskAssignee(task, m.index, m.assignee ?? undefined, opts);
+            else await setSubtaskLane(task, m.index, m.lane ?? undefined, opts);
+          }
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+        return post();
+      }
+      case "editTask":
+      case "editSubtask":
+      case "deleteSubtask": {
+        const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+        const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+        try {
+          if (!task) throw new Error("task not found");
+          if (m.type === "editTask") await updateTask(task, m.patch, opts);
+          else {
+            // The webview's index refers to the board it saw; refuse if the file has shifted since.
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            if (m.type === "editSubtask") await editSubtask(task, m.index, { text: m.text, assignee: m.assignee, lane: m.lane }, opts);
+            else {
+              const ok = await vscode.window.showWarningMessage(`Delete sub-task "${task.subtasks[m.index].text}"?`, { modal: true, detail: SUBTASK_DELETE_DETAIL }, "Delete");
+              if (ok !== "Delete") return;
+              await deleteSubtask(task, m.index, opts);
+            }
+          }
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+        return post();
+      }
+      case "setOwner":
+      case "addPerson":
+        try {
+          const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+          await (m.type === "setOwner" ? handleSetOwner(dir, board, m, opts) : handleAddPerson(dir, board, m, opts));
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not set the owner: ${(e as Error).message}`);
+        }
+        return post();
+      case "githubPlan": {
+        // Dry run: reads files only, never asks for a token and never touches the network.
+        try {
+          const built = await buildPlan(dir);
+          send(built.ok ? { type: "githubPlanResult", plan: toPlanView(built.plan) } : { type: "githubPlanResult", error: built.error });
+        } catch (e) {
+          send({ type: "githubPlanResult", error: (e as Error).message });
+        }
+        return;
+      }
+      case "githubSync": {
+        // The dialog showed the plan and the user pressed its confirm button. Token comes from the VS Code session.
+        try {
+          const r = await syncFromDialog(dir, m);
+          for (const w of r.warnings) log?.appendLine(`GitHub sync: ${w}`);
+          send(syncResultMessage(r, r.repo));
+        } catch (e) {
+          send(syncErrorMessage(e));
+        }
+        return post(); // issue numbers were written into task files
+      }
       case "toggleSubtask": {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {
@@ -169,7 +316,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         return post();
       }
     }
-  }, undefined, ctx.subscriptions);
+  }
 
   const root = vscode.workspace.workspaceFolders?.[0];
   if (root) {
@@ -189,6 +336,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("gitask.openBoard", () => openBoard(ctx)),
     vscode.commands.registerCommand("gitask.newTask", () => newTask()),
     vscode.commands.registerCommand("gitask.initTasks", () => initTasksFolder(ctx)),
+    vscode.commands.registerCommand("gitask.syncGithub", () => syncGithub(tasksDir(), log)),
   );
 }
 

@@ -2,6 +2,158 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-10-30 · [Ext] feat(ui): new task dialog with title, description, start/due, tier, status and member
+- Owner: SNLRLONG
+- Branch/PR: feat/new-task-dialog-fields · merged to main (c0cff3b)
+- What changed: the new task dialog mirrors the edit dialog look (Field labels, grid form, DialogFooter) and collects title (required), description, start date, due date, tier, status (dropdown of columns) and member (dropdown of contributors) before creating, in the browser and in VS Code. Core gains `createTaskWithFields` writing the full task file (description into `## Goal`, start/due/tier/owner headers). The `new` message carries the validated fields; both hosts create via `createTaskWithFields`. Protocol validation added for title/description/start/due/tier/owner; tests cover accepted and rejected values.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): new-task dialog and always-visible GitHub sync button
+- Owner: SNLRLONG
+- Branch/PR: feat/new-task-dialog · merged to main (dfb8d8c)
+- What changed: creating a task now opens a dialog that asks for the task id (the H1 title) and target status before creating, in the browser and in VS Code; the `new` message carries an optional validated id and hosts fall back to a generated id when none is given. Sync to GitHub is always visible in the browser filter bar instead of only when `Tasks/gitask.json` already has a github block; when not configured the dialog shows setup instructions.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(report): simple report
+- Owner: SNLRLONG
+- Task: Tasks/4-testing/Ext-report-simple.md
+- Branch/PR: feat/report-simple · merged to main (c68308c)
+- What changed: the report is now three tiles (tasks done, sub-tasks done, people) and one section per person with their done tasks and finished sub-tasks; `late` tag only when a Due date exists. Removed per-person tables, tier mix, data notes and date-source labels. CSV is `person,task,sub_task,done_date,sub_tasks_done`. Escaping, CSV formula neutralisation and no-email rules unchanged.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): modern date range picker
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-date-picker.md
+- Branch/PR: feat/ui-date-picker · merged to main (75f75f8)
+- What changed: the date range picker is a popover card with a light range band, rounded start/end, normal-weight numbers and Clear / Apply buttons; closing without Apply keeps the old range. Uses theme tokens.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(brand): colourful tab icon and favicon
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-brand-icon.md
+- Branch/PR: feat/brand-icon · merged to main (e01d47e)
+- What changed: one coloured icon (`media/icon.svg`, `icon.png` 256 px) on the VS Code tab; `gitask serve` serves `/favicon.svg` and `/favicon.png` so the browser tab shows the icon.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): dashboard charts on the Overview tab
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-dashboard-charts.md
+- Branch/PR: feat/ui-dashboard-charts · merged to main (2238de1)
+- What changed: Overview tab gains real charts: donut by status and by tier, bar per person (owner + sub-task assignees) and completed per week (last 12 weeks), and a GitHub-style activity heatmap of the last 12 months. Core gains `taskActivity(dir)`/`taskActivityCached(dir)`: one `git log --since --name-only`, committer dates, counts per day, `[]` outside git/empty repo, never throws, cached by HEAD; exposed as an `activity` field on the board payload in both hosts (heatmap always the full year, status/tier/person charts follow the existing filters). Charts use theme tokens (`--chart-*`, `--heat-*`), accessible palette, tooltips with numbers, `role=img` + `aria-label`, empty states, hand-made SVG (no new dependency).
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): browser System/Light/Dark theme with custom colour tokens
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-theme.md
+- Branch/PR: feat/ui-theme · merged to main (d9ba1eb)
+- What changed: browser-only System/Light/Dark toggle applied before first paint (inline nonce script under the existing CSP, no unsafe-inline) and remembered in localStorage; hidden in VS Code which owns its theme. Theme popover: presets (Neutral, Blue, Green, Violet, Orange, Red), custom #rrggbb for primary/accent/background/card/border, radius slider 0-20, live preview, Reset, strict JSON export/import (unknown keys dropped). Every custom value is validated and applied only through `document.documentElement.style.setProperty`; contrast warns below 4.5:1. Explicit light/dark token sets in `index.css` so charts and the calendar follow the theme.
+- Needs: none
+
+## 2026-10-30 · [CLI] feat(cli): npx/gitask-cli serve, walk-up Tasks discovery and init
+- Owner: SNLRLONG
+- Task: Tasks/5-done/CLI-npx-run.md
+- Branch/PR: feat/npx-run · merged to main (8dbcdb1)
+- What changed: `bin` exposes both `gitask` and `gitask-cli` from `dist/gitask.js` (shebang + exec bit survive `npm pack`); `gitask serve` with no `--dir` walks up to find `Tasks/` and fails with a clear `init` suggestion; new `gitask init` scaffolds `Tasks/`; root `pnpm gitask` / `pnpm serve` scripts build the CLI first when `dist` is missing. Verified via `npm pack`: `npx --yes <tarball> serve` and `pnpm dlx <tarball> serve` both serve (200 page, 401 on `/api/board` without token). `yarn dlx` and `bunx` were not available in this environment. Docs show the four runners and `npm i -g gitask-cli`.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): edit/delete tasks and sub-tasks from a three-dots menu
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-edit-delete.md
+- Branch/PR: feat/ui-edit-delete · merged to main (cbf8178)
+- What changed: kebab (vertical ellipsis) DropdownMenu replaces the trash icon on Board cards, List rows, the detail panel and sub-task rows (aria-label, stopPropagation, keyboard accessible). Edit task: title, due, tier T0-T3, owner (reuse picker), claimed by; core `updateTask` rewrites only patched lines, keeps CRLF, never renames, asserts regular file (symlink refused), commits by pathspec with `fillTemplate`. Edit/delete sub-task: text, assignee, lane; `deleteSubtask` removes exactly the index+line checkbox line. Delete keeps safeguards: VS Code modal, browser confirm with the `confirmed` flag. `editTask`/`editSubtask`/`deleteSubtask` validated in core protocol and handled identically in the extension and `gitask serve` through `serialQueue`. MockHost supports them; tests cover CRLF, `$&`, newline injection, stale line, symlink, protocol rejections and handler over HTTP.
+- Needs: none
+
+## 2026-10-30 · [Ops] chore(release): 0.5.0
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ops-release-0-5.md
+- Branch/PR: feat/release-prep (into release/0.5.0, then main) · tag `v0.5.0` by the owner
+- What changed: CLI and extension bumped to 0.5.0 with `pnpm bump`; `engines.node` is `>=22.18` at the repo root (tests run TypeScript through Node type stripping). README files, the website docs and the docs index cover people, sub-tasks, the report, `gitask serve` and GitHub sync.
+- Needs: owner tags `v0.5.0` and approves the `release` environment; Marketplace screenshots still to be captured
+
+## 2026-10-30 · [Ext] feat(github): sync tasks to GitHub Issues
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-github-sync.md
+- Branch/PR: feat/github-sync
+- What changed: opt-in, one-way sync (`"github"` in `Tasks/gitask.json`). `gitask github plan` is a dry run, `gitask github sync --yes` and `GITASK: Sync to GitHub` apply it: issue per task, assignee from the Owner's GitHub name, sub-tasks as sub-issues, optional Project status, `Issue:` line written back. Token from `GITHUB_TOKEN` or the VS Code GitHub sign-in, never stored.
+- Needs: a GitHub token with Issues write (Projects write for a Project)
+
+## 2026-10-30 · [Ext] feat(ui): export dialog with live report preview
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-export.md
+- Branch/PR: feat/ui-export
+- What changed: Export button opens a dialog (period, date field, people, sub-tasks, format) with a live preview of the real report; save as HTML, Markdown or CSV in VS Code, download in the browser over `gitask serve`. The host validates the options and builds the report.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): sub-tasks in List, Board and detail
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-subtasks.md
+- Branch/PR: feat/ui-subtasks
+- What changed: Jira-style sub-tasks: expand a List row, a Sub-tasks toggle on Board cards, and a detail section to add, tick, assign, set the lane or split into backend / UX/UI / frontend. New validated messages `addSubtask`, `setSubtaskAssignee`, `setSubtaskLane`.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): assignee picker, avatars and People filter
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-assign.md
+- Branch/PR: feat/ui-assign
+- What changed: pick the Owner from the contributors in a searchable combobox (Board card and detail), avatars on Board, List and detail, and a People filter (with Unassigned) that also matches sub-task assignees. `setOwner` and `addPerson` are validated.
+- Needs: none
+
+## 2026-10-30 · [CLI] feat(serve): gitask serve, the UI in a browser
+- Owner: SNLRLONG
+- Task: Tasks/5-done/CLI-serve.md
+- Branch/PR: feat/serve
+- What changed: `gitask serve` opens the same UI in a browser on `127.0.0.1`, protected by a random token plus Host and Origin checks, the same message validation as VS Code, a body cap and a strict CSP. The UI is bundled into the CLI, so `npx gitask-cli serve` needs no other files.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): List, Timeline, Overview and task detail in React
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-views.md
+- Branch/PR: feat/ui-views
+- What changed: the three views and the task detail panel (react-markdown, no raw HTML) moved to `packages/ui` with shadcn; List keeps a chevron column and expandable row slot for sub-tasks. Removed the string-built views, `detail.ts`, `markdown.ts`, `webviewHtml` and the `GITASK: Open Classic Board` command.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ui): React and shadcn UI foundation
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-ui-foundation.md
+- Branch/PR: feat/ui-foundation
+- What changed: new `packages/ui` (React, Vite, Tailwind, shadcn) behind a `Host` interface, with the shell and Board; the webview loads it under a strict CSP (nonce scripts) and follows the VS Code theme.
+- Needs: none
+
+## 2026-10-30 · [CLI] feat(cli): people, assign, subtask and report commands
+- Owner: SNLRLONG
+- Task: Tasks/5-done/CLI-commands.md
+- Branch/PR: feat/cli-commands
+- What changed: `gitask people`, `assign`, `subtask add|assign|list` and `report --format html|md|csv` with period, people and date-field options.
+- Needs: none
+
+## 2026-10-30 · [Core] feat(core): done report by person
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Core-done-report.md
+- Branch/PR: feat/done-report
+- What changed: report of what was done in a period, per person (tasks and sub-tasks done, on time vs late, average days, tier mix), as self-contained HTML, Markdown or CSV. Done date comes from the git move commit, falling back to `Updated`; GitHub names only, never emails.
+- Needs: none
+
+## 2026-10-30 · [Core] feat(core): sub-task assignee and lane
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Core-subtask-assignee.md
+- Branch/PR: feat/subtask-assignee
+- What changed: sub-task lines under `## Sub-tasks` accept `@person` and `#lane` tokens; `addSubtask`, `setSubtaskAssignee` and `setSubtaskLane` edit only that line. Card progress counts `Done when` and `Sub-tasks`.
+- Needs: none
+
+## 2026-10-30 · [Core] feat(core): people from git history
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Core-people.md
+- Branch/PR: feat/people
+- What changed: contributors read from git history and `.mailmap`, merged with `people` in `Tasks/gitask.json` (stable id, name, GitHub name, role; emails never stored); `setOwner` writes the task Owner.
+- Needs: none
+
+## 2026-10-30 · [Ext] feat(ext): GITASK icon on the editor tab
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-tab-icon.md
+- Branch/PR: feat/tab-icon
+- What changed: the board tab shows the GITASK icon (light and dark).
+- Needs: none
+
 ## 2026-10-21 · [Ext] feat(board): task ID, delete task or empty status
 - Owner: SNLRLONG
 - Task: Tasks/6-deploy/Ext-task-id-delete.md

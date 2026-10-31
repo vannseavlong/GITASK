@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+/*
+ * Theme. shadcn tokens are mapped to VS Code's webview CSS variables, so the UI follows the user's
+ * theme (light, dark, high contrast) with no theme code. The fallbacks after each comma apply in a
+ * plain browser, where there are no --vscode-* variables.
+ */
+:root {
+  --background: var(--vscode-editor-background, #ffffff);
+  --foreground: var(--vscode-foreground, #1f2328);
+  --card: var(--vscode-editor-background, #ffffff);
+  --card-foreground: var(--vscode-foreground, #1f2328);
+  --sidebar: var(--vscode-sideBar-background, #f6f8fa);
+  --popover: var(--vscode-editorWidget-background, #ffffff);
+  --popover-foreground: var(--vscode-editorWidget-foreground, var(--vscode-foreground, #1f2328));
+  --primary: var(--vscode-button-background, #0969da);
+  --primary-foreground: var(--vscode-button-foreground, #ffffff);
+  --secondary: var(--vscode-button-secondaryBackground, #eaeef2);
+  --secondary-foreground: var(--vscode-button-secondaryForeground, #1f2328);
+  --muted-foreground: var(--vscode-descriptionForeground, #656d76);
+  --accent: var(--vscode-list-hoverBackground, #eaeef2);
+  --accent-foreground: var(--vscode-list-hoverForeground, var(--vscode-foreground, #1f2328));
+  --destructive: var(--vscode-errorForeground, #cf222e);
+  --destructive-foreground: var(--vscode-editor-background, #ffffff);
+  --border: var(--vscode-contrastBorder, var(--vscode-panel-border, #d0d7de));
+  --input: var(--vscode-input-background, #ffffff);
+  --input-foreground: var(--vscode-input-foreground, #1f2328);
+  --input-border: var(--vscode-input-border, var(--vscode-panel-border, #d0d7de));
+  --ring: var(--vscode-focusBorder, #0969da);
+  --badge: var(--vscode-badge-background, #ddf4ff);
+  --badge-foreground: var(--vscode-badge-foreground, #0550ae);
+  --progress: var(--vscode-progressBar-background, #0969da);
+  --radius: 0.25rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.vscode-theme) {
+    --background: #1e1e1e; --foreground: #cccccc; --card: #1e1e1e; --card-foreground: #cccccc; --sidebar: #252526;
+    --popover: #252526; --popover-foreground: #cccccc; --primary: #0e639c; --primary-foreground: #ffffff;
+    --secondary: #3a3d41; --secondary-foreground: #ffffff; --muted-foreground: #9d9d9d; --accent: #2a2d2e;
+    --accent-foreground: #ffffff; --destructive: #f48771; --destructive-foreground: #1e1e1e; --border: #3c3c3c;
+    --input: #3c3c3c; --input-foreground: #cccccc; --input-border: #3c3c3c; --ring: #007fd4; --badge: #4d4d4d;
+    --badge-foreground: #ffffff; --progress: #0e639c;
+  }
+}
+
+/* Chart palette (dataviz skill): 8 categorical slots in fixed order, a muted grey, and a 5-step
+   heat ramp mixed from slot 1 and the editor background, so it follows the theme in light and dark. */
+:root {
+  --chart-1: #2a78d6; --chart-2: #eb6834; --chart-3: #1baf7a; --chart-4: #eda100;
+  --chart-5: #e87ba4; --chart-6: #008300; --chart-7: #6250d6; --chart-8: #e34948;
+  --chart-muted: #8c959f;
+}
+:root, body {
+  --heat-0: color-mix(in srgb, var(--foreground) 9%, var(--background));
+  --heat-1: color-mix(in srgb, var(--chart-1) 30%, var(--background));
+  --heat-2: color-mix(in srgb, var(--chart-1) 55%, var(--background));
+  --heat-3: color-mix(in srgb, var(--chart-1) 78%, var(--background));
+  --heat-4: var(--chart-1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.vscode-theme) {
+    --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+    --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+    --chart-muted: #8c959f;
+  }
+}
+body.vscode-dark, body.vscode-high-contrast:not(.vscode-high-contrast-light) {
+  --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+  --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+}
+
+/*
+ * Browser only (never inside VS Code): explicit light and dark token sets, shadcn neutral look. The toggle sets
+ * data-theme="light|dark" on <html> (and .dark); "System" is resolved to one of the two in JS. Without JS the prefers-color-scheme block above applies.
+ * Custom colours from the Theme dialog are inline custom properties on <html> and win over everything here.
+ */
+:root:not(.vscode-theme)[data-theme="light"] {
+  --background: #ffffff; --foreground: #0a0a0a; --card: #ffffff; --card-foreground: #0a0a0a; --sidebar: #fafafa;
+  --popover: #ffffff; --popover-foreground: #0a0a0a; --primary: #171717; --primary-foreground: #fafafa;
+  --secondary: #f5f5f5; --secondary-foreground: #171717; --muted-foreground: #737373; --accent: #f5f5f5;
+  --accent-foreground: #171717; --destructive: #dc2626; --destructive-foreground: #ffffff; --border: #e5e5e5;
+  --input: #ffffff; --input-foreground: #0a0a0a; --input-border: #e5e5e5; --ring: #a3a3a3; --badge: #f5f5f5;
+  --badge-foreground: #171717; --progress: #171717;
+}
+:root:not(.vscode-theme)[data-theme="dark"] {
+  --background: #0a0a0a; --foreground: #fafafa; --card: #0a0a0a; --card-foreground: #fafafa; --sidebar: #171717;
+  --popover: #171717; --popover-foreground: #fafafa; --primary: #e5e5e5; --primary-foreground: #171717;
+  --secondary: #262626; --secondary-foreground: #fafafa; --muted-foreground: #a3a3a3; --accent: #262626;
+  --accent-foreground: #fafafa; --destructive: #f87171; --destructive-foreground: #0a0a0a; --border: #262626;
+  --input: #171717; --input-foreground: #fafafa; --input-border: #333333; --ring: #737373; --badge: #262626;
+  --badge-foreground: #fafafa; --progress: #e5e5e5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-foreground: var(--input-foreground);
+  --color-ring: var(--ring);
+  --color-badge: var(--badge);
+  --color-badge-foreground: var(--badge-foreground);
+  --color-progress: var(--progress);
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+}
+
+@layer base {
+  * { border-color: var(--border); }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--background); color: var(--foreground);
+    font-family: var(--vscode-font-family, system-ui, sans-serif);
+    font-size: var(--vscode-font-size, 13px);
+  }
+  button:not(:disabled), [role="tab"], [role="combobox"] { cursor: pointer; }
+}
+
+/* Inputs get their border from --input-border; high contrast themes override via --vscode-contrastBorder. */
+[data-slot="input"], [data-slot="select-trigger"] { border-color: var(--input-border); }
+body.vscode-high-contrast [data-slot="input"], body.vscode-high-contrast-light [data-slot="input"] { border-color: var(--vscode-contrastBorder); }
+
+/* react-day-picker v9 reads these variables. */
+.gitask-calendar.rdp-root {
+  --rdp-day-height: 36px;
+  --rdp-day-width: 38px;
+  --rdp-day_button-height: 36px;
+  --rdp-day_button-width: 38px;
+  --rdp-day_button-border: 0;
+  --rdp-day_button-border-radius: 8px;
+  --rdp-selected-border: 0;
+  --rdp-range_start-background: none;
+  --rdp-range_end-background: none;
+  --rdp-range_start-date-background-color: var(--primary);
+  --rdp-range_end-date-background-color: var(--primary);
+  --rdp-range_middle-background-color: var(--muted, var(--accent));
+  --rdp-range_start-color: var(--primary-foreground);
+  --rdp-range_end-color: var(--primary-foreground);
+  --rdp-nav_button-height: 28px;
+  --rdp-nav_button-width: 28px;
+  --rdp-months-gap: 28px;
+  color: var(--popover-foreground);
+  font-size: 13px;
+  position: relative;
+}
+.gitask-calendar.rdp-root .rdp-nav { position: absolute; inset: 0 0 auto 0; height: 36px; justify-content: space-between; pointer-events: none; z-index: 1; }
+.gitask-calendar.rdp-root .rdp-button_previous, .gitask-calendar.rdp-root .rdp-button_next { pointer-events: auto; border-radius: 6px; color: var(--foreground); }
+.gitask-calendar.rdp-root .rdp-button_previous:hover, .gitask-calendar.rdp-root .rdp-button_next:hover { background: var(--muted, var(--accent)); }
+.gitask-calendar.rdp-root .rdp-month_caption { height: 36px; justify-content: center; font-size: 13px; font-weight: 600; }
+.gitask-calendar.rdp-root .rdp-caption_label { font-weight: 600; }
+.gitask-calendar.rdp-root .rdp-weekday { font-size: 12px; font-weight: 400; color: var(--muted-foreground); opacity: 1; }
+.gitask-calendar.rdp-root .rdp-day { padding: 1px 0; }
+.gitask-calendar.rdp-root .rdp-day_button { font-size: 13px; font-weight: 400; color: inherit; }
+.gitask-calendar.rdp-root .rdp-day_button:hover { background: var(--muted, var(--accent)); }
+.gitask-calendar.rdp-root .rdp-outside { color: var(--muted-foreground); opacity: .7; }
+.gitask-calendar.rdp-root .rdp-today:not(.rdp-selected) .rdp-day_button { box-shadow: inset 0 0 0 1px var(--ring); }
+.gitask-calendar.rdp-root .rdp-day.rdp-today, .gitask-calendar.rdp-root .rdp-day.rdp-today .rdp-day_button { color: inherit; }
+.gitask-calendar.rdp-root .rdp-range_start, .gitask-calendar.rdp-root .rdp-range_middle, .gitask-calendar.rdp-root .rdp-range_end { background: var(--muted, var(--accent)); }
+.gitask-calendar.rdp-root .rdp-range_middle { color: var(--foreground); }
+.gitask-calendar.rdp-root .rdp-selected { font-weight: 400; font-size: 13px; }
+.gitask-calendar.rdp-root .rdp-range_start .rdp-day_button, .gitask-calendar.rdp-root .rdp-range_end .rdp-day_button { background: var(--primary); color: var(--primary-foreground); }
+.gitask-calendar.rdp-root .rdp-range_start { border-radius: 8px 0 0 8px; }
+.gitask-calendar.rdp-root .rdp-range_end { border-radius: 0 8px 8px 0; }
+.gitask-calendar.rdp-root .rdp-range_start.rdp-range_end { border-radius: 8px; }
+.gitask-calendar.rdp-root .rdp-week > .rdp-range_middle:first-child { border-radius: 8px 0 0 8px; }
+.gitask-calendar.rdp-root .rdp-week > .rdp-range_middle:last-child { border-radius: 0 8px 8px 0; }
+.gitask-calendar.rdp-root .rdp-chevron { fill: currentColor; }
+
+/* Task detail: rendered Markdown. Headings, lists, code and tables, themed with the shadcn tokens. */
+.gitask-md > :first-child { margin-top: 0; }
+.gitask-md h1, .gitask-md h2, .gitask-md h3, .gitask-md h4 { margin: 14px 0 6px; font-size: 13px; font-weight: 600; text-transform: uppercase; opacity: .85; }
+.gitask-md h2 { border-bottom: 1px solid var(--border); padding-bottom: 2px; }
+.gitask-md p { margin: 4px 0; }
+.gitask-md ul, .gitask-md ol { margin: 4px 0; padding-left: 22px; }
+.gitask-md ul { list-style: disc; }
+.gitask-md ol { list-style: decimal; }
+.gitask-md li.task-list-item { list-style: none; margin-left: -18px; }
+.gitask-md input[type="checkbox"] { margin: 0 6px 0 0; vertical-align: middle; accent-color: var(--primary); }
+.gitask-md a { color: var(--vscode-textLink-foreground, var(--primary)); text-decoration: underline; }
+.gitask-md code { font-family: var(--vscode-editor-font-family, monospace); font-size: .95em; background: var(--vscode-textCodeBlock-background, var(--secondary)); padding: 0 3px; border-radius: 3px; }
+.gitask-md pre { background: var(--vscode-textCodeBlock-background, var(--secondary)); padding: 8px; border-radius: 4px; overflow: auto; margin: 6px 0; }
+.gitask-md pre code { background: none; padding: 0; }
+.gitask-md blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--border); opacity: .9; }
+.gitask-md table { border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+.gitask-md th, .gitask-md td { border: 1px solid var(--border); padding: 3px 8px; text-align: left; }
+.gitask-md hr { border: 0; border-top: 1px solid var(--border); margin: 10px 0; }

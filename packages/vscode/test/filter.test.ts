@@ -1,8 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { filterLogic, FILTER_SRC } from "../src/filter-logic.ts";
-import { VIEWS } from "../src/views/registry.ts";
-import { webviewHtml } from "../src/html.ts";
 
 const { rangeNorm, rangeActive, inRange, filterBoard, countTasks, taskDate } = filterLogic;
 
@@ -67,14 +65,4 @@ test("filterBoard keeps columns, filters tasks, does not mutate, and returns the
   assert.equal(countTasks(board), 3);
   assert.equal(countTasks(out), 1);
   assert.equal(countTasks(null), 0);
-});
-
-test("shell embeds the shared filter once, views stay free of it, range kept per view state", () => {
-  const html = webviewHtml(VIEWS, { nonce: "N" });
-  assert.equal(html.split("function inRange(").length - 1, 1);
-  assert.ok(html.includes("get board() { return filterBoard(board, viewState(id).range); }"));
-  assert.ok(html.includes("st.range = rangeNorm("));
-  assert.ok(html.includes('inp.type = "date"'));
-  for (const v of VIEWS) assert.ok(!(v.js ?? "").includes("function inRange"), v.id);
-  assert.ok(!/innerHTML|eval\(|new Function/.test(FILTER_SRC));
 });
