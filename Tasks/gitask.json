@@ -29,5 +29,9 @@
       "name": "VANN Seavlong",
       "github": "vannseavlong"
     }
-  ]
+  ],
+  "github": {
+    "repo": "vannseavlong/GITASK",
+    "project": 1
+  }
 }
