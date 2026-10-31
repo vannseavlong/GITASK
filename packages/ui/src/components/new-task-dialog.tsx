@@ -32,11 +32,15 @@ export function NewTaskDialog({
   const [column, setColumn] = React.useState(columns[0]?.id ?? "1-backlog");
   const [member, setMember] = React.useState("");
   const [error, setError] = React.useState("");
+  const [submitted, setSubmitted] = React.useState(false);
+
+  React.useEffect(() => { if (open) { setSubmitted(false); setError(""); } }, [open]);
 
   const id = slug(title);
   const valid = Boolean(title) && ID_RE.test(id);
 
   const submit = () => {
+    setSubmitted(true);
     setError("");
     if (!valid) { setError("Enter a title."); return; }
     host.send({ type: "new", column, id, title, description, start: start || undefined, due: due || undefined, tier: (tier || undefined) as "T0" | "T1" | "T2" | "T3" | undefined, owner: member || undefined });
@@ -52,8 +56,8 @@ export function NewTaskDialog({
         </DialogHeader>
         <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); submit(); }}>
           <Field label="Title" htmlFor="new-task-title">
-            <Input id="new-task-title" autoFocus value={title} maxLength={200} aria-invalid={!valid} onChange={(e) => { setTitle(e.target.value); setError(""); }} />
-            {!valid && <span role="status" className="text-xs text-destructive">Enter a title (letters, digits, spaces, . _ -).</span>}
+            <Input id="new-task-title" autoFocus value={title} maxLength={200} aria-invalid={submitted && !valid} onChange={(e) => { setTitle(e.target.value); setError(""); }} />
+            {submitted && !valid && <span role="status" className="text-xs text-destructive">Enter a title (letters, digits, spaces, . _ -).</span>}
           </Field>
           <Field label="Description" htmlFor="new-task-desc-input">
             <textarea id="new-task-desc-input" value={description} onChange={(e) => setDescription(e.target.value)} className="h-24 rounded-md border border-border bg-input px-3 py-2 text-sm text-input-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none" />

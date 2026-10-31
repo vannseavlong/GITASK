@@ -61,6 +61,8 @@ const BODY = (t: { title: string; subtasks: { text: string; checked: boolean }[]
 
 const REPORT_FIXTURE = (from: string, to: string) => `<!doctype html><html><head><meta charset="utf-8"><title>Report</title><style>body{font:14px sans-serif;margin:16px}th,td{padding:4px 8px;text-align:left}</style></head><body><h1>Done report</h1><p>${from || "start"} to ${to || "end"}</p><table><tr><th>Person</th><th>Tasks</th></tr><tr><td>samlee</td><td>3</td></tr><tr><td>ann</td><td>1</td></tr></table></body></html>`;
 
+const slug = (title: string) => title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "new-task";
+
 export function createMockHost(): Host {
   const board: BoardData = structuredClone(FIXTURE);
   const subs = new Set<(b: BoardData) => void>();
@@ -150,6 +152,14 @@ export function createMockHost(): Host {
       if (m.type === "deleteImpact") for (const cb of msgSubs) cb({ type: "deleteImpact", path: m.path, impact: "recoverable", detail: "The file is removed and the removal is committed, so it can be restored from git history." });
       if (m.type === "deleteTask") { for (const c of board.columns) c.tasks = c.tasks.filter((t) => t.path !== m.path); emit(); }
       if (m.type === "deleteColumn") { board.columns = board.columns.filter((c) => c.id !== m.column); emit(); }
+      if (m.type === "new") {
+        const id = m.id ?? slug(m.title ?? "new-task");
+        const col = board.columns.find((c) => c.id === m.column);
+        if (!col) { for (const cb of msgSubs) cb({ type: "error", message: `unknown column ${m.column}` }); return; }
+        if (col.tasks.some((t) => t.id === id)) { for (const cb of msgSubs) cb({ type: "error", message: `Task ${id} already exists` }); return; }
+        col.tasks.push({ id, title: m.title ?? id, path: `/fixture/Tasks/${m.column}/${id}.md`, column: col.id, fields: {}, prefix: id.split("-")[0], subtasks: [], progress: { done: 0, total: 0 }, dependsOn: [] });
+        emit();
+      }
       if (m.type === "setColumnColor") { const c = board.columns.find((x) => x.id === m.column); if (c) { c.color = m.color ?? undefined; emit(); } }
     },
     onBoard(cb) { subs.add(cb); return () => void subs.delete(cb); },
