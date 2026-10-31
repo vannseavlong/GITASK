@@ -172,7 +172,7 @@ export function BoardView({ board, full, host, ui, update, openTask }: ViewProps
           </section>
         ))}
       </div>
-      <NewTaskDialog host={host} columns={full.columns} open={newTaskOpen} onOpenChange={setNewTaskOpen} />
+      <NewTaskDialog host={host} columns={full.columns} people={board?.people} open={newTaskOpen} onOpenChange={setNewTaskOpen} />
     </div>
   );
 }

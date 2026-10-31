@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTask, deleteColumn, deleteSubtask, editSubtask, SUBTASK_DELETE_DETAIL, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, SUBTASK_DELETE_DETAIL, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
@@ -54,7 +54,7 @@ async function post(): Promise<void> {
   }
 }
 
-async function newTask(id?: string, column?: string, patch?: { due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null; claimedBy?: string | null }): Promise<void> {
+async function newTask(id?: string, column?: string, fields?: { title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null }): Promise<void> {
   const dir = tasksDir();
   if (!dir) return;
   if (!id) {
@@ -65,17 +65,14 @@ async function newTask(id?: string, column?: string, patch?: { due?: string | nu
     if (!id) return;
   }
   try {
-    const owner = vscode.workspace.getConfiguration("git").get<string>("userName");
-    const file = await createTask(dir, column ?? "1-backlog", id, { owner: patch?.owner ?? owner });
-    const b = await loadBoard(dir);
-    const task = b.columns.flatMap((c) => c.tasks).find((t) => t.path === file);
-    if (task) {
-      const p: { due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; claimedBy?: string | null } = {};
-      if (patch?.due !== undefined) p.due = patch.due;
-      if (patch?.tier !== undefined) p.tier = patch.tier;
-      if (patch?.claimedBy !== undefined) p.claimedBy = patch.claimedBy;
-      if (Object.keys(p).length) await updateTask(task, p, { commit: vscode.workspace.getConfiguration("gitask").get<boolean>("autoCommit", true) });
-    }
+    const file = await createTaskWithFields(dir, column ?? "1-backlog", id, {
+      title: fields?.title,
+      description: fields?.description,
+      start: fields?.start,
+      due: fields?.due,
+      tier: fields?.tier,
+      owner: fields?.owner,
+    });
     await vscode.window.showTextDocument(vscode.Uri.file(file));
   } catch (e) {
     vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
@@ -157,7 +154,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "open":
         return void vscode.window.showTextDocument(vscode.Uri.file(m.path));
       case "new":
-        return newTask(m.id, m.column, { due: m.due, tier: m.tier, owner: m.owner, claimedBy: m.claimedBy });
+        return newTask(m.id, m.column, { title: m.title, description: m.description, start: m.start, due: m.due, tier: m.tier, owner: m.owner });
       case "move":
         try {
           await moveTask(dir, m.path, m.to, {

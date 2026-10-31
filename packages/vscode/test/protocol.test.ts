@@ -68,23 +68,25 @@ test("rejects unknown columns", () => {
   assert.equal(validateMessage({ type: "new", column: 3 }, ctx).ok, false);
 });
 
-test("rejects bad new-task ids", () => {
-  for (const id of ["-dash", "  space", "a/b", "a b", "a\nb", "", "a<b", "a;b", 5, null]) {
-    assert.equal(validateMessage({ type: "new", column: "1-backlog", id }, ctx).ok, false, String(id));
-  }
-});
-
-test("accepts new task with title, due, tier, owner and claimed by", () => {
-  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog", id: "Web-login-page", title: "Web login page", due: "2026-11-06", tier: "T2", owner: "ann-roe", claimedBy: "claude session" }, ctx), { ok: true, message: { type: "new", column: "1-backlog", id: "Web-login-page", title: "Web login page", due: "2026-11-06", tier: "T2", owner: "ann-roe", claimedBy: "claude session" } });
-  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog", id: "Web-login-page", due: null, tier: null, owner: null, claimedBy: null }, ctx), { ok: true, message: { type: "new", column: "1-backlog", id: "Web-login-page", due: null, tier: null, owner: null, claimedBy: null } });
+test("accepts new task with title, description, start, due, tier and owner", () => {
+  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog", id: "web-login-page", title: "Web login page", description: "Implement the login screen.", start: "2026-11-02", due: "2026-11-06", tier: "T2", owner: "ann-roe" }, ctx), { ok: true, message: { type: "new", column: "1-backlog", id: "web-login-page", title: "Web login page", description: "Implement the login screen.", start: "2026-11-02", due: "2026-11-06", tier: "T2", owner: "ann-roe" } });
+  assert.deepEqual(validateMessage({ type: "new", column: "1-backlog", id: "x" }, ctx), { ok: true, message: { type: "new", column: "1-backlog", id: "x" } });
 });
 
 test("rejects bad new task fields", () => {
   assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", title: "" }, ctx).ok, false);
-  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", due: "not-a-date" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", title: "a".repeat(201) }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", start: "not-a-date" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", due: "2026-13-01" }, ctx).ok, false);
   assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", tier: "T9" }, ctx).ok, false);
   assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", owner: "Bad Id" }, ctx).ok, false);
-  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", claimedBy: "" }, ctx).ok, false);
+  assert.equal(validateMessage({ type: "new", column: "1-backlog", id: "x", description: "a".repeat(4001) }, ctx).ok, false);
+});
+
+test("rejects bad new-task ids", () => {
+  for (const id of ["-dash", "  space", "a/b", "a b", "a\nb", "", "a<b", "a;b", 5, null]) {
+    assert.equal(validateMessage({ type: "new", column: "1-backlog", id }, ctx).ok, false, String(id));
+  }
 });
 
 test("rejects bad sub-task indexes and views", () => {

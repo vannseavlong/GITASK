@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, applySync, assignIds, createTask, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
@@ -30,6 +30,10 @@ export interface HandlerResult {
   /** True when files may have changed, so a fresh board should be pushed. */
   changed: boolean;
 }
+
+/** Derive a valid task id from a title: lowercase, runs of non-alphanumerics to `-`. */
+const slug = (title: string): string =>
+  title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "new-task";
 
 export function createHandler(o: HandlerOptions) {
   const commit = o.commit ?? true;
@@ -75,17 +79,15 @@ export function createHandler(o: HandlerOptions) {
         return { status: 200, changed: false }; // a browser cannot open a file in an editor
       case "new":
         try {
-          const id = m.id ?? `New-task-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}`;
-          const dest = await createTask(o.dir, m.column ?? "1-backlog", id, { owner: m.owner ?? o.owner });
-          const b = await loadBoard(o.dir);
-          const task = b.columns.flatMap((c) => c.tasks).find((t) => t.path === dest);
-          if (task) {
-            const patch: { due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; claimedBy?: string | null } = {};
-            if (m.due !== undefined) patch.due = m.due;
-            if (m.tier !== undefined) patch.tier = m.tier;
-            if (m.claimedBy !== undefined) patch.claimedBy = m.claimedBy;
-            if (Object.keys(patch).length) await updateTask(task, patch, { commit });
-          }
+          const id = m.id ?? slug(m.title ?? `New-task-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}`);
+          await createTaskWithFields(o.dir, m.column ?? "1-backlog", id, {
+            title: m.title,
+            description: m.description,
+            start: m.start,
+            due: m.due,
+            tier: m.tier,
+            owner: m.owner,
+          });
           return { status: 200, changed: true };
         } catch (e) {
           return err((e as Error).message);

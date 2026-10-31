@@ -8,7 +8,7 @@ import { isAbsolute, relative, resolve, sep } from "node:path";
 export type WebviewMessage =
   | { type: "ready" }
   | { type: "open"; path: string }
-  | { type: "new"; column?: string; id?: string; title?: string; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null; claimedBy?: string | null }
+  | { type: "new"; column?: string; id?: string; title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null }
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "addSubtask"; path: string; text: string; assignee?: string; lane?: string }
@@ -143,6 +143,7 @@ export type ValidationResult = { ok: true; message: WebviewMessage } | { ok: fal
 const MAX_INDEX = 100_000;
 const MAX_SUBTASK_TEXT = 200;
 const MAX_TITLE_LEN = 200;
+const MAX_DESCRIPTION_LEN = 4000;
 const MAX_CLAIMED_LEN = 120;
 /** Control characters and line separators: never allowed in a single-line value. */
 const CONTROL = /[\u0000-\u001f\u007f\u2028\u2029]/;
@@ -216,6 +217,17 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
         if (HEADER_CHECKBOX.test(t)) return fail("title must not contain checkbox syntax");
         message.title = t;
       }
+      if (raw.description !== undefined) {
+        if (typeof raw.description !== "string") return fail("bad description");
+        const d = raw.description.trim();
+        if (d.length > 0 && d.length > MAX_DESCRIPTION_LEN) return fail(`description must be at most ${MAX_DESCRIPTION_LEN} characters`);
+        if (HEADER_CHECKBOX.test(d)) return fail("description must not contain checkbox syntax");
+        message.description = d;
+      }
+      if (raw.start !== undefined) {
+        if (raw.start !== null && (typeof raw.start !== "string" || !realDay(raw.start))) return fail("start must be a real date, YYYY-MM-DD");
+        message.start = raw.start;
+      }
       if (raw.due !== undefined) {
         if (raw.due !== null && (typeof raw.due !== "string" || !realDay(raw.due))) return fail("due must be a real date, YYYY-MM-DD");
         message.due = raw.due;
@@ -227,15 +239,6 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (raw.owner !== undefined) {
         if (raw.owner !== null && (typeof raw.owner !== "string" || raw.owner.length > MAX_NAME || !PERSON_ID.test(raw.owner))) return fail("bad person id");
         message.owner = raw.owner;
-      }
-      if (raw.claimedBy !== undefined) {
-        if (raw.claimedBy !== null) {
-          if (typeof raw.claimedBy !== "string") return fail("bad claimed by");
-          const c = raw.claimedBy.trim();
-          if (!c || c.length > MAX_CLAIMED_LEN || CONTROL.test(c)) return fail("claimed by must be one line of 1-120 characters");
-          if (HEADER_CHECKBOX.test(c)) return fail("claimed by must not contain checkbox syntax");
-          message.claimedBy = c;
-        } else message.claimedBy = null;
       }
       return { ok: true, message };
     }
