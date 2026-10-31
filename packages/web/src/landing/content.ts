@@ -2,12 +2,16 @@ export const links = {
   repo: "https://github.com/vannseavlong/GITASK",
   issues: "https://github.com/vannseavlong/GITASK/issues",
   releases: "https://github.com/vannseavlong/GITASK/releases/latest",
+  marketplace:
+    "https://marketplace.visualstudio.com/items?itemName=vannseavlong.gitask-vscode",
   openVsx: "https://open-vsx.org/extension/vannseavlong/gitask-vscode",
+  npm: "https://www.npmjs.com/package/gitask-cli",
   docs: "/docs/intro",
 } as const
 
 export const navItems = [
   { label: "Features", href: "#features" },
+  { label: "New in 0.5", href: "#whats-new" },
   { label: "Views", href: "#views" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Download", href: "#download" },
@@ -33,7 +37,7 @@ export const features = [
   {
     icon: "terminal",
     title: "VS Code and a CLI",
-    text: "The board in your editor, and gitask board, move, new and changelog in any terminal.",
+    text: "The board in your editor, or in a browser with gitask serve. Every action also works from the terminal.",
   },
 ] as const
 
@@ -72,13 +76,52 @@ export const views = [
 
 export const commands = [
   "gitask board",
-  "gitask move Web-login-page 3-in-progress",
-  "gitask new Core-export",
-  "gitask changelog Core-changelog",
+  "gitask assign Web-login-page sam-lee",
+  "gitask subtask add Web-login-page \"Build login API\" --assign sam-lee",
+  "gitask report --format md --from 2026-10-01",
+  "gitask serve",
 ] as const
 
-export const installCommand = (file = "<downloaded-file.vsix>") =>
-  `code --install-extension ${file}`
+export const extensionId = "vannseavlong.gitask-vscode"
+
+export const installCommand = `code --install-extension ${extensionId}`
+
+export const whatsNew = {
+  version: "0.5.0",
+  items: [
+    {
+      icon: "users",
+      title: "People and sub-tasks",
+      text: "Assign an owner, split a task into checkbox sub-tasks and give each one a person and a lane.",
+    },
+    {
+      icon: "report",
+      title: "Done reports",
+      text: "Export what each person finished as HTML, Markdown or CSV, with a live preview.",
+    },
+    {
+      icon: "browser",
+      title: "Board in your browser",
+      text: "gitask serve opens the same board on localhost, protected by a one-time token.",
+    },
+    {
+      icon: "github",
+      title: "GitHub Issues sync",
+      text: "Opt in, see a dry run, then create issues so assignees are notified. It never pushes.",
+    },
+  ],
+} as const
+
+export const cliCommands = [
+  { command: "gitask init", text: "Create a Tasks/ folder with the six status folders." },
+  { command: "gitask people", text: "List contributors; add --json for scripts.", isNew: true },
+  { command: "gitask assign <task> <person>", text: "Set or clear a task owner.", isNew: true },
+  { command: "gitask subtask add|assign|list", text: "Manage a task's checkboxes.", isNew: true },
+  { command: "gitask report --format md", text: "Done report by person, to stdout or a file.", isNew: true },
+  { command: "gitask serve", text: "The board in your browser, local and token-protected.", isNew: true },
+  { command: "gitask github plan | sync", text: "Dry-run, then sync tasks to GitHub Issues.", isNew: true },
+  { command: "gitask board | move | new | changelog", text: "The core commands from earlier releases." },
+] as const
 
 export interface BoardCard {
   title: string
