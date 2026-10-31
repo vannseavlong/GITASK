@@ -18,4 +18,4 @@ GITASK is a Kanban board for a `Tasks/` folder. One Markdown file is one task, a
 
 Open the board in a browser with `npx gitask-cli serve` (or `pnpm dlx gitask-cli serve`, `yarn dlx gitask-cli serve`, `bunx gitask-cli serve`, or `npm i -g gitask-cli` then `gitask serve`). See [serve](./serve.md).
 
-The full install guide and CLI reference are still being written. Until then, see the [project README](https://github.com/vannseavlong/GITASK#readme).
+New here? [Install GITASK](./install.md), then see the [CLI reference](./cli.md).

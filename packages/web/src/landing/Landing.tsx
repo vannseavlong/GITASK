@@ -2,6 +2,7 @@ import Navbar from "./components/Navbar"
 import Hero from "./components/Hero"
 import WhyGitask from "./components/WhyGitask"
 import HowItWorks from "./components/HowItWorks"
+import WhatsNew from "./components/WhatsNew"
 import Views from "./components/Views"
 import CommandLine from "./components/CommandLine"
 import Download from "./components/Download"
@@ -18,6 +19,7 @@ export default function Landing() {
         <Hero />
         <WhyGitask />
         <HowItWorks />
+        <WhatsNew />
         <Views />
         <CommandLine />
         <Download />

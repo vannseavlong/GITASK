@@ -17,14 +17,15 @@ export default function Footer() {
         <div>
           <h3>Product</h3>
           <a href="#features">Features</a>
+          <a href="#whats-new">What's new</a>
           <a href="#views">Views</a>
           <a href="#download">Download</a>
         </div>
         <div>
           <h3>Docs</h3>
           <a href={links.docs}>Getting started</a>
-          <a href={links.docs}>Task format</a>
-          <a href={links.docs}>CLI reference</a>
+          <a href="/docs/cli">CLI reference</a>
+          <a href="/docs/report">Reports</a>
         </div>
         <div>
           <h3>Community</h3>
@@ -34,10 +35,15 @@ export default function Footer() {
           <a href={links.issues} target="_blank" rel="noreferrer">
             Issues
           </a>
+          <a href={links.marketplace} target="_blank" rel="noreferrer">
+            VS Code Marketplace
+          </a>
           <a href={links.openVsx} target="_blank" rel="noreferrer">
             Open VSX
           </a>
-          <span className="muted-link">npm · pending</span>
+          <a href={links.npm} target="_blank" rel="noreferrer">
+            npm
+          </a>
         </div>
       </div>
       <div className="container footer-bottom">

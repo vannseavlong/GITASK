@@ -1,5 +1,5 @@
 import { CheckCircle2, Terminal } from "lucide-react"
-import { commands } from "../content"
+import { commands, links } from "../content"
 import { CopyButton } from "./Shared"
 
 export default function CommandLine() {
@@ -15,9 +15,9 @@ export default function CommandLine() {
           </p>
           <ul className="benefit-list">
             {[
-              "Inspect your board from any terminal.",
-              "Move and create tasks without opening an editor.",
-              "Review changes through Git history.",
+              "Assign people and sub-tasks without opening an editor.",
+              "Export a done report for any period.",
+              "Open the board in a browser with gitask serve.",
             ].map((item) => (
               <li key={item}>
                 <CheckCircle2 size={17} />
@@ -25,10 +25,9 @@ export default function CommandLine() {
               </li>
             ))}
           </ul>
-          <div className="availability-note">
-            <strong>CLI package publishing is not yet confirmed.</strong> Build
-            and run it from the repository for now.
-          </div>
+          <a className="text-link" href={links.docs}>
+            Read the CLI reference →
+          </a>
         </div>
         <div className="terminal">
           <div className="terminal-bar">
@@ -55,12 +54,15 @@ export default function CommandLine() {
                     3-in-progress&nbsp;&nbsp; CLI-gitask
                   </small>
                 )}
+                {index === commands.length - 1 && (
+                  <small>Board at http://127.0.0.1:4173/?token=…</small>
+                )}
               </div>
             ))}
           </div>
           <div className="terminal-install">
             <div>
-              <span>Planned npm install</span>
+              <span>Install from npm</span>
               <code>npm i -g gitask-cli</code>
             </div>
             <CopyButton value="npm i -g gitask-cli" />
