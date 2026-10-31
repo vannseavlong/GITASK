@@ -70,3 +70,15 @@ test("handler: addPerson with a path adds the person and assigns the task", asyn
   assert.match(readFileSync(path, "utf8"), /\*\*Owner:\*\* Zoe Kim/);
   assert.ok(JSON.parse(readFileSync(join(dir, "gitask.json"), "utf8")).people.some((p: { id: string }) => p.id === "zoe-kim"));
 });
+
+test("ownerName maps a saved person id to the display name and keeps unknown ids", async () => {
+  const { ownerName } = await import("../src/owner.ts");
+  const root = mkdtempSync(join(tmpdir(), "gitask-ownername-"));
+  const tasks = join(root, "Tasks");
+  mkdirSync(tasks, { recursive: true });
+  writeFileSync(join(tasks, "gitask.json"), JSON.stringify({ people: [{ id: "ann-roe", name: "Ann Roe" }] }));
+  assert.equal(await ownerName(tasks, "ann-roe"), "Ann Roe");
+  assert.equal(await ownerName(tasks, "ghost"), "ghost");
+  assert.equal(await ownerName(tasks, null), null);
+  assert.equal(await ownerName(tasks, undefined), undefined);
+});

@@ -5,7 +5,7 @@ import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, del
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
-import { handleAddPerson, handleSetOwner } from "../../vscode/src/owner.ts";
+import { handleAddPerson, handleSetOwner, ownerName } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
 
 export interface HandlerOptions {
@@ -86,7 +86,7 @@ export function createHandler(o: HandlerOptions) {
             start: m.start,
             due: m.due,
             tier: m.tier,
-            owner: m.owner,
+            owner: await ownerName(o.dir, m.owner),
           });
           return { status: 200, changed: true };
         } catch (e) {

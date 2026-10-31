@@ -6,6 +6,12 @@ export interface OwnerOptions { commit?: boolean }
 
 const findTask = (board: Board, path: string) => board.columns.flatMap((c) => c.tasks).find((t) => t.path === path);
 
+/** The display name of a saved person id (what the `Owner` line holds); an unknown id is kept as given. */
+export async function ownerName(dir: string, id: string | null | undefined): Promise<string | null | undefined> {
+  if (!id) return id;
+  return (await readPeople(dir)).find((p) => p.id === id)?.name ?? id;
+}
+
 /** `setOwner`: the person must be null or a saved person; the task must be on the board. */
 export async function handleSetOwner(dir: string, board: Board, m: Extract<WebviewMessage, { type: "setOwner" }>, opts: OwnerOptions = {}): Promise<void> {
   const task = findTask(board, m.path);

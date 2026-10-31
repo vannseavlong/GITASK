@@ -6,7 +6,7 @@ import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
 import { uiHtml } from "./html.ts";
-import { handleAddPerson, handleSetOwner } from "./owner.ts";
+import { handleAddPerson, handleSetOwner, ownerName } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
 import { resolveTasksDir } from "./tasks-dir.ts";
@@ -71,7 +71,7 @@ async function newTask(id?: string, column?: string, fields?: { title?: string; 
       start: fields?.start,
       due: fields?.due,
       tier: fields?.tier,
-      owner: fields?.owner,
+      owner: await ownerName(dir, fields?.owner),
     });
     await vscode.window.showTextDocument(vscode.Uri.file(file));
   } catch (e) {

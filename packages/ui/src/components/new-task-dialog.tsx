@@ -35,7 +35,13 @@ export function NewTaskDialog({
   const [submitted, setSubmitted] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
 
-  React.useEffect(() => { if (open) { setSubmitted(false); setSubmitting(false); setError(""); } }, [open]);
+  React.useEffect(() => {
+    if (!open) return;
+    // A fresh form every time: the previous task's values must not carry over.
+    setTitle(""); setDescription(""); setStart(""); setDue(""); setTier(""); setMember("");
+    setColumn(columns[0]?.id ?? "1-backlog");
+    setSubmitted(false); setSubmitting(false); setError("");
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const id = slug(title);
   const valid = Boolean(title) && ID_RE.test(id);
@@ -88,7 +94,7 @@ export function NewTaskDialog({
             </Select>
           </Field>
           <Field label="Member (assignee)">
-            <Select value={member || "__none"} onValueChange={setMember}>
+            <Select value={member || "__none"} onValueChange={(v) => setMember(v === "__none" ? "" : v)}>
               <SelectTrigger aria-label="Member" className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none">Unassigned</SelectItem>
@@ -97,11 +103,11 @@ export function NewTaskDialog({
             </Select>
           </Field>
           {error && <span role="alert" className="text-xs text-destructive">{error}</span>}
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" disabled={!valid || submitting}>{submitting ? "Creating…" : "Create"}</Button>
+          </DialogFooter>
         </form>
-        <DialogFooter>
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={!valid || submitting}>{submitting ? "Creating…" : "Create"}</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
