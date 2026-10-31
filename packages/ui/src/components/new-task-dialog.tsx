@@ -33,17 +33,21 @@ export function NewTaskDialog({
   const [member, setMember] = React.useState("");
   const [error, setError] = React.useState("");
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
 
-  React.useEffect(() => { if (open) { setSubmitted(false); setError(""); } }, [open]);
+  React.useEffect(() => { if (open) { setSubmitted(false); setSubmitting(false); setError(""); } }, [open]);
 
   const id = slug(title);
   const valid = Boolean(title) && ID_RE.test(id);
 
-  const submit = () => {
+  const submit = async () => {
     setSubmitted(true);
     setError("");
     if (!valid) { setError("Enter a title."); return; }
+    setSubmitting(true);
     host.send({ type: "new", column, id, title, description, start: start || undefined, due: due || undefined, tier: (tier || undefined) as "T0" | "T1" | "T2" | "T3" | undefined, owner: member || undefined });
+    // The server creates the task and pushes a fresh board; close once the request is dispatched.
+    await new Promise((r) => setTimeout(r, 400));
     onOpenChange(false);
   };
 
@@ -96,7 +100,7 @@ export function NewTaskDialog({
         </form>
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={!valid}>Create</Button>
+          <Button type="submit" disabled={!valid || submitting}>{submitting ? "Creating…" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
