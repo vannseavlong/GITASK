@@ -2,6 +2,11 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ops] feat(web): SEO and sharing metadata for the site
+- Owner: SNLRLONG
+- Task: Ops-web-seo (T-0009) · Branch/PR: feat/web-seo · not merged yet
+- What changed: unique home title/description, canonical and `og:*` from the one `SITE_URL`, 1200x630 OG image (`static/img/og.png`, built from the real board screenshot) as the default for every page, `twitter:card=summary_large_image`, `SoftwareApplication` JSON-LD on the home page, favicon set, `site.webmanifest`, `theme-color`, and a `robots.txt` generated at build time naming `/sitemap.xml`.
+- Needs: `Ops-web-deploy` sets the final `SITE_URL`; re-run the checklist then.
 ## 2026-11-02 · [Ops] feat(web): real screenshots in the landing Views section
 - Owner: SNLRLONG
 - Task: Ops-web-screenshots (T-0057) · Branch/PR: feat/web-screenshots
