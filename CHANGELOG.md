@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-01 · [Ops] feat: Ops-web-search-console
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ops-web-search-console.md
+- Branch/PR: `feat/web-search-console`
+- What changed: Prepare the site for Google Search Console: add the owner-supplied `google-site-verification` meta tag and keep the `/search` page out of the sitemap.
+
 ## 2026-11-02 · [Ops] feat(web): Google Search Console verification tag, search page out of the sitemap
 - Owner: SNLRLONG
 - Task: Ops-web-search-console (T-0065) · Branch/PR: feat/web-search-console
