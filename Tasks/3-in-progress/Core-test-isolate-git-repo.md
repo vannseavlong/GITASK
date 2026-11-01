@@ -4,7 +4,7 @@
 - **Repo:** GITASK
 - **Owner:** Owner
 - **Tier:** T1 · test-only change, no behaviour change (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** claude session, 2026-11-02
 - **Worktree:** `GITASK/GITASK-<short-name>/` · **Branch:** `feat/<short-name>`
 - **Started / updated:** 2026-11-02 / 2026-11-02
 - **Due:** <YYYY-MM-DD, optional>
