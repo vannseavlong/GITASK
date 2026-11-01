@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · docs content and sidebar config in one package
-- **Claimed by:** none
+- **Claimed by:** claude session, 2026-11-02
 - **Worktree:** `GITASK/GITASK-web-docs/` · **Branch:** `feat/web-docs`
-- **Started / updated:** 2026-11-05 / 2026-11-02
+- **Started / updated:** 2026-11-02 / 2026-11-02
 - **Due:** 2026-11-09
 - **Docs:** `Tasks/_plans/Ops-landing-page.md`; run the `docs-writer` skill first
 - **Depends on:** Ops-web-scaffold
