@@ -33,3 +33,8 @@ Make the extension README show the product and teach it: a demo video and a usag
 - Done (text): `packages/web/docs/getting-started.md` (slug `/getting-started`, incl. "Using GITASK with coding agents"), sidebar entry, README "Getting started in 5 steps". Commands and settings checked against `packages/cli/src/main.ts` and `packages/vscode/package.json`. Inbox note sent to `Tasks/_inbox/Ops-web-docs/`.
 - Build passes; only warnings are the existing `/#download` anchors on every docs page (navbar, not this task).
 - Remaining: demo GIF/WebP in `packages/vscode/media/` + video link (owner; `TODO(demo)` placeholders in README and guide); screenshots from `Ops-web-screenshots` (`TODO(screenshot)` in README and guide); CHANGELOG `[Ext]` if shipped in a release; G8 PR message; depends on `Ops-release-0-5` merging (README overlap). Nothing committed.
+
+## Notes: screenshots wired (2026-11-02)
+- README: board and detail images use absolute `raw.githubusercontent.com/.../img/views/*.webp` URLs with `#gh-dark-mode-only` / `#gh-light-mode-only`. Unverified: the Marketplace/Open VSX probably ignores those fragments and would show both the dark and light image, and WebP support there is unverified. Fix if so: drop the light images (dark only) and/or use PNG. Images only resolve once they are on `main` of the public repo.
+- Docs page: `ThemedImage` (light/dark swap) for board and detail, `/img/views/*-{light,dark}.webp`. The worktree branch lacks these files (they are on main), so I copied them in temporarily to build (passes), then removed them; they arrive on merge/rebase.
+- Still open: `TODO(demo)` GIF/video (owner).
