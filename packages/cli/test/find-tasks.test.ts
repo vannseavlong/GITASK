@@ -1,11 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, realpathSync, symlinkSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { findTasksDir } from "../src/find-tasks.ts";
 
 const tmp = () => realpathSync(mkdtempSync(join(tmpdir(), "gitask-find-")));
+
+/** True when some ancestor of `dir` has a `.git` (e.g. a stray `/tmp/.git`), so "outside a git repo" cannot be built there. */
+function insideGitRepo(dir: string): boolean {
+  for (let cur = dirname(dir); ; cur = dirname(cur)) {
+    if (existsSync(join(cur, ".git"))) return true;
+    if (dirname(cur) === cur) return false;
+  }
+}
 
 test("finds Tasks in the folder itself and in a parent inside the git root", () => {
   const root = tmp();
@@ -25,8 +33,9 @@ test("never walks above the git root", () => {
   assert.equal(findTasksDir(join(proj, "sub")), undefined);
 });
 
-test("outside a git repo only the current folder is checked", () => {
+test("outside a git repo only the current folder is checked", (t) => {
   const outer = tmp();
+  if (insideGitRepo(outer)) return t.skip(`a parent of ${outer} holds a .git, so there is no git-free place to test`);
   mkdirSync(join(outer, "Tasks"));
   mkdirSync(join(outer, "child"));
   assert.equal(findTasksDir(join(outer, "child")), undefined);
