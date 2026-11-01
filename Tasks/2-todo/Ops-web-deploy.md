@@ -6,7 +6,8 @@
 - **Tier:** T3 · deploy files (`.github/workflows`), hosting release, public site
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-web-deploy/` · **Branch:** `feat/web-deploy`
-- **Started / updated:** none / 2026-10-17
+- **Started / updated:** 2026-11-10 / 2026-11-02
+- **Due:** 2026-11-12
 - **Docs:** `Docs/architecture/release.md`, `Tasks/_plans/Ops-landing-page.md`; pattern to follow: `SheetDB/sheet-db-landing/CI-CD-SETUP.md` and `FIREBASE_DEPLOYMENT.md`
 - **Depends on:** Ops-web-downloads, Ops-web-docs, Ops-web-seo, Ops-github-remote (repo pushed), owner creates the Firebase site and secrets
 - **Touches:** `.github/workflows/ci.yml`, `.github/workflows/web.yml` (new), `packages/web/firebase.json`, `packages/web/.firebaserc`, `Docs/architecture/release.md` (add a "Website" section)

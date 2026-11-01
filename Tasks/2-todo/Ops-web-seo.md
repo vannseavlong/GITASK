@@ -6,7 +6,8 @@
 - **Tier:** T1 · metadata and static assets, no logic
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-web-seo/` · **Branch:** `feat/web-seo`
-- **Started / updated:** none / 2026-10-17
+- **Started / updated:** 2026-11-05 / 2026-11-02
+- **Due:** 2026-11-07
 - **Docs:** `Tasks/_plans/Ops-landing-page.md`, `Tasks/_plans/Ops-web-polish-and-readme.md`; run the `seo-checklist` skill
 - **Depends on:** Ops-web-scaffold, `Ops-web-screenshots` (real image for the OG card)
 - **Touches:** `packages/web/docusaurus.config.ts` (metadata keys only), `packages/web/static/**` (robots, OG image, favicons, manifest), page front matter

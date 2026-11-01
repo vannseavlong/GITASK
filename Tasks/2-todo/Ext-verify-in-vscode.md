@@ -1,15 +1,16 @@
 # Ext-verify-in-vscode
 
 - **ID:** T-0005
-- **Repo:** <repo>
+- **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · manual check
 - **Claimed by:** none
-- **Worktree:** `GITASK/<repo>-<short-name>/` · **Branch:** `feat/<short-name>`
-- **Started / updated:** 2026-10-17 / 2026-10-17
-- **Docs:** <links>
-- **Depends on:** <request item, other task, or none>
-- **Touches:** <main files/areas, to spot overlap with other worktrees>
+- **Worktree:** `GITASK/GITASK-verify-in-vscode/` · **Branch:** `fix/verify-in-vscode`
+- **Started / updated:** 2026-11-03 / 2026-11-02
+- **Due:** 2026-11-04
+- **Docs:** `Docs/architecture/ui.md`
+- **Depends on:** none
+- **Touches:** `packages/vscode/**` (fixes found only)
 
 ## Goal
 Run the extension (F5 on packages/vscode), open the board on a workspace with Tasks/, drag cards, confirm git mv + commit + UI resync. Fix bugs found, then move Ext-webview-board to 5-done.

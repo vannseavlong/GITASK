@@ -6,7 +6,8 @@
 - **Tier:** T3 · changes an export of personal data (names, per-person figures) (auto picker, see `PIPELINE.md`)
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-report-simple/` · **Branch:** `feat/report-simple`
-- **Started / updated:** 2026-10-30 / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-11-02
+- **Due:** 2026-11-04
 - **Docs:** `Tasks/_plans/Ext-polish-0-5-0.md`
 - **Depends on:** none (0.5.0 is merged on main)
 - **Touches:** packages/core/src/report-render.ts, report.ts (summary only), packages/ui export dialog preview text, tests, Docs/requirements/views.md

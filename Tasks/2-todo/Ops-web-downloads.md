@@ -6,7 +6,8 @@
 - **Tier:** T2 · new API call (GitHub Releases), new feature on the page
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-web-downloads/` · **Branch:** `feat/web-downloads`
-- **Started / updated:** none / 2026-10-17
+- **Started / updated:** 2026-11-05 / 2026-11-02
+- **Due:** 2026-11-09
 - **Docs:** `Docs/requirements/landing-page.md` (download table), `Tasks/_plans/Ops-landing-page.md`
 - **Depends on:** Ops-web-scaffold
 - **Touches:** `packages/web/src/lib/release.ts`, `packages/web/src/lib/os.ts`, `packages/web/src/components/Download*.tsx`, `packages/web/test/**`

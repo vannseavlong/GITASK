@@ -6,7 +6,8 @@
 - **Tier:** T3 · export of personal data (names, per-person KPIs), new core feature (auto picker, see `PIPELINE.md`)
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-done-report/` · **Branch:** `feat/done-report`
-- **Started / updated:** 2026-10-30 / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-11-02
+- **Due:** 2026-11-04
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** Core-people, Core-subtask-assignee
 - **Touches:** packages/core/src/report.ts, report-render.ts (new), git.ts (read-only log helper), index.ts, tests

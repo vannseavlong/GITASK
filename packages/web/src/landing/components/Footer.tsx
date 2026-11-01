@@ -1,5 +1,5 @@
 import useBaseUrl from "@docusaurus/useBaseUrl"
-import { GitFork } from "lucide-react"
+import GitHubIcon from "./GitHubIcon"
 import { links } from "../content"
 
 export default function Footer() {
@@ -30,7 +30,7 @@ export default function Footer() {
         <div>
           <h3>Community</h3>
           <a href={links.repo} target="_blank" rel="noreferrer">
-            <GitFork size={14} /> GitHub
+            <GitHubIcon size={14} /> GitHub
           </a>
           <a href={links.issues} target="_blank" rel="noreferrer">
             Issues
@@ -44,11 +44,19 @@ export default function Footer() {
           <a href={links.npm} target="_blank" rel="noreferrer">
             npm
           </a>
+          <a href={links.portfolio} target="_blank" rel="noreferrer">
+            Portfolio
+          </a>
         </div>
       </div>
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} GITASK</span>
-        <span>Built in the open, one task file at a time.</span>
+        <span>
+          Built by{" "}
+          <a href={links.portfolio} target="_blank" rel="noreferrer">
+            Vann Seavlong
+          </a>
+        </span>
       </div>
     </footer>
   )

@@ -6,6 +6,11 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - Owner: SNLRLONG
 - Task: Ops-web-screenshots (T-0057) · Branch/PR: feat/web-screenshots
 - What changed: the CSS-drawn view thumbnails are replaced by WebP screenshots of the browser board (Board, Task detail, List, Timeline, Overview; dark and light, 1280x800, each under 100 KB) in `packages/web/static/img/views/`. The image follows the Docusaurus colour mode through `[data-theme]` show/hide; dead `.thumb-*` CSS removed.
+## 2026-11-02 · [Ops] fix(web): landing navbar label, GitHub icon, hamburger and portfolio link
+- Owner: SNLRLONG
+- Task: Tasks/3-in-progress/Ops-web-landing-fixes.md
+- Branch/PR: fix/web-landing-fixes · not merged yet
+- What changed: navbar item reads "What's new"; inline-SVG GitHub mark (`GitHubIcon`) in navbar and footer; the hamburger no longer shows on desktop (the minified CSS let `.icon-link` override the hide rule) and the mobile panel is opaque, closes on Escape, link tap or outside tap, and has `aria-controls`; portfolio link stored in `links.portfolio` and shown in the footer ("Built by Vann Seavlong") and Community column.
 - Needs: none
 
 ## 2026-10-30 · [Ext] feat(ui): new task dialog with title, description, start/due, tier, status and member
