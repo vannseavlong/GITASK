@@ -2,6 +2,24 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-01 · [Ops] feat: Ops-web-scaffold
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ops-web-scaffold.md
+- Branch/PR: `feat/web-scaffold`
+- What changed: Create `packages/web` as a Docusaurus 3 site (React, TypeScript) with the portfolio brand in one `src/css/custom.css`, and a custom home page (`src/pages/index.tsx`): hero, views preview, features, how it works, footer. The Download section is a static placeholder with its final layout; `Ops-web-downloads` makes it live.
+
+## 2026-11-01 · [Ops] feat: Ops-web-downloads
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ops-web-downloads.md
+- Branch/PR: `feat/web-downloads`
+- What changed: Make the Download section real: detect the OS, resolve the latest release's `.vsix` from the GitHub API, show Mac/Windows/Linux cards (same file, OS-specific install command), "Install in VS Code", and a command-line tab (`npm i -g gitask-cli`, `npx gitask-cli board`), with copy buttons and fallbacks.
+
+## 2026-11-01 · [Ops] feat: Ops-web-docs
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ops-web-docs.md
+- Branch/PR: `feat/web-docs`
+- What changed: User documentation on the site: Getting started (install, first board), Task format (folders, header fields, sub-tasks, `Due`, `Depends on`), CLI reference (`board`, `move`, `new`, `changelog`), the VS Code views, FAQ. Local search, no Algolia account.
+
 ## 2026-11-02 · [Ops] feat(web): real Download section with OS detection and latest release
 - Owner: SNLRLONG
 - Task: Ops-web-downloads (T-0008) · Branch/PR: feat/web-downloads · not merged yet
