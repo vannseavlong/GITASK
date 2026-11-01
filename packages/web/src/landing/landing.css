@@ -850,80 +850,24 @@ a,
   margin-top: 7px;
 }
 
-.view-thumbnail {
-  position: relative;
-  display: grid;
-  height: 152px;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 7px;
-  overflow: hidden;
-  border-bottom: 1px solid var(--border);
-  padding: 18px;
-  background: var(--bg);
-}
-
-.view-thumbnail i {
+.view-shot {
   display: block;
-  border: 1px solid var(--border-strong);
-  border-radius: 4px;
-  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  line-height: 0;
 }
 
-.thumb-board i:nth-child(2),
-.thumb-board i:nth-child(5) {
-  transform: translateY(9px);
-  border-color: var(--accent-border-hover);
+.view-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 8 / 5;
 }
 
-.thumb-detail {
-  grid-template-columns: 1fr;
-}
-
-.thumb-detail i {
-  height: 8px;
-}
-
-.thumb-detail i:first-child {
-  width: 46%;
-  height: 15px;
-}
-
-.thumb-detail i:nth-child(3) {
-  width: 76%;
-}
-
-.thumb-list {
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-
-.thumb-list i {
-  height: 14px;
-}
-
-.thumb-timeline {
-  grid-template-columns: repeat(4, 1fr);
-  background-image: linear-gradient(90deg, transparent 24%, var(--border) 25%, transparent 26%, transparent 49%, var(--border) 50%, transparent 51%, transparent 74%, var(--border) 75%, transparent 76%);
-}
-
-.thumb-timeline i {
-  height: 9px;
-  border-color: var(--accent-border-hover);
-  background: var(--accent-soft);
-}
-
-.thumb-timeline i:nth-child(2),
-.thumb-timeline i:nth-child(5) {
-  grid-column: span 2;
-}
-
-.thumb-overview {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.thumb-overview i:first-child,
-.thumb-overview i:nth-child(2) {
-  border-top: 3px solid var(--accent);
+/* Docusaurus sets data-theme on <html> before first paint, so there is no flash. */
+[data-theme='light'] & .shot-dark,
+[data-theme='dark'] & .shot-light {
+  display: none;
 }
 
 /* CLI */
@@ -1581,10 +1525,6 @@ a,
   .view-card:nth-child(1),
   .view-card:nth-child(2) {
     grid-column: auto;
-  }
-
-  .view-thumbnail {
-    height: 130px;
   }
 
   .cli-grid {
