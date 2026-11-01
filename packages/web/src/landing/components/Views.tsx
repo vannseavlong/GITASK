@@ -1,16 +1,15 @@
+import useBaseUrl from "@docusaurus/useBaseUrl"
 import { CheckCircle2, Clock3 } from "lucide-react"
 import { views } from "../content"
 import { SectionHeading } from "./Shared"
 
-function Thumbnail({ type }: { type: string }) {
+function Shot({ image, alt }: { image: string; alt: string }) {
+  const dark = useBaseUrl(`/img/views/${image}-dark.webp`)
+  const light = useBaseUrl(`/img/views/${image}-light.webp`)
   return (
-    <div className={`view-thumbnail thumb-${type}`} aria-hidden="true">
-      <i />
-      <i />
-      <i />
-      <i />
-      <i />
-      <i />
+    <div className="view-shot">
+      <img className="shot-dark" src={dark} alt={alt} width={1280} height={800} loading="lazy" decoding="async" />
+      <img className="shot-light" src={light} alt={alt} width={1280} height={800} loading="lazy" decoding="async" />
     </div>
   )
 }
@@ -30,7 +29,7 @@ export default function Views() {
               className="view-card"
               key={view.title}
             >
-              <Thumbnail type={view.type} />
+              <Shot image={view.image} alt={view.alt} />
               <div className="view-copy">
                 <div>
                   <h3>{view.title}</h3>

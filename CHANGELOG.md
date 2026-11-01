@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ops] feat(web): real screenshots in the landing Views section
+- Owner: SNLRLONG
+- Task: Ops-web-screenshots (T-0057) · Branch/PR: feat/web-screenshots
+- What changed: the CSS-drawn view thumbnails are replaced by WebP screenshots of the browser board (Board, Task detail, List, Timeline, Overview; dark and light, 1280x800, each under 100 KB) in `packages/web/static/img/views/`. The image follows the Docusaurus colour mode through `[data-theme]` show/hide; dead `.thumb-*` CSS removed.
+- Needs: none
+
 ## 2026-10-30 · [Ext] feat(ui): new task dialog with title, description, start/due, tier, status and member
 - Owner: SNLRLONG
 - Branch/PR: feat/new-task-dialog-fields · merged to main (c0cff3b)
