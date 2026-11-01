@@ -1080,6 +1080,71 @@ a,
   justify-content: center;
 }
 
+.download-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.download-stack[data-os="mobile"] .two-grid {
+  order: -1;
+}
+
+.two-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.release-status {
+  min-height: 1.4em;
+  margin: 0 0 14px;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.download-card .shell-label {
+  margin-bottom: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.plain-links {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plain-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.os-grid .install-code code {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.install-code code:focus-visible,
+.plain-links a:focus-visible,
+.release-error a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* What's new */
 .new-grid {
   display: grid;
@@ -1403,7 +1468,8 @@ a,
     gap: 42px;
   }
 
-  .download-grid {
+  .download-grid,
+  .two-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1607,7 +1673,8 @@ a,
     font-size: var(--fs-mock-xs);
   }
 
-  .download-grid {
+  .download-grid,
+  .two-grid {
     grid-template-columns: 1fr;
   }
 

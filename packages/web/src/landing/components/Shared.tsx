@@ -1,5 +1,5 @@
 import { Check, Copy } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export function SectionHeading({
   eyebrow,
@@ -26,27 +26,46 @@ export function SectionHeading({
 export function CopyButton({
   value,
   label = "Copy command",
+  announce = false,
 }: {
   value: string
   label?: string
+  /** Add a polite live region that says "Copied" or why it failed. */
+  announce?: boolean
 }) {
-  const [copied, setCopied] = useState(false)
+  const [message, setMessage] = useState("")
+  const timer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(timer.current), [])
 
   async function copy() {
-    await navigator.clipboard.writeText(value)
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1800)
+    let text = "Copied"
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      text = "Copy failed. Select the text and copy it by hand."
+    }
+    setMessage(text)
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setMessage(""), 2500)
   }
 
+  const copied = message === "Copied"
   return (
-    <button
-      className="icon-button"
-      type="button"
-      onClick={copy}
-      aria-label={copied ? "Copied" : label}
-    >
-      {copied ? <Check size={16} /> : <Copy size={16} />}
-      <span className="copy-label">{copied ? "Copied" : "Copy"}</span>
-    </button>
+    <>
+      <button
+        className="icon-button"
+        type="button"
+        onClick={copy}
+        aria-label={announce ? label : copied ? "Copied" : label}
+      >
+        {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+        <span className="copy-label">{copied ? "Copied" : "Copy"}</span>
+      </button>
+      {announce && (
+        <span className="sr-only" role="status" aria-live="polite">
+          {message}
+        </span>
+      )}
+    </>
   )
 }

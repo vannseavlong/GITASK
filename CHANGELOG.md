@@ -2,6 +2,11 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ops] feat(web): real Download section with OS detection and latest release
+- Owner: SNLRLONG
+- Task: Ops-web-downloads (T-0008) · Branch/PR: feat/web-downloads · not merged yet
+- What changed: the Download section detects macOS, Windows, Linux, mobile or unknown from the user agent, resolves the latest `.vsix` by extension from the GitHub Releases API (unauthenticated, cached in `sessionStorage`), and shows per-OS cards with a PowerShell or shell install command, "Install in VS Code", the CLI commands and Open VSX/Marketplace/Releases links. Network, 403/429, 404 and no-`.vsix` failures show those fallback links; release text is never rendered. Server-rendered links work with JavaScript off; copy buttons announce their result. Pure logic in `src/lib/os.ts` and `src/lib/release.ts`, tested with `node:test` (`packages/web/test`, added to root `pnpm test`).
+- Needs: none; checked against the real v0.5.0 release.
 ## 2026-11-02 · [Ops] feat(web): task format, views and FAQ docs, local search
 - Owner: SNLRLONG
 - Task: Ops-web-docs (T-0007) · Branch/PR: feat/web-docs · not merged yet

@@ -16,6 +16,7 @@ tag vX.Y.Z → verify (tag == package versions, typecheck, test)
 - `vX.Y.Z-beta.1` publishes to the npm `next` tag and the Marketplace/Open VSX pre-release channel.
 - A marketplace step is skipped (not failed) while its secret is missing.
 - Jobs `npm` and `extension` use the GitHub environment `release`; add required reviewers there to get a manual approval before anything goes live.
+- The website's Download section reads `releases/latest` from the GitHub API at page load and picks the asset ending in `.vsix` (the name carries the version, so nothing is hard-coded). Keep exactly one `.vsix` on each release and the repo public; see `packages/web/src/lib/release.ts`.
 - `gitask-core` is bundled into both outputs by esbuild and is never published.
 
 ## Release workflow (every change, every release)
