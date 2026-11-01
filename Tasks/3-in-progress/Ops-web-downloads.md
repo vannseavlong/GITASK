@@ -4,13 +4,13 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new API call (GitHub Releases), new feature on the page
-- **Claimed by:** none
+- **Claimed by:** claude session, 2026-11-02
 - **Worktree:** `GITASK/GITASK-web-downloads/` · **Branch:** `feat/web-downloads`
-- **Started / updated:** 2026-11-05 / 2026-11-02
+- **Started / updated:** 2026-11-02 / 2026-11-02
 - **Due:** 2026-11-09
 - **Docs:** `Docs/requirements/landing-page.md` (download table), `Tasks/_plans/Ops-landing-page.md`
 - **Depends on:** Ops-web-scaffold
-- **Touches:** `packages/web/src/lib/release.ts`, `packages/web/src/lib/os.ts`, `packages/web/src/components/Download*.tsx`, `packages/web/test/**`
+- **Touches:** `packages/web/src/lib/release.ts`, `packages/web/src/lib/os.ts`, `packages/web/src/landing/components/Download.tsx` (the landing moved to `src/landing`), `packages/web/test/**`
 
 ## Goal
 Make the Download section real: detect the OS, resolve the latest release's `.vsix` from the GitHub API, show Mac/Windows/Linux cards (same file, OS-specific install command), "Install in VS Code", and a command-line tab (`npm i -g gitask-cli`, `npx gitask-cli board`), with copy buttons and fallbacks.
