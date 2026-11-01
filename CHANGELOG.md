@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-01 · [Ext] feat: Ext-readme-screens
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-readme-screens.md
+- Branch/PR: `docs/readme-screens`
+- What changed: Drop the demo video/GIF plan. Use the real screenshots already on main everywhere a `TODO(demo)` or `TODO(screenshot)` was left.
+
 ## 2026-11-01 · [Ops] feat: Ops-web-scaffold
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ops-web-scaffold.md
