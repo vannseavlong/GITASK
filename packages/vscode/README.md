@@ -4,6 +4,18 @@ A Kanban board for a plain-Markdown `Tasks/` folder, inside VS Code. One Markdow
 
 Built for workspaces where humans and coding agents share one board ([My-Agent-SetUp](https://github.com/vannseavlong/Agent-SetUp)).
 
+## Getting started in 5 steps
+
+<!-- TODO(demo): looping GIF/WebP in packages/vscode/media/ linking to the full video (arrives from the owner; no URL yet) -->
+
+1. **Initialize:** run **GITASK: Initialize Tasks Folder**.
+2. **Create:** run **GITASK: New Task**.
+3. **Move:** run **GITASK: Open Board** and drag a card to another column.
+4. **Assign and split:** click the owner on a card; add `- [ ] text @person #lane` under `## Sub-tasks`.
+5. **Export:** click **Export** for a report by person.
+
+Full walkthrough, including use with coding agents: [Use GITASK from install to a finished task](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/getting-started.md).
+
 ## Use it
 
 Open a workspace that has `Tasks/1-backlog/` (or any numbered folders under `Tasks/`). The extension activates by itself.
@@ -35,7 +47,11 @@ A task is a Markdown file. The `#` heading is the title and the `- **Key:** valu
 - **Export:** the **Export** button builds a "what was done" report by person (HTML, Markdown or CSV) with a live preview. See the [report guide](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/report.md).
 - **GITASK: Sync to GitHub** (opt-in, shows a dry run first) creates issues for your tasks so assignees are notified. It does nothing until `Tasks/gitask.json` has a `github` entry; see [Docs/architecture/github.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/github.md).
 
-<!-- TODO(screenshot): Board with avatars and sub-tasks; Export dialog -->
+![GITASK board with assignees and sub-tasks](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/board-dark.webp#gh-dark-mode-only)
+![GITASK board with assignees and sub-tasks](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/board-light.webp#gh-light-mode-only)
+
+![GITASK task detail](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/detail-dark.webp#gh-dark-mode-only)
+![GITASK task detail](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/detail-light.webp#gh-light-mode-only)
 
 ## Settings
 
