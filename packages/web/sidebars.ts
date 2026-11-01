@@ -5,8 +5,10 @@ const sidebars: SidebarsConfig = {
     'intro',
     'install',
     'getting-started',
+    'task-format',
+    'views',
     {type: 'category', label: 'Guides', collapsed: false, items: ['people-and-subtasks', 'report', 'serve', 'github-sync']},
-    {type: 'category', label: 'Reference', collapsed: false, items: ['cli']},
+    {type: 'category', label: 'Reference', collapsed: false, items: ['cli', 'faq']},
   ],
 };
 
