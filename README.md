@@ -42,7 +42,8 @@ The H1 is the title; `- **Key:** value` lines above the first `##` are the field
 - **GitHub sync:** opt-in, dry run first, one-way to Issues. `Docs/architecture/github.md`.
 - **New UI:** React + shadcn, see `Docs/architecture/ui.md`.
 
-<!-- TODO(screenshot): Board with avatars and sub-tasks; Export dialog with preview -->
+![GITASK board with assignees and sub-tasks](packages/web/static/img/views/board-dark.webp#gh-dark-mode-only)
+![GITASK board with assignees and sub-tasks](packages/web/static/img/views/board-light.webp#gh-light-mode-only)
 
 ## Develop
 
