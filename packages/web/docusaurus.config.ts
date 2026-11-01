@@ -38,6 +38,14 @@ const config: Config = {
     },
   ],
 
+  themes: [
+    // Local search: index built at build time, no account or external service.
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {hashed: true, docsRouteBasePath: '/docs', indexBlog: false, indexPages: false, highlightSearchTermsOnTargetPage: true},
+    ],
+  ],
+
   presets: [
     [
       'classic',

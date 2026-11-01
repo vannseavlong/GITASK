@@ -2,6 +2,10 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ops] feat(web): task format, views and FAQ docs, local search
+- Owner: SNLRLONG
+- Task: Ops-web-docs (T-0007) · Branch/PR: feat/web-docs · not merged yet
+- What changed: new docs pages Task format, Views and FAQ (sidebar updated); CLI reference re-checked against `gitask --help`; local search with `@easyops-cn/docusaurus-search-local` 0.55.3 (index built at build time, no account), registered in `docusaurus.config.ts`.
 ## 2026-11-02 · [Ops] feat(web): SEO and sharing metadata for the site
 - Owner: SNLRLONG
 - Task: Ops-web-seo (T-0009) · Branch/PR: feat/web-seo · not merged yet
