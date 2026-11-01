@@ -2,6 +2,11 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ops] feat(web): Google Search Console verification tag, search page out of the sitemap
+- Owner: SNLRLONG
+- Task: Ops-web-search-console (T-0065) · Branch/PR: feat/web-search-console
+- What changed: the `google-site-verification` meta tag (a public ownership token) is added site wide through `docusaurus.config.ts`, and `/search` is excluded from `sitemap.xml`.
+- Needs: owner runs `pnpm deploy:web`, clicks Verify in Search Console, submits `sitemap.xml` and requests indexing.
 ## 2026-11-02 · [Ext] chore(release): 0.5.1, refreshed listing README
 - Owner: SNLRLONG
 - Task: Ops-release-0-5-1 (T-0064) · Branch/PR: chore/release-0-5-1

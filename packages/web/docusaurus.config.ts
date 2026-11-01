@@ -7,6 +7,8 @@ const SITE_URL = 'https://gitask-me.web.app';
 const DESCRIPTION =
   'GITASK is a Kanban board for a plain-Markdown Tasks folder, in VS Code and on the command line. One file per task, the folder is the status, git is the history.';
 const THEME_COLOR = '#3b82f6'; // --brand-primary in src/css/custom.css
+// Public ownership token for Google Search Console (an HTML-tag verification, not a secret).
+const GOOGLE_SITE_VERIFICATION = 'jAVN--LqYyMndNhV65oe70UmMoMOhgejwSV6BzO2WUo';
 const REPO = 'https://github.com/vannseavlong/GITASK';
 
 const config: Config = {
@@ -53,6 +55,8 @@ const config: Config = {
         docs: {sidebarPath: './sidebars.ts', routeBasePath: 'docs'},
         blog: false,
         theme: {customCss: './src/css/custom.css'},
+        // The search page is a tool, not content: keep it out of the sitemap.
+        sitemap: {ignorePatterns: ['/search/**', '/search']},
       } satisfies Preset.Options,
     ],
   ],
@@ -62,6 +66,7 @@ const config: Config = {
     metadata: [
       {name: 'description', content: DESCRIPTION},
       {name: 'theme-color', content: THEME_COLOR},
+      {name: 'google-site-verification', content: GOOGLE_SITE_VERIFICATION},
       {name: 'twitter:card', content: 'summary_large_image'},
       {property: 'og:image:width', content: '1200'},
       {property: 'og:image:height', content: '630'},
