@@ -2,7 +2,7 @@
   "name": "gitask-vscode",
   "displayName": "GITASK",
   "description": "Git-backed Kanban for a Tasks/ folder. Drag a card, the file moves and the change is committed. Assign people, sub-tasks, reports.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publisher": "vannseavlong",
   "license": "MIT",
   "icon": "media/icon.png",

@@ -2,6 +2,11 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ext] chore(release): 0.5.2, one screenshot per view in the listing README
+- Owner: SNLRLONG
+- Task: Ops-release-0-5-2 (T-0066) · Branch/PR: chore/release-0-5-2
+- What changed: version 0.5.2 for `gitask-cli` and `gitask-vscode`. The extension README keeps one dark screenshot for the board and one for the task detail; 0.5.1 showed each twice on the Marketplace, which ignores the GitHub dark/light image fragments. The root README is unchanged.
+- Needs: owner merges, tags `v0.5.2`, approves the `release` environment, uploads the .vsix to the Marketplace by hand (`VSCE_PAT` is not set).
 ## 2026-11-01 · [Ops] feat: Ops-web-search-console
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ops-web-search-console.md

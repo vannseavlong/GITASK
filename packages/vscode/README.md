@@ -45,11 +45,9 @@ A task is a Markdown file. The `#` heading is the title and the `- **Key:** valu
 - **Export:** the **Export** button builds a "what was done" report by person (HTML, Markdown or CSV) with a live preview. See the [report guide](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/report.md).
 - **GITASK: Sync to GitHub** (opt-in, shows a dry run first) creates issues for your tasks so assignees are notified. It does nothing until `Tasks/gitask.json` has a `github` entry; see [Docs/architecture/github.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/github.md).
 
-![GITASK board with assignees and sub-tasks](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/board-dark.webp#gh-dark-mode-only)
-![GITASK board with assignees and sub-tasks](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/board-light.webp#gh-light-mode-only)
+![GITASK board with assignees and sub-tasks](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/board-dark.webp)
 
-![GITASK task detail](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/detail-dark.webp#gh-dark-mode-only)
-![GITASK task detail](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/detail-light.webp#gh-light-mode-only)
+![GITASK task detail](https://raw.githubusercontent.com/vannseavlong/GITASK/main/packages/web/static/img/views/detail-dark.webp)
 
 ## Settings
 
