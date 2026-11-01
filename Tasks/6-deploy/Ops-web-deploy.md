@@ -48,3 +48,10 @@ Deploy the site to Firebase Hosting (`gitask-me.web.app`, project `longcelot-eco
 - `pnpm --filter gitask-web build` succeeds but reports pre-existing "broken anchor `/#download`" warnings on docs pages (not touched here).
 - Not verified: real deploy/preview/login, `hosting:clone` rollback on a live site, CI run on GitHub, live-site checks.
 
+## Live check (2026-11-02, after the owner's first production deploy)
+- `https://gitask-me.web.app` returns 200; `/docs/faq` 200; unknown path returns 404 with the 404 page; `og.png` 200 (61 KB, image/png); `robots.txt` allows all and names the sitemap; sitemap lists the home page and the docs pages.
+- Home head: unique title, description, canonical, `og:*` with 1200x630 image, `twitter:card=summary_large_image`, `theme-color`, favicon, manifest, one `h1`, `SoftwareApplication` JSON-LD with price 0 and no version.
+- Hashed `/assets/` files: `max-age=31536000, immutable`. Images: `max-age=86400`.
+- **Finding:** HTML pages (`/`, `/docs/*`) are served with `max-age=3600`, not `must-revalidate`. The `**/*.@(html)` header rule does not match clean URLs. After a deploy, a visitor can get 1 hour old HTML that points at hashed assets Firebase has already replaced. Follow-up: `Ops-web-cache-headers`.
+- **Findings, not fixed:** `gitask-me.firebaseapp.com` serves the site too (canonical covers it, no redirect); `/search` is listed in the sitemap; `http://` redirects (301) to https. Lighthouse not re-run on the live URL; JSON-LD not yet put through a validator.
+
