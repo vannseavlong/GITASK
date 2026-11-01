@@ -2,6 +2,11 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ops] feat(web): local deploy to Firebase Hosting, preview channel, web CI
+- Owner: SNLRLONG
+- Task: Ops-web-deploy (T-0006) · Branch/PR: feat/web-deploy · not merged yet
+- What changed: `scripts/deploy-web.sh` with `pnpm deploy:web` (main + clean tree only, typecheck, tests, build, typed confirmation) and `pnpm deploy:web:preview` (`staging` channel, 7d expiry); `firebase-tools` pinned to 15.34.0 instead of `@latest`; `deploy:pro` kept as an alias and the unpinned `deploy` script in `packages/web` removed; `ci.yml` gets a read-only `web` job (typecheck + build, no secrets, no deploy); `release.md` "Website" section (rollback, first-deploy checklist, outage); site linked from the README. Cache headers checked against the real build, no change needed.
+- Needs: owner runs `firebase login` and the first deploy; `seo-checklist` re-run on the live URL.
 ## 2026-11-01 · [Ext] feat: Ext-readme-screens
 - Owner: SNLRLONG
 - Task: Tasks/5-done/Ext-readme-screens.md

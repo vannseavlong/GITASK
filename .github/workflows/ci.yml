@@ -18,3 +18,16 @@ jobs:
       - run: pnpm package
       - uses: actions/upload-artifact@v4
         with: { name: gitask-vsix, path: packages/vscode/*.vsix }
+  # Website: typecheck + build only. No secrets, no deploy (deploys run locally: scripts/deploy-web.sh).
+  web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter gitask-web run typecheck
+      - run: pnpm --filter gitask-web run build
