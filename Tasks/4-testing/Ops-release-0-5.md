@@ -6,7 +6,8 @@
 - **Tier:** T3 · release and version files, docs, marketplace listing (auto picker, see `PIPELINE.md`)
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-release-0-5/` · **Branch:** `feat/release-0-5`
-- **Started / updated:** 2026-10-30 / 2026-10-30
+- **Started / updated:** 2026-10-30 / 2026-11-02
+- **Due:** 2026-11-04
 - **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
 - **Depends on:** all tasks above merged
 - **Touches:** package versions via `pnpm bump`, CHANGELOG.md, Docs/architecture/ui.md, Docs/requirements/views.md, READMEs, packages/web/docs, Marketplace screenshots

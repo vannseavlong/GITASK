@@ -6,7 +6,8 @@
 - **Tier:** T2 · new site and workspace package (`packages/web`), new route/feature
 - **Claimed by:** claude session, 2026-10-17
 - **Worktree:** `GITASK/GITASK-web-scaffold/` · **Branch:** `feat/web-scaffold`
-- **Started / updated:** 2026-10-17 / 2026-10-17
+- **Started / updated:** 2026-10-17 / 2026-11-02
+- **Due:** 2026-11-04
 - **Docs:** `Docs/requirements/landing-page.md`, `Tasks/_plans/Ops-landing-page.md`
 - **Depends on:** none
 - **Touches:** `packages/web/**` (new), root `package.json` scripts, root `.gitignore` only if needed

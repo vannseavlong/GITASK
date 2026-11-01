@@ -6,7 +6,8 @@
 - **Tier:** T1 · docs content and sidebar config in one package
 - **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-web-docs/` · **Branch:** `feat/web-docs`
-- **Started / updated:** none / 2026-10-17
+- **Started / updated:** 2026-11-05 / 2026-11-02
+- **Due:** 2026-11-09
 - **Docs:** `Tasks/_plans/Ops-landing-page.md`; run the `docs-writer` skill first
 - **Depends on:** Ops-web-scaffold
 - **Touches:** `packages/web/docs/**`, `packages/web/sidebars.ts`, local search plugin dependency in `packages/web/package.json`
