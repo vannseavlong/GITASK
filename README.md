@@ -2,6 +2,8 @@
 
 **Git + Task.** A Kanban board for a plain-Markdown `Tasks/` folder. One file per task, the folder is the status. Drag a card in VS Code and GITASK runs `git mv`, bumps the task's `Started / updated` date and commits that one file. No accounts: git is the identity and the history.
 
+Website and docs: [gitask-me.web.app](https://gitask-me.web.app).
+
 Built for workspaces installed from [My-Agent-SetUp](https://github.com/vannseavlong/Agent-SetUp), so humans and coding agents share one board.
 
 ## Packages

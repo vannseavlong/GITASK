@@ -42,6 +42,42 @@ Rules:
 - A published version is final (npm never reuses one). Fix forward with the next number. A tag whose run failed before publishing can be deleted and re-pushed: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`.
 - Agents prepare the PR and the bump; the human commits, merges, tags and approves.
 
+## Website
+
+`packages/web` (Docusaurus) is hosted on Firebase Hosting: site `gitask-me` (`https://gitask-me.web.app`) in project `longcelot-eco-system`. It is deployed **from the owner's machine**, never from CI. CI (`ci.yml`, job `web`) only typechecks and builds it on PRs, with read-only permissions and no secrets. The website does not take part in the tag release; the Download section reads the latest release at runtime.
+
+The target comes from `packages/web/.firebaserc` and `packages/web/firebase.json`. `firebase-tools` is pinned in `scripts/deploy-web.sh` (`FIREBASE_TOOLS_VERSION`, never `@latest`); bump it on purpose, using a release at least two weeks old.
+
+**Deploy (live), from an up-to-date `main`:**
+```bash
+pnpm deploy:web            # alias: pnpm deploy:pro
+```
+It refuses unless you are on `main`, `HEAD` equals a freshly fetched `origin/main` (an offline fetch also refuses, even with `DRY_RUN=1`) and the tree is clean. `--allow-unclean` skips only the clean-tree check, never the branch or up-to-date check. It then runs typecheck, tests and build, prints the project and site, and deploys only after you type `deploy gitask-me` in an interactive terminal (piped input is refused).
+
+**Preview (staging channel), any branch:**
+```bash
+pnpm deploy:web:preview    # PREVIEW_EXPIRES=3d to change the 7d default
+```
+Typechecks, builds and runs `hosting:channel:deploy staging --expires 7d`; firebase prints the preview URL. The live channel is never touched. Re-running replaces the same `staging` channel.
+
+`DRY_RUN=1 pnpm deploy:web` (only empty or `1` accepted) runs the guards and prints each command without building or contacting Firebase.
+
+**Cache headers** (`firebase.json`): HTML `max-age=0, must-revalidate`; `/assets/**` (Docusaurus hashed JS/CSS) one year, immutable; images and fonts one day. Checked against a real `pnpm --filter gitask-web build`: only hashed `.js`/`.css` live in `/assets/`, images are in `/img/`.
+
+**Rollback.** `firebase hosting:rollback` does not exist in firebase-tools 15. Use one of:
+- Console: Firebase Console > Hosting > `gitask-me` > Release history > the previous release > Rollback.
+- CLI: `npx firebase-tools@<pinned> hosting:clone gitask-me@<versionId> gitask-me:live --project longcelot-eco-system` (version ids are in the Release history).
+- Or check out the previous good commit on `main` and run `pnpm deploy:web` again.
+
+**First-deploy checklist (owner, once):**
+1. `npx firebase-tools@<pinned> login`, and confirm access: `... hosting:sites:list --project longcelot-eco-system` shows `gitask-me`.
+2. `pnpm deploy:web:preview`; open the printed URL: home, a docs page, search, dark/light toggle, download buttons.
+3. From `main`, `pnpm deploy:web`; watch it finish.
+4. On `https://gitask-me.web.app`: Download buttons resolve to the real latest `.vsix`, `/sitemap.xml` and `/robots.txt` load, a deep link such as `/docs/faq` loads on refresh, the OG image shows in a link preview.
+5. Re-run the `seo-checklist` on the live URL.
+
+**If hosting is down:** only the website is affected. The extension (Marketplace, Open VSX), the CLI (npm) and the `.vsix` (GitHub Releases) install from their own registries, and docs are also readable in the repo under `packages/web/docs`. Check status.firebase.google.com, then redeploy or roll back when it recovers; nothing else needs action.
+
 ## One-time setup (owner)
 Tokens, publisher, namespace and the `release` environment: [setupguide.md](setupguide.md).
 

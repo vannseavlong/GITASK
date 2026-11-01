@@ -11,7 +11,9 @@
     "gitask": "node scripts/gitask.mjs",
     "serve": "node scripts/gitask.mjs serve",
     "bump": "node scripts/bump.mjs",
-    "deploy:pro": "pnpm --filter gitask-web run deploy"
+    "deploy:web": "bash scripts/deploy-web.sh prod",
+    "deploy:web:preview": "bash scripts/deploy-web.sh preview",
+    "deploy:pro": "pnpm run deploy:web"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
