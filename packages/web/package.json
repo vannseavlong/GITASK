@@ -7,6 +7,7 @@
     "build": "docusaurus build",
     "serve": "docusaurus serve",
     "typecheck": "tsc",
+    "test": "node --test test/*.test.ts",
     "deploy": "pnpm build && npx --yes firebase-tools@latest deploy --only hosting --project longcelot-eco-system"
   },
   "dependencies": {

@@ -90,8 +90,6 @@ export const commands = [
 
 export const extensionId = "vannseavlong.gitask-vscode"
 
-export const installCommand = `code --install-extension ${extensionId}`
-
 export const whatsNew = {
   version: "0.5.0",
   items: [
