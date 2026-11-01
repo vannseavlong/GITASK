@@ -2,6 +2,11 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ext] chore(release): 0.5.1, refreshed listing README
+- Owner: SNLRLONG
+- Task: Ops-release-0-5-1 (T-0064) · Branch/PR: chore/release-0-5-1
+- What changed: version 0.5.1 for `gitask-cli` and `gitask-vscode`. The only code-free change since 0.5.0 is the extension README: "Getting started in 5 steps", real board and task detail screenshots, and a link to the new guide. The listing only updates on a new version.
+- Needs: owner merges, tags `v0.5.1`, approves the `release` environment; check the README renders on the Marketplace and Open VSX.
 ## 2026-11-02 · [CLI] fix(test): find-tasks test no longer fails on a stray parent .git
 - Owner: SNLRLONG
 - Task: Core-test-isolate-git-repo (T-0060) · Branch/PR: fix/test-isolate-git-repo
