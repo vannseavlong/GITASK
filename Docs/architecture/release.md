@@ -62,7 +62,7 @@ Typechecks, builds and runs `hosting:channel:deploy staging --expires 7d`; fireb
 
 `DRY_RUN=1 pnpm deploy:web` (only empty or `1` accepted) runs the guards and prints each command without building or contacting Firebase.
 
-**Cache headers** (`firebase.json`): HTML `max-age=0, must-revalidate`; `/assets/**` (Docusaurus hashed JS/CSS) one year, immutable; images and fonts one day. Checked against a real `pnpm --filter gitask-web build`: only hashed `.js`/`.css` live in `/assets/`, images are in `/img/`.
+**Cache headers** (`firebase.json`): HTML `max-age=0, must-revalidate` (Firebase matches the request path, so clean URLs need explicit rules for `/`, `/docs/**` and `/search`; add the path when a new top-level page is added); `/assets/**` (Docusaurus hashed JS/CSS) one year, immutable; images and fonts one day. Checked against a real `pnpm --filter gitask-web build`: only hashed `.js`/`.css` live in `/assets/`, images are in `/img/`.
 
 **Rollback.** `firebase hosting:rollback` does not exist in firebase-tools 15. Use one of:
 - Console: Firebase Console > Hosting > `gitask-me` > Release history > the previous release > Rollback.
