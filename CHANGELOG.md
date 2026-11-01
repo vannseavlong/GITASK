@@ -6,6 +6,11 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - Owner: SNLRLONG
 - Task: Core-test-isolate-git-repo (T-0060) · Branch/PR: fix/test-isolate-git-repo
 - What changed: the "outside a git repo" test now skips (with the reason) when a parent of the temp folder holds a `.git`, such as an empty `/tmp/.git`, instead of failing. This had blocked `pnpm deploy:web`, which runs the tests. No product code changed.
+## 2026-11-02 · [Ops] fix(web): HTML pages are no longer cached for an hour
+- Owner: SNLRLONG
+- Task: Ops-web-cache-headers (T-0063) · Branch/PR: fix/web-cache-headers
+- What changed: `firebase.json` now sets `Cache-Control: public, max-age=0, must-revalidate` for `/`, `/docs/**` and `/search`. The old `**/*.html` rule never matched clean URLs, so Firebase served HTML with `max-age=3600` and a visitor could get old HTML pointing at replaced hashed assets after a deploy.
+- Needs: owner runs `pnpm deploy:web`, then `curl -sI https://gitask-me.web.app/docs/faq | grep -i cache-control` shows `max-age=0, must-revalidate`.
 ## 2026-11-02 · [Ops] feat(web): local deploy to Firebase Hosting, preview channel, web CI
 - Owner: SNLRLONG
 - Task: Ops-web-deploy (T-0006) · Branch/PR: feat/web-deploy · not merged yet
