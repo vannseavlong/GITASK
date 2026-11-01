@@ -7,11 +7,12 @@ export const links = {
   openVsx: "https://open-vsx.org/extension/vannseavlong/gitask-vscode",
   npm: "https://www.npmjs.com/package/gitask-cli",
   docs: "/docs/intro",
+  portfolio: "https://vann-seavlong.vercel.app/",
 } as const
 
 export const navItems = [
   { label: "Features", href: "#features" },
-  { label: "New in 0.5", href: "#whats-new" },
+  { label: "What's new", href: "#whats-new" },
   { label: "Views", href: "#views" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Download", href: "#download" },

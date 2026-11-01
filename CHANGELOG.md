@@ -2,6 +2,13 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-02 · [Ops] fix(web): landing navbar label, GitHub icon, hamburger and portfolio link
+- Owner: SNLRLONG
+- Task: Tasks/3-in-progress/Ops-web-landing-fixes.md
+- Branch/PR: fix/web-landing-fixes · not merged yet
+- What changed: navbar item reads "What's new"; inline-SVG GitHub mark (`GitHubIcon`) in navbar and footer; the hamburger no longer shows on desktop (the minified CSS let `.icon-link` override the hide rule) and the mobile panel is opaque, closes on Escape, link tap or outside tap, and has `aria-controls`; portfolio link stored in `links.portfolio` and shown in the footer ("Built by Vann Seavlong") and Community column.
+- Needs: none
+
 ## 2026-10-30 · [Ext] feat(ui): new task dialog with title, description, start/due, tier, status and member
 - Owner: SNLRLONG
 - Branch/PR: feat/new-task-dialog-fields · merged to main (c0cff3b)

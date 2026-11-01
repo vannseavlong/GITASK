@@ -274,8 +274,10 @@ a,
   gap: 5px;
 }
 
-.menu-button,
-.mobile-only {
+/* Hidden by default. Higher specificity than .icon-link: the production CSS minifier merges
+   a plain .menu-button rule above .icon-link, which then showed the hamburger on desktop. */
+.nav-actions .menu-button,
+.nav-links a.mobile-only {
   display: none;
 }
 
@@ -1488,7 +1490,7 @@ a,
     display: none !important;
   }
 
-  .menu-button {
+  .nav-actions .menu-button {
     display: inline-flex;
   }
 
@@ -1503,8 +1505,9 @@ a,
     gap: 2px;
     border-bottom: 1px solid var(--border);
     padding: 10px 16px 15px;
-    background: var(--bg-nav);
-    backdrop-filter: blur(16px);
+    /* Opaque: a nested backdrop-filter inside the blurred .navbar does not blur, so a
+       translucent panel let the hero text show through the links. */
+    background: var(--bg);
   }
 
   .nav-links.is-open {
@@ -1515,8 +1518,10 @@ a,
     padding: 10px 12px;
   }
 
-  .nav-links .mobile-only {
-    display: block;
+  .nav-links a.mobile-only {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .hero {
@@ -1730,7 +1735,7 @@ a,
     padding: 6px 7px;
   }
 
-  .landing .menu-button {
+  .landing .nav-actions .menu-button {
     display: none;
   }
 }

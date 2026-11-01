@@ -1,16 +1,33 @@
-import { GitFork, Menu, Moon, Sun, X } from "lucide-react"
-import { useState } from "react"
+import { Menu, Moon, Sun, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 import { useColorMode } from "@docusaurus/theme-common"
 import useBaseUrl from "@docusaurus/useBaseUrl"
 import { links, navItems } from "../content"
+import GitHubIcon from "./GitHubIcon"
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const { colorMode: theme, setColorMode: setTheme } = useColorMode()
   const icon = useBaseUrl("/img/icon.png")
+  const headerRef = useRef<HTMLElement>(null)
+
+  // Escape or a tap outside the header closes the mobile menu.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false)
+    const onDown = (e: PointerEvent) => {
+      if (!headerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("keydown", onKey)
+    document.addEventListener("pointerdown", onDown)
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      document.removeEventListener("pointerdown", onDown)
+    }
+  }, [open])
 
   return (
-    <header className="navbar">
+    <header className="navbar" ref={headerRef}>
       <div className="nav-inner">
         <a className="brand" href="#" aria-label="GITASK home">
           <img src={icon} alt="" />
@@ -18,6 +35,7 @@ export default function Navbar() {
           <small>Git + Task</small>
         </a>
         <nav
+          id="nav-links"
           className={`nav-links ${open ? "is-open" : ""}`}
           aria-label="Main navigation"
         >
@@ -32,7 +50,7 @@ export default function Navbar() {
             target="_blank"
             rel="noreferrer"
           >
-            GitHub
+            <GitHubIcon size={16} /> GitHub
           </a>
         </nav>
         <div className="nav-actions">
@@ -43,7 +61,7 @@ export default function Navbar() {
             rel="noreferrer"
             aria-label="GITASK on GitHub"
           >
-            <GitFork size={18} />
+            <GitHubIcon size={18} />
           </a>
           <button
             className="icon-link"
@@ -62,6 +80,7 @@ export default function Navbar() {
             className="icon-link menu-button"
             type="button"
             aria-expanded={open}
+            aria-controls="nav-links"
             aria-label={open ? "Close navigation" : "Open navigation"}
             onClick={() => setOpen(!open)}
           >
