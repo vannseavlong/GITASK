@@ -4,6 +4,9 @@ description: GITASK turns a plain-Markdown Tasks folder into a Kanban board in V
 slug: /intro
 ---
 
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 GITASK is a Kanban board for a `Tasks/` folder. One Markdown file is one task, and the folder it sits in is its status.
 
 ## What you can do
@@ -14,7 +17,7 @@ GITASK is a Kanban board for a `Tasks/` folder. One Markdown file is one task, a
 - [Export a report of what was done](./report.md) by person.
 - [Sync tasks to GitHub Issues](./github-sync.md), if you want assignees notified.
 
-<!-- TODO(screenshot): the 0.5.0 Board with avatars and sub-tasks, alt text "GITASK board with assignees" -->
+<ThemedImage alt="The GITASK board with assignees and sub-tasks" width="1280" height="800" loading="lazy" sources={{light: useBaseUrl('/img/views/board-light.webp'), dark: useBaseUrl('/img/views/board-dark.webp')}} />
 
 Open the board in a browser with `npx gitask-cli serve` (or `pnpm dlx gitask-cli serve`, `yarn dlx gitask-cli serve`, `bunx gitask-cli serve`, or `npm i -g gitask-cli` then `gitask serve`). See [serve](./serve.md).
 

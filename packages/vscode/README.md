@@ -6,8 +6,6 @@ Built for workspaces where humans and coding agents share one board ([My-Agent-S
 
 ## Getting started in 5 steps
 
-<!-- TODO(demo): looping GIF/WebP in packages/vscode/media/ linking to the full video (arrives from the owner; no URL yet) -->
-
 1. **Initialize:** run **GITASK: Initialize Tasks Folder**.
 2. **Create:** run **GITASK: New Task**.
 3. **Move:** run **GITASK: Open Board** and drag a card to another column.

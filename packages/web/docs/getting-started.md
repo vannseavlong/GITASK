@@ -9,8 +9,6 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 After this page you can run a project on a GITASK board, from an empty folder to an exported report. Needs GITASK 0.5.0. Install it first: [install](./install.md).
 
-<!-- TODO(demo): link to the full demo video here once the owner has uploaded it (placeholder, no URL yet) -->
-
 ## 1. Set up the Tasks folder
 
 Open your project folder in VS Code and run **GITASK: Initialize Tasks Folder** from the Command Palette. It creates `Tasks/1-backlog` to `Tasks/6-deploy` and a `_TEMPLATE.md`, then opens the board. It never overwrites files, so it is safe to run again.
