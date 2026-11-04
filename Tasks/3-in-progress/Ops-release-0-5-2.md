@@ -25,7 +25,7 @@ Fix the Marketplace listing: 0.5.1 showed the dark and the light screenshot one 
 - [x] `pnpm bump 0.5.2`; `node scripts/check-release.mjs v0.5.2` prints `stable`; typecheck, tests and `pnpm package` green
 - [x] Human merges, pulls `main`, tags `v0.5.2`, pushes only the tag; approves the `release` environment; uploads the .vsix to the Marketplace by hand while `VSCE_PAT` is not set
 - [x] After publish: `npm view gitask-cli version` is 0.5.2; the GitHub Release has exactly one `gitask-vscode-0.5.2.vsix`; Marketplace and Open VSX show 0.5.2 with one image per view
-- [x] G10 release plan (below) written
+- [ ] G10 release plan (below) written
 - [ ] Root `CHANGELOG.md` entry added
 - [ ] Worktree and branch removed after merge
 
