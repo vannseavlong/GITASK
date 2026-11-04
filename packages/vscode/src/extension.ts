@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
@@ -201,6 +201,14 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
         }
         return post();
+      }
+      case "readLogo": {
+        try {
+          const logo = await readLogoBytes(dir); // re-validated now: a file swapped after the board loaded is not followed
+          return send({ type: "logo", src: logo ? logoDataUrl(logo) : undefined });
+        } catch {
+          return send({ type: "logo" });
+        }
       }
       case "readTask": {
         const r = await readTaskBody(m.path, dir);

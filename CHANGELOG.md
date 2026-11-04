@@ -13,6 +13,12 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - Task: Core-report-header (T-0074) · Branch/PR: feat/report-header
 - What changed: HTML reports show the project title, subtitle and logo (logo re-validated at report time and inlined as a `data:` image, per `project.layout`); Markdown reports start with the title; CSV unchanged. Export dialog gets an "Include project header" toggle (`includeHeader` in the report request). See `Docs/architecture/config.md`.
 
+## 2026-11-05 · [Ext] feat(ui): project header with title, subtitle and logo
+- Owner: SNLRLONG
+- Task: Ext-project-header (T-0072) · Branch/PR: feat/project-header
+- What changed: the board and `gitask serve` show the project title, subtitle and logo above the tabs on every view, following `project.layout`. Nothing shows without a `project` block. The logo is served by one core helper that re-checks the file on every request (`GET /api/logo` in the browser, a `readLogo` message in VS Code); SVG only through `<img>`; the webview CSP gains `img-src`. See `Docs/architecture/ui.md`.
+- Needs: a check in a real VS Code webview (dark and high contrast) and `gitask serve`; Ext-project-layout-settings to edit it from the UI
+
 ## 2026-11-05 · [Core] feat: project identity block in gitask.json
 - Owner: SNLRLONG
 - Task: Core-project-config (T-0071) · Branch/PR: feat/project-config

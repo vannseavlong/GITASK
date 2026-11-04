@@ -8,6 +8,7 @@ import { SV, derive } from "./logic.ts";
 import { ViewTabs } from "./view-tabs.tsx";
 import { resolveOrder, sameOrder } from "@/lib/view-order.ts";
 import { FilterBar } from "./filter-bar.tsx";
+import { ProjectHeader } from "./project-header.tsx";
 import { StatusBar } from "./status-bar.tsx";
 import { ExportDialog } from "@/components/export-dialog.tsx";
 import { DeleteConfirm } from "@/components/delete-confirm.tsx";
@@ -60,6 +61,7 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
   return (
     <TooltipProvider>
       <div className="flex h-full flex-col">
+        <ProjectHeader project={raw?.project} host={host} />
         <Tabs
           value={view}
           onValueChange={(id) => { update({ view: id }); host.send({ type: "view", id }); }}

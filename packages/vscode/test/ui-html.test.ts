@@ -15,7 +15,7 @@ test("UI page CSP: nonce + cspSource scripts, no eval, style attributes only inl
   assert.ok(m);
   assert.equal(
     m[1],
-    `default-src 'none'; script-src 'nonce-${NONCE}' ${CSP_SOURCE}; style-src ${CSP_SOURCE} 'nonce-${NONCE}'; style-src-attr 'unsafe-inline';`,
+    `default-src 'none'; script-src 'nonce-${NONCE}' ${CSP_SOURCE}; style-src ${CSP_SOURCE} 'nonce-${NONCE}'; style-src-attr 'unsafe-inline'; img-src ${CSP_SOURCE} data:;`,
   );
   assert.ok(!/unsafe-eval/.test(m[1]));
   // unsafe-inline appears only in style-src-attr

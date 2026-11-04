@@ -1,4 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { open, readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import type { Project, ProjectLayout, ProjectLogo } from "./types.ts";
 import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
@@ -203,6 +204,34 @@ export async function resolveLogo(dir: string, logo: string): Promise<ProjectLog
   if (!st || st.size === 0) throw new Error("logo file is empty");
   if (st.size > MAX_LOGO_BYTES) throw new Error(`logo is larger than ${MAX_LOGO_BYTES / 1024} KiB`);
   return { path: logo, mime: LOGO_TYPES[logo.slice(logo.lastIndexOf(".") + 1).toLowerCase()] };
+}
+
+/**
+ * The bytes of the configured logo, for a host to serve. Reads the project config and runs `resolveLogo` NOW (regular
+ * file, extension, size, inside `dir`), so a file swapped after the board loaded is not followed. Nothing is taken
+ * from the caller: there is no path argument. Returns `undefined` when no valid logo is configured. The length is
+ * checked again after the read, so a file that grew in between is refused.
+ */
+export async function readLogoBytes(dir: string): Promise<{ bytes: Buffer; mime: string } | undefined> {
+  const logo = (await readProject(dir))?.logo;
+  if (!logo) return undefined;
+  const checked = await resolveLogo(dir, logo.path);
+  // O_NOFOLLOW: a symlink put in place after `resolveLogo` is refused by the open itself (no-op flag on Windows).
+  const fh = await open(resolve(dir, ...checked.path.split("/")), constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const st = await fh.stat();
+    if (!st.isFile() || st.size === 0 || st.size > MAX_LOGO_BYTES) return undefined;
+    const bytes = await fh.readFile();
+    if (bytes.length === 0 || bytes.length > MAX_LOGO_BYTES) return undefined;
+    return { bytes, mime: checked.mime };
+  } finally {
+    await fh.close();
+  }
+}
+
+/** `data:` URL for a logo's bytes, for a host that cannot give the page a URL (the VS Code webview). */
+export function logoDataUrl(logo: { bytes: Uint8Array; mime: string }): string {
+  return `data:${logo.mime};base64,${Buffer.from(logo.bytes).toString("base64")}`;
 }
 
 function parseLayout(v: unknown): ProjectLayout {

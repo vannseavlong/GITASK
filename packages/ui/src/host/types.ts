@@ -39,6 +39,11 @@ export interface Host {
   /** Called with every other host message (`taskBody`, `error`). Returns an unsubscribe function. */
   onMessage(cb: (message: Exclude<HostMessage, { type: "board" }>) => void): () => void;
   /** Remembered UI state (VS Code webview state, or localStorage in a browser). */
+  /**
+   * A URL the page may put in an `<img>` for the project logo, or `undefined` when there is none. The host re-checks the
+   * file when it serves it (core `readLogoBytes`); the logo path is only a cache key, never used to find a file.
+   */
+  logoSrc(logo: { path: string }): Promise<string | undefined>;
   loadState(): UiState;
   saveState(state: UiState): void;
 }

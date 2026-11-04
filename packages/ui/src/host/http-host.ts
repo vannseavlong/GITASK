@@ -107,6 +107,10 @@ export function createHttpHost(base = ""): Host {
     },
     onBoard(cb) { boardSubs.add(cb); return () => void boardSubs.delete(cb); },
     onMessage(cb) { msgSubs.add(cb); return () => void msgSubs.delete(cb); },
+    async logoSrc(logo) {
+      await ready;
+      return `${base}/api/logo?token=${encodeURIComponent(token)}&v=${encodeURIComponent(logo.path)}`;
+    },
     loadState() {
       try { return JSON.parse(localStorage.getItem("gitask.ui") ?? "{}") as UiState; } catch { return {}; }
     },
