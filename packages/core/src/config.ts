@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
+import type { Project, ProjectLayout, ProjectLogo } from "./types.ts";
 import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
 import { assertRegularFile } from "./taskfile.ts";
@@ -124,4 +125,227 @@ export async function readGithubConfig(dir: string): Promise<GithubConfig | unde
   } catch {
     return undefined;
   }
+}
+
+// ---- Project identity: `project` block of Tasks/gitask.json ---------------------------------------------------
+
+export const PROJECT_LAYOUT_DEFAULTS: ProjectLayout = { align: "left", size: "md", logoPosition: "left", showTitle: true };
+const ENUMS = {
+  align: ["left", "center", "right"],
+  size: ["sm", "md", "lg"],
+  logoPosition: ["left", "top", "right", "hidden"],
+} as const;
+const MAX_TITLE = 80;
+const MAX_SUBTITLE = 160;
+const MAX_LOGO_PATH = 255;
+/** Logos are shown small; a larger file is refused rather than shipped to every client. */
+export const MAX_LOGO_BYTES = 1024 * 1024;
+/** Extension allow-list. SVG is allowed because hosts must render it only through `<img>` (scripts do not run there). */
+export const LOGO_TYPES: Readonly<Record<string, string>> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml" };
+
+// Control characters, line breaks and bidi controls never belong in a one-line heading (ZWJ stays: emoji need it).
+const UNSAFE_TEXT = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
+const UNSAFE_TEXT_ALL = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/gu;
+
+/** Trimmed one-line text, or `undefined` when empty. `strict` throws instead of truncating or dropping. */
+function cleanText(v: unknown, max: number, label: string, strict: boolean): string | undefined {
+  if (typeof v !== "string") {
+    if (strict) throw new Error(`${label} must be text`);
+    return undefined;
+  }
+  let t = v;
+  if (UNSAFE_TEXT.test(t)) {
+    if (strict) throw new Error(`${label} contains control characters`);
+    t = t.replace(UNSAFE_TEXT_ALL, " ");
+  }
+  t = t.trim();
+  if (!t) return undefined;
+  const chars = [...t];
+  if (chars.length > max) {
+    if (strict) throw new Error(`${label} is longer than ${max} characters`);
+    t = chars.slice(0, max).join("");
+  }
+  return t;
+}
+
+/**
+ * Syntax check of a logo path from config: relative to the Tasks dir, `/` separated, no `.`/`..`/empty segments,
+ * no drive letter, backslash, control character, and an allow-listed image extension.
+ * This does not touch the disk; `resolveLogo` does.
+ */
+export function isLogoPath(v: unknown): v is string {
+  if (typeof v !== "string" || !v || v.length > MAX_LOGO_PATH) return false;
+  if (v.startsWith("/") || v.includes("\\") || v.includes(":") || UNSAFE_TEXT.test(v)) return false;
+  const parts = v.split("/");
+  if (parts.some((p) => !p || p === "." || p === "..")) return false;
+  const last = parts[parts.length - 1];
+  const dot = last.lastIndexOf(".");
+  return dot > 0 && Object.hasOwn(LOGO_TYPES, last.slice(dot + 1).toLowerCase());
+}
+
+/**
+ * Check a logo on disk and return its path and mime type; throws with the reason otherwise. The file must be
+ * a regular file (no symlink, also not through a symlinked folder) whose real location is inside `dir`,
+ * non-empty and at most `MAX_LOGO_BYTES`. Bytes are never read.
+ */
+export async function resolveLogo(dir: string, logo: string): Promise<ProjectLogo> {
+  if (!isLogoPath(logo)) throw new Error("logo must be a relative path to a png, jpg, webp, gif or svg file inside Tasks/");
+  const file = resolve(dir, ...logo.split("/"));
+  const rel = relative(resolve(dir), file);
+  if (rel.startsWith("..") || isAbsolute(rel)) throw new Error("logo is outside the Tasks folder");
+  let st;
+  try {
+    st = await assertRegularFile(file, dir);
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code;
+    throw new Error(code === "ENOENT" ? "logo file not found" : `logo rejected: ${(e as Error).message}`);
+  }
+  if (!st || st.size === 0) throw new Error("logo file is empty");
+  if (st.size > MAX_LOGO_BYTES) throw new Error(`logo is larger than ${MAX_LOGO_BYTES / 1024} KiB`);
+  return { path: logo, mime: LOGO_TYPES[logo.slice(logo.lastIndexOf(".") + 1).toLowerCase()] };
+}
+
+function parseLayout(v: unknown): ProjectLayout {
+  const out: ProjectLayout = { ...PROJECT_LAYOUT_DEFAULTS };
+  if (!isRecord(v)) return out;
+  for (const k of Object.keys(ENUMS) as (keyof typeof ENUMS)[]) {
+    const x = v[k];
+    if (typeof x === "string" && (ENUMS[k] as readonly string[]).includes(x)) (out as unknown as Record<string, string>)[k] = x;
+  }
+  if (typeof v.showTitle === "boolean") out.showTitle = v.showTitle;
+  return out;
+}
+
+/** What `parseProject` can know without the disk: the logo is only a syntactically valid path. */
+export interface ParsedProject {
+  title?: string;
+  subtitle?: string;
+  logo?: string;
+  layout: ProjectLayout;
+}
+
+/** Parse the `project` block. Anything wrong falls back to a default or is dropped; never throws. */
+export function parseProject(text: string): ParsedProject {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return { layout: { ...PROJECT_LAYOUT_DEFAULTS } };
+  }
+  const p = isRecord(json) ? json.project : undefined;
+  if (!isRecord(p)) return { layout: { ...PROJECT_LAYOUT_DEFAULTS } };
+  const out: ParsedProject = { layout: parseLayout(p.layout) };
+  const title = cleanText(p.title, MAX_TITLE, "title", false);
+  const subtitle = cleanText(p.subtitle, MAX_SUBTITLE, "subtitle", false);
+  if (title) out.title = title;
+  if (subtitle) out.subtitle = subtitle;
+  if (isLogoPath(p.logo)) out.logo = p.logo;
+  return out;
+}
+
+/**
+ * The validated project of `<dir>/gitask.json`; `undefined` when the file is missing, unreadable or not a regular
+ * file, or when no title, subtitle or logo is set. A logo that fails `resolveLogo` is dropped, the rest is kept.
+ */
+export async function readProject(dir: string): Promise<Project | undefined> {
+  let parsed: ParsedProject;
+  try {
+    const file = join(dir, CONFIG_FILE);
+    await assertRegularFile(file, dir);
+    parsed = parseProject(await readFile(file, "utf8"));
+  } catch {
+    return undefined;
+  }
+  const { logo: logoPath, ...rest } = parsed;
+  const project: Project = rest;
+  if (logoPath) {
+    try {
+      project.logo = await resolveLogo(dir, logoPath);
+    } catch {
+      /* broken or hostile logo: show the project without it */
+    }
+  }
+  return project.title || project.subtitle || project.logo ? project : undefined;
+}
+
+/** Fields `setProject` changes: `undefined` leaves a field alone, `null` clears it. */
+export interface ProjectInput {
+  title?: string | null;
+  subtitle?: string | null;
+  logo?: string | null;
+  layout?: Partial<ProjectLayout>;
+}
+
+export interface ProjectOptions {
+  /** Commit the file when it is tracked by git (default true). */
+  commit?: boolean;
+}
+
+export const PROJECT_MESSAGE = "board: update project settings";
+
+/**
+ * Update the `project` block of `<dir>/gitask.json`. Validates everything first (throws, writes nothing),
+ * keeps every other key, and commits that file only, and only when it is already tracked.
+ * A logo must pass `resolveLogo`; the logo file itself is not committed.
+ */
+export async function setProject(dir: string, input: ProjectInput, opts: ProjectOptions = {}): Promise<{ committed: boolean }> {
+  if (!isRecord(input)) throw new Error("project settings must be an object");
+  for (const k of Object.keys(input)) if (!["title", "subtitle", "logo", "layout"].includes(k)) throw new Error(`Unknown project field: ${k}`);
+
+  const patch = new Map<string, unknown>(); // field -> value, or undefined to delete
+  for (const [k, max] of [["title", MAX_TITLE], ["subtitle", MAX_SUBTITLE]] as const) {
+    const v = input[k];
+    if (v !== undefined) patch.set(k, v === null ? undefined : cleanText(v, max, k, true));
+  }
+  const logo: unknown = input.logo;
+  if (logo !== undefined) patch.set("logo", logo === null ? undefined : (await resolveLogo(dir, logo as string)).path);
+
+  const layoutPatch = new Map<string, unknown>();
+  if (input.layout !== undefined) {
+    if (!isRecord(input.layout)) throw new Error("layout must be an object");
+    for (const [k, v] of Object.entries(input.layout)) {
+      if (v === undefined) continue;
+      if (k === "showTitle") {
+        if (typeof v !== "boolean") throw new Error("layout.showTitle must be true or false");
+      } else if (Object.hasOwn(ENUMS, k)) {
+        const allowed = ENUMS[k as keyof typeof ENUMS] as readonly string[];
+        if (typeof v !== "string" || !allowed.includes(v)) throw new Error(`layout.${k} must be one of ${allowed.join(", ")}`);
+      } else throw new Error(`Unknown layout field: ${k}`);
+      layoutPatch.set(k, v);
+    }
+  }
+
+  const file = join(dir, CONFIG_FILE);
+  let json: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = JSON.parse(await readFile(file, "utf8"));
+    if (isRecord(parsed)) json = parsed;
+    else throw new Error(`${CONFIG_FILE} is not a JSON object`);
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw new Error(`Cannot update ${CONFIG_FILE}: ${(e as Error).message}`);
+  }
+  const prev = json.project;
+  const entry = new Map<string, unknown>(isRecord(prev) ? Object.entries(prev) : []);
+  for (const [k, v] of patch) {
+    if (v === undefined) entry.delete(k);
+    else entry.set(k, v);
+  }
+  if (layoutPatch.size) {
+    const old = entry.get("layout");
+    const layout = new Map<string, unknown>(isRecord(old) ? Object.entries(old) : []);
+    for (const [k, v] of layoutPatch) layout.set(k, v);
+    entry.set("layout", Object.fromEntries(layout));
+  }
+  if (entry.size) json.project = Object.fromEntries(entry);
+  else delete json.project;
+  await assertRegularFile(file, dir, { missingOk: true });
+  await writeFile(file, JSON.stringify(json, null, 2) + "\n");
+
+  const root = await repoRoot(dir);
+  if (root && opts.commit !== false && (await isTracked(dir, file))) {
+    await gitAdd(root, file);
+    await gitCommitPaths(root, PROJECT_MESSAGE, file);
+    return { committed: true };
+  }
+  return { committed: false };
 }

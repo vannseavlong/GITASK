@@ -1,7 +1,7 @@
 import type { Board, Person } from "gitask-core";
 import type { HostMessage, WebviewMessage } from "@host-src/protocol.ts";
 
-/** What the extension (or server) sends with a board: the core board plus view settings. */
+/** What the extension (or server) sends with a board: the core board (`project` is read-only, logo as a path, never bytes) plus view settings. */
 export type BoardData = Board & { settings?: { staleDays: number }; people?: Person[]; /** Present only when Tasks/gitask.json has a `github` block. */ github?: { repo: string; project?: number }; /** Commits touching Tasks/ per day, last 12 months (heatmap on Overview). */ activity?: { date: string; count: number }[] };
 
 export type { HostMessage, WebviewMessage };

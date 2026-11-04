@@ -55,8 +55,32 @@ export interface Column {
   tasks: Task[];
 }
 
+/** `project.layout` of `Tasks/gitask.json`; every field has a default. */
+export interface ProjectLayout {
+  align: "left" | "center" | "right";
+  size: "sm" | "md" | "lg";
+  logoPosition: "left" | "top" | "right" | "hidden";
+  showTitle: boolean;
+}
+
+/** A validated logo: a file inside `Tasks/` (no bytes here; hosts serve it). */
+export interface ProjectLogo {
+  /** Relative to the Tasks dir, `/` separated, no `..`. */
+  path: string;
+  mime: string;
+}
+
+/** Project identity from `Tasks/gitask.json`. Present on a board only when a title, subtitle or logo is set. */
+export interface Project {
+  title?: string;
+  subtitle?: string;
+  logo?: ProjectLogo;
+  layout: ProjectLayout;
+}
+
 export interface Board {
   /** Absolute path to the tasks directory. */
   dir: string;
   columns: Column[];
+  project?: Project;
 }

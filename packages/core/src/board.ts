@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { colorOf, readColors } from "./config.ts";
+import { colorOf, readColors, readProject } from "./config.ts";
 import { parseTask } from "./parse.ts";
 import type { Board, Column } from "./types.ts";
 
@@ -40,5 +40,6 @@ export async function loadBoard(dir: string): Promise<Board> {
     const color = colorOf(colors, id);
     columns.push({ id, label: columnLabel(id), ...(color ? { color } : {}), tasks });
   }
-  return { dir, columns };
+  const project = await readProject(dir);
+  return { dir, columns, ...(project ? { project } : {}) };
 }
