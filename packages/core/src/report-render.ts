@@ -1,4 +1,9 @@
+import { constants } from "node:fs";
+import { open } from "node:fs/promises";
+import { resolve } from "node:path";
+import { MAX_LOGO_BYTES, readProject, resolveLogo } from "./config.ts";
 import type { PersonRow, Report, ReportTask } from "./report.ts";
+import type { ProjectLayout } from "./types.ts";
 
 // Renderers for a Report. Every string that came from a task file (titles, names, sub-task text) is
 // untrusted: HTML escapes it, Markdown escapes it, CSV quotes it and defuses spreadsheet formulas.
@@ -30,6 +35,65 @@ function groups(r: Report): { person: PersonRow; tasks: { task: ReportTask; owns
   }));
 }
 
+// ---------- Project header ----------
+
+/** Project identity ready to render. The logo is already read and encoded; nothing here touches the disk. */
+export interface ReportHeader {
+  title?: string;
+  subtitle?: string;
+  layout: ProjectLayout;
+  /** `data:` URI built from a logo that passed `resolveLogo` just now. */
+  logoUri?: string;
+}
+
+/**
+ * Read the project block of `Tasks/gitask.json` for a report header; undefined when no project is set.
+ * The logo is checked again here (regular file, size cap, inside `dir`) and its bytes are read only now,
+ * because the file may have changed since the board loaded. A logo that fails is dropped, the rest stays.
+ */
+export async function loadReportHeader(dir: string): Promise<ReportHeader | undefined> {
+  const project = await readProject(dir);
+  if (!project) return undefined;
+  const header: ReportHeader = { layout: project.layout, ...(project.title ? { title: project.title } : {}), ...(project.subtitle ? { subtitle: project.subtitle } : {}) };
+  if (project.logo && project.layout.logoPosition !== "hidden") {
+    try {
+      const logo = await resolveLogo(dir, project.logo.path);
+      // O_NOFOLLOW + fstat on the open handle: a swap to a symlink after resolveLogo cannot redirect the read.
+      const fh = await open(resolve(dir, ...logo.path.split("/")), constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+      let bytes: Buffer;
+      try {
+        const st = await fh.stat();
+        if (!st.isFile() || st.size === 0 || st.size > MAX_LOGO_BYTES) throw new Error("logo changed");
+        bytes = await fh.readFile();
+      } finally {
+        await fh.close();
+      }
+      if (bytes.length > 0 && bytes.length <= MAX_LOGO_BYTES) header.logoUri = `data:${logo.mime};base64,${bytes.toString("base64")}`;
+    } catch {
+      // dropped: the report still shows the text
+    }
+  }
+  return header.title || header.subtitle || header.logoUri ? header : undefined;
+}
+
+const LOGO_PX = { sm: 32, md: 48, lg: 72 } as const;
+const TITLE_PX = { sm: 18, md: 22, lg: 30 } as const;
+const ALIGN_FLEX = { left: "flex-start", center: "center", right: "flex-end" } as const;
+
+/** Header block for the HTML report. Only enum values and numbers go into style; text is escaped. */
+function headerHtml(h: ReportHeader | undefined): string {
+  if (!h) return "";
+  const l = h.layout;
+  const logo = h.logoUri && l.logoPosition !== "hidden" ? `<img class="plogo" alt="" src="${escapeHtml(h.logoUri)}" style="height:${LOGO_PX[l.size]}px">` : "";
+  const title = l.showTitle && h.title ? `<div class="ptitle" style="font-size:${TITLE_PX[l.size]}px">${escapeHtml(h.title)}</div>` : "";
+  const sub = h.subtitle ? `<div class="psub">${escapeHtml(h.subtitle)}</div>` : "";
+  if (!logo && !title && !sub) return "";
+  const text = title || sub ? `<div class="ptext">${title}${sub}</div>` : "";
+  const dir = l.logoPosition === "top" ? "column" : l.logoPosition === "right" ? "row-reverse" : "row";
+  const items = l.logoPosition === "top" ? ALIGN_FLEX[l.align] : "center";
+  return `<header class="phead" style="flex-direction:${dir};align-items:${items};justify-content:${ALIGN_FLEX[l.align]};text-align:${l.align}">${logo}${text}</header>\n`;
+}
+
 // ---------- HTML ----------
 
 const CSS = `
@@ -56,6 +120,10 @@ h3{margin:14px 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercas
 .subs li{padding:3px 0;color:var(--ink)}
 .subs li span{color:var(--mute)}
 .empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:10px;margin-top:24px}
+.phead{display:flex;gap:14px;margin:0 0 26px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.plogo{display:block;width:auto;max-width:100%;object-fit:contain}
+.ptitle{font-weight:700;line-height:1.2;letter-spacing:-.01em}
+.psub{color:var(--mute);font-size:13px}
 @media (max-width:640px){.page{padding:24px 16px}}
 @media print{
 @page{size:A4;margin:14mm 12mm}
@@ -71,8 +139,8 @@ function tileHtml(value: number, label: string): string {
   return `<div class="tile"><div class="v">${value}</div><div class="l">${escapeHtml(label)}</div></div>`;
 }
 
-/** One self-contained HTML page: inline CSS, no script, no network. Prints cleanly on A4. */
-export function renderHtml(r: Report): string {
+/** One self-contained HTML page: inline CSS, no script, no network (a project logo is a `data:` image). Prints cleanly on A4. */
+export function renderHtml(r: Report, header?: ReportHeader): string {
   const s = r.summary;
   const e = escapeHtml;
   const tiles = [tileHtml(s.tasksDone, "Tasks done"), ...(r.includeSubtasks ? [tileHtml(s.subtasksDone, "Sub-tasks done")] : []), tileHtml(s.people, "People")].join("");
@@ -91,12 +159,12 @@ export function renderHtml(r: Report): string {
   const empty = r.tasks.length === 0 ? `<div class="empty">No tasks were completed in this period.</div>` : "";
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'${header?.logoUri ? "; img-src data:" : ""}">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${e(`Done report ${period(r)}`)}</title>
 <style>${CSS}</style></head>
 <body><div class="page">
-<h1>${e(r.repo ? `${r.repo}: work completed` : "Work completed")}</h1>
+${headerHtml(header)}<h1>${e(r.repo ? `${r.repo}: work completed` : "Work completed")}</h1>
 <p class="sub">${e(subtitle(r))}</p>
 <div class="tiles">${tiles}</div>
 ${empty}${sections}
@@ -116,10 +184,12 @@ export function escapeMd(s: string): string {
     .replace(/\r?\n/g, " ").replace(/[\\`*_{}[\]<>()#+!|~&]/g, (c) => (c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === "&" ? "&amp;" : `\\${c}`)).replace(/^-/, "\\-");
 }
 
-export function renderMarkdown(r: Report): string {
+export function renderMarkdown(r: Report, header?: ReportHeader): string {
   const s = r.summary;
   const m = escapeMd;
   const out: string[] = [
+    ...(header?.layout.showTitle && header.title ? [`# ${m(header.title)}`, ""] : []),
+    ...(header?.subtitle ? [m(header.subtitle), ""] : []),
     `# ${m(r.repo ? `${r.repo}: work completed` : "Work completed")}`,
     "",
     m(subtitle(r)),

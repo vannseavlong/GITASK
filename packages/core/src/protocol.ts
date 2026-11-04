@@ -94,6 +94,8 @@ export interface ReportRequest {
   /** Person ids (`unassigned` allowed); empty means everyone. */
   people: string[];
   includeSubtasks: boolean;
+  /** Project title and logo on top (HTML, Markdown). Missing means on; it only applies when the board has a project. */
+  includeHeader?: boolean;
 }
 export type ReportFormat = "html" | "markdown" | "csv";
 
@@ -123,12 +125,13 @@ export function validateReportRequest(raw: unknown): { ok: true; options: Report
   if (typeof o.dateField !== "string" || !(REPORT_DATE_FIELDS as readonly string[]).includes(o.dateField)) return { ok: false, reason: "unknown date field" };
   if (typeof o.includeSubtasks !== "boolean") return { ok: false, reason: "includeSubtasks must be true or false" };
   if (!Array.isArray(o.people) || o.people.length > MAX_REPORT_PEOPLE) return { ok: false, reason: "too many people" };
+  if (o.includeHeader !== undefined && typeof o.includeHeader !== "boolean") return { ok: false, reason: "includeHeader must be true or false" };
   const seen = new Set<string>();
   for (const p of o.people) {
     if (typeof p !== "string" || !REPORT_PERSON_ID.test(p)) return { ok: false, reason: "bad person id" };
     seen.add(p);
   }
-  return { ok: true, options: { from, to, dateField: o.dateField as ReportRequest["dateField"], people: [...seen], includeSubtasks: o.includeSubtasks } };
+  return { ok: true, options: { from, to, dateField: o.dateField as ReportRequest["dateField"], people: [...seen], includeSubtasks: o.includeSubtasks, ...(o.includeHeader !== undefined ? { includeHeader: o.includeHeader } : {}) } };
 }
 
 export interface ValidationContext {

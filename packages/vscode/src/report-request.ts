@@ -1,7 +1,7 @@
 // Export dialog logic with no `vscode` import: filter state -> report request, and the host-side
 // handler that builds the report from a VALIDATED request. CLI-serve reuses `buildReportFile`.
 import { basename, dirname } from "node:path";
-import { buildReport, loadBoard, readPeople, renderCsv, renderHtml, renderMarkdown } from "gitask-core";
+import { buildReport, loadBoard, loadReportHeader, readPeople, renderCsv, renderHtml, renderMarkdown } from "gitask-core";
 import type { Person } from "gitask-core";
 import type { ReportFormat, ReportRequest } from "./protocol.ts";
 import { reportFileName } from "./report-options.ts";
@@ -22,6 +22,7 @@ export async function buildReportFile(tasksDir: string, o: ReportRequest, format
     people: people ?? (await readPeople(tasksDir)),
     repo: basename(dirname(tasksDir)),
   });
-  const content = format === "html" ? renderHtml(report) : format === "markdown" ? renderMarkdown(report) : renderCsv(report);
+  const header = format !== "csv" && o.includeHeader !== false ? await loadReportHeader(tasksDir) : undefined;
+  const content = format === "html" ? renderHtml(report, header) : format === "markdown" ? renderMarkdown(report, header) : renderCsv(report);
   return { name: reportFileName(o, format), mime: MIME[format], content };
 }

@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import {
-  addSubtask, buildReport, listPeople, readPeople, renderCsv, renderHtml, renderMarkdown, repoRoot,
+  addSubtask, buildReport, loadReportHeader, listPeople, readPeople, renderCsv, renderHtml, renderMarkdown, repoRoot,
   setOwner, setSubtaskAssignee, UNASSIGNED_KEY, planSync, applySync, readGithubConfig, readOriginRepo,
 } from "gitask-core";
 import type { Board, Person, ReportDateField, Task } from "gitask-core";
@@ -134,7 +134,8 @@ export async function reportCmd(dir: string, board: Board, p: Parsed): Promise<v
     from, to, people, only, dateField: dateField as ReportDateField,
     includeSubtasks: !p.has("no-subtasks"), repo: basename(root),
   });
-  const text = format === "html" ? renderHtml(report) : format === "md" ? renderMarkdown(report) : renderCsv(report);
+  const header = format !== "csv" ? await loadReportHeader(dir) : undefined;
+  const text = format === "html" ? renderHtml(report, header) : format === "md" ? renderMarkdown(report, header) : renderCsv(report);
   const out = p.value("out");
   if (!out) return void process.stdout.write(text.endsWith("\n") ? text : text + "\n");
   await mkdir(dirname(resolve(out)), { recursive: true });
