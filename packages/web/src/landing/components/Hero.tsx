@@ -1,4 +1,4 @@
-import { ArrowRight, FileCode2, Folder, GitFork } from "lucide-react"
+import { ArrowRight, ExternalLink, FileCode2, Folder, GitFork } from "lucide-react"
 import { boardCards, links } from "../content"
 
 function BoardIllustration() {
@@ -97,11 +97,16 @@ export default function Hero() {
             history. In VS Code and on the command line.
           </p>
           <div className="button-row">
-            <a className="button primary" href="#download">
-              Download <ArrowRight size={16} />
+            <a
+              className="button primary"
+              href={links.marketplace}
+              target="_blank"
+              rel="noreferrer"
+            >
+              VS Code Marketplace <ExternalLink size={16} />
             </a>
-            <a className="button secondary" href={links.docs}>
-              Read the docs
+            <a className="button secondary" href="#download">
+              Other ways to install <ArrowRight size={16} />
             </a>
           </div>
           <small className="compatibility">

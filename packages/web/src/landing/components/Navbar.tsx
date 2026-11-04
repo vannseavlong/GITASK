@@ -46,6 +46,14 @@ export default function Navbar() {
           ))}
           <a
             className="mobile-only"
+            href={links.marketplace}
+            target="_blank"
+            rel="noreferrer"
+          >
+            VS Code Marketplace
+          </a>
+          <a
+            className="mobile-only"
             href={links.repo}
             target="_blank"
             rel="noreferrer"
@@ -73,8 +81,13 @@ export default function Navbar() {
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <a className="button primary desktop-only" href="#download">
-            Download
+          <a
+            className="button primary desktop-only"
+            href={links.marketplace}
+            target="_blank"
+            rel="noreferrer"
+          >
+            VS Code Marketplace
           </a>
           <button
             className="icon-link menu-button"
