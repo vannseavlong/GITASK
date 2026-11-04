@@ -5,6 +5,10 @@ import type { Project, ProjectLayout, ProjectLogo } from "./types.ts";
 import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
 import { assertRegularFile } from "./taskfile.ts";
+import { LOGO_TYPES, MAX_LOGO_BYTES, MAX_SUBTITLE, MAX_TITLE, PROJECT_ENUMS as ENUMS, PROJECT_LAYOUT_DEFAULTS, UNSAFE_TEXT, cleanText } from "./project-rules.ts";
+export { LOGO_TYPES, MAX_LOGO_BYTES, PROJECT_LAYOUT_DEFAULTS };
+
+const MAX_LOGO_PATH = 255;
 
 export const CONFIG_FILE = "gitask.json";
 export const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
@@ -129,45 +133,6 @@ export async function readGithubConfig(dir: string): Promise<GithubConfig | unde
 }
 
 // ---- Project identity: `project` block of Tasks/gitask.json ---------------------------------------------------
-
-export const PROJECT_LAYOUT_DEFAULTS: ProjectLayout = { align: "left", size: "md", logoPosition: "left", showTitle: true };
-const ENUMS = {
-  align: ["left", "center", "right"],
-  size: ["sm", "md", "lg"],
-  logoPosition: ["left", "top", "right", "hidden"],
-} as const;
-const MAX_TITLE = 80;
-const MAX_SUBTITLE = 160;
-const MAX_LOGO_PATH = 255;
-/** Logos are shown small; a larger file is refused rather than shipped to every client. */
-export const MAX_LOGO_BYTES = 1024 * 1024;
-/** Extension allow-list. SVG is allowed because hosts must render it only through `<img>` (scripts do not run there). */
-export const LOGO_TYPES: Readonly<Record<string, string>> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml" };
-
-// Control characters, line breaks and bidi controls never belong in a one-line heading (ZWJ stays: emoji need it).
-const UNSAFE_TEXT = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200b\u200e\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff\u{e0000}-\u{e007f}]/u;
-const UNSAFE_TEXT_ALL = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200b\u200e\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff\u{e0000}-\u{e007f}]/gu;
-
-/** Trimmed one-line text, or `undefined` when empty. `strict` throws instead of truncating or dropping. */
-function cleanText(v: unknown, max: number, label: string, strict: boolean): string | undefined {
-  if (typeof v !== "string") {
-    if (strict) throw new Error(`${label} must be text`);
-    return undefined;
-  }
-  let t = v;
-  if (UNSAFE_TEXT.test(t)) {
-    if (strict) throw new Error(`${label} contains control characters`);
-    t = t.replace(UNSAFE_TEXT_ALL, " ");
-  }
-  t = t.trim();
-  if (!t) return undefined;
-  const chars = [...t];
-  if (chars.length > max) {
-    if (strict) throw new Error(`${label} is longer than ${max} characters`);
-    t = chars.slice(0, max).join("");
-  }
-  return t;
-}
 
 /**
  * Syntax check of a logo path from config: relative to the Tasks dir, `/` separated, no `.`/`..`/empty segments,
@@ -310,6 +275,8 @@ export interface ProjectInput {
 export interface ProjectOptions {
   /** Commit the file when it is tracked by git (default true). */
   commit?: boolean;
+  /** Absolute path of one more file to commit with the config (a logo this call chose). Its path is re-checked by `resolveLogo`, never taken from a caller. */
+  withFile?: string;
 }
 
 export const PROJECT_MESSAGE = "board: update project settings";
@@ -375,9 +342,12 @@ export async function setProject(dir: string, input: ProjectInput, opts: Project
 
   const root = await repoRoot(dir);
   if (root && opts.commit !== false && (await isTracked(dir, file))) {
-    if (!(await hasLocalChanges(root, file))) return { committed: false }; // same content again: nothing to commit
-    await gitAdd(root, file);
-    await gitCommitPaths(root, PROJECT_MESSAGE, file);
+    const files = opts.withFile ? [file, opts.withFile] : [file];
+    let dirty = false;
+    for (const f of files) dirty ||= await hasLocalChanges(root, f);
+    if (!dirty) return { committed: false }; // same content again: nothing to commit
+    await gitAdd(root, ...files);
+    await gitCommitPaths(root, PROJECT_MESSAGE, ...files);
     return { committed: true };
   }
   return { committed: false };

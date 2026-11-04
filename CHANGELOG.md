@@ -8,6 +8,12 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - What changed: tabs reorder by pointer events (works in Firefox); dragging no longer activates the tab or sends a `view` message; drops in the gap, on the strip and on Reset land; Alt+Arrow and drag moves are announced via an `aria-live` region; the drop marker uses the foreground colour; focus returns to the active tab after Reset. Pure logic in `packages/ui/src/lib/view-order.ts`, tests in `packages/vscode/test/view-order.test.ts`.
 - Needs: a check in a real VS Code webview and Firefox
 
+## 2026-11-05 · [Ext] feat: customize the project header from the board
+- Owner: SNLRLONG
+- Task: Ext-project-layout-settings (T-0073) · Branch/PR: feat/project-layout-settings
+- What changed: "Customize header" dialog with live preview (title, subtitle, alignment, size, logo position, hide title, logo upload, Reset layout). New `setProject` message validated in core for VS Code and `gitask serve`; an uploaded logo is checked by content, stored in `Tasks/` under a generated name and committed with `gitask.json` only. The header refetches its logo after a save or after a failed fetch. See `Docs/architecture/config.md`.
+- Needs: a check in a real VS Code webview and in a browser with a real file picker
+
 ## 2026-11-05 · [Ext] feat: new task opens its detail panel
 - Owner: SNLRLONG
 - Task: Ext-new-task-open-detail (T-0075) · Branch/PR: feat/new-task-open-detail

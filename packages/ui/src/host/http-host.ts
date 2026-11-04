@@ -57,7 +57,7 @@ export function createHttpHost(base = ""): Host {
   async function post(m: WebviewMessage): Promise<void> {
     await ready;
     try {
-      const r = await fetch(`${base}/api/message`, { method: "POST", headers: { ...headers(), "Content-Type": "application/json" }, body: JSON.stringify(m) });
+      const r = await fetch(`${base}/api/message`, { method: "POST", headers: { ...headers(), "Content-Type": "application/json", ...(m.type === "setProject" && m.logo ? { "X-Gitask-Upload": "logo" } : {}) }, body: JSON.stringify(m) });
       const body = (await r.json().catch(() => ({}))) as { reply?: HostMessage; error?: string };
       if (body.reply && body.reply.type !== "board") emitMsg(body.reply);
       else if (!r.ok) emitMsg({ type: "error", message: body.error ?? `request failed (${r.status})` });

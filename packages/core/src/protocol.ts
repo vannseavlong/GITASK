@@ -2,6 +2,7 @@
 // so node:test can run it. Every webview message goes through `validateMessage` before it
 // touches the filesystem or git.
 import type { DeleteImpact } from "./delete.ts";
+import { validateProjectFields, type ProjectFields } from "./project-rules.ts";
 import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 /** Messages the webview may send. */
@@ -26,6 +27,8 @@ export type WebviewMessage =
   | { type: "previewReport"; options: ReportRequest }
   | { type: "exportReport"; options: ReportRequest; format: ReportFormat }
   | { type: "setColumnColor"; column: string; color: string | null }
+  /** Change the project header (title, subtitle, layout) and/or the logo. `logo` is `null` to remove it or an upload `{ name, data }` (base64, at most 1 MiB) that the host stores under a generated name. */
+  | ({ type: "setProject" } & ProjectFields)
   /** Ask what deleting this task would cost (for a confirm dialog). The host answers with `deleteImpact`. */
   | { type: "deleteImpact"; path: string }
   /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` and the VS Code extension refuse a delete without it. */
@@ -378,6 +381,10 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
     }
     case "readLogo":
       return { ok: true, message: { type: "readLogo" } };
+    case "setProject": {
+      const r = validateProjectFields(raw);
+      return r.ok ? { ok: true, message: { type: "setProject", ...r.fields } } : fail(r.reason);
+    }
     case "view": {
       if (typeof raw.id !== "string" || !ctx.views.includes(raw.id)) return fail("unknown view");
       return { ok: true, message: { type: "view", id: raw.id } };
@@ -445,3 +452,6 @@ export function taskCreatedMessage(path: string, tasksDir: string): Extract<Host
   const abs = taskPathInside(path, { tasksDir, columns: [column], views: [] });
   return abs ? { type: "taskCreated", path: abs } : null;
 }
+
+export type { LogoUpload, ProjectFields } from "./project-rules.ts";
+export { MAX_LOGO_BYTES, MAX_LOGO_BASE64, LOGO_BODY_BYTES, LOGO_TYPES, MAX_TITLE, MAX_SUBTITLE, PROJECT_LAYOUT_DEFAULTS } from "./project-rules.ts";

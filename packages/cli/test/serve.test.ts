@@ -1,7 +1,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, symlinkSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, symlinkSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { request, type IncomingMessage } from "node:http";
@@ -210,4 +210,36 @@ test("GET /api/logo serves only the configured logo, with the token, and re-chec
   // the page CSP lets images come from this server only
   const page = await call(s, "GET", "/", { token: null });
   assert.match(String(page.headers["content-security-policy"]), /img-src 'self' data:/);
+});
+
+test("setProject: a logo upload needs the token and the upload header; hostile ones are refused; ordinary messages keep the 64 KiB cap", async () => {
+  const { tasks, g } = workspace();
+  writeFileSync(join(tasks, "gitask.json"), "{}\n");
+  g("add", "-A"); g("commit", "-q", "-m", "cfg");
+  const s = await boot(tasks);
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(200 * 1024, 7)]);
+  const msg = { type: "setProject", title: "Acme", logo: { name: "l.png", data: png.toString("base64") } };
+  const json = { "Content-Type": "application/json" };
+  assert.equal((await call(s, "POST", "/api/message", { token: null, headers: { ...json, "X-Gitask-Upload": "logo" }, body: JSON.stringify(msg) })).status, 401);
+  // The server hangs up on an oversize body, so the client may see 413 or a reset.
+  const tooBig = async (m: unknown, h: Record<string, string> = {}) => { try { return (await post(s, m, h)).status === 413; } catch (e) { return (e as NodeJS.ErrnoException).code === "ECONNRESET" || (e as NodeJS.ErrnoException).code === "EPIPE"; } };
+  assert.ok(await tooBig(msg), "no upload header: the normal cap applies");
+  const ok = await post(s, msg, { "X-Gitask-Upload": "logo" });
+  assert.equal(ok.status, 200);
+  assert.equal(JSON.parse(ok.body).reply, undefined);
+  const logo = await call(s, "GET", "/api/logo");
+  assert.equal(logo.status, 200);
+  assert.equal(logo.headers["content-type"], "image/png");
+  assert.match(g("show", "--name-only", "--format=", "HEAD"), /Tasks\/gitask\.json\nTasks\/logo-[0-9a-f]{12}\.png/);
+  for (const bad of [
+    { type: "setProject", logo: { name: "x.exe", data: "AAAA" } },
+    { type: "setProject", logo: { name: "../x.png", data: "AAAA" } },
+    { type: "setProject", layout: { align: "up" } },
+  ]) assert.equal((await post(s, bad, { "X-Gitask-Upload": "logo" })).status, 400);
+  const huge = { type: "setProject", logo: { name: "l.png", data: "A".repeat(3 * 1024 * 1024) } };
+  assert.ok(await tooBig(huge, { "X-Gitask-Upload": "logo" }));
+  const before = readdirSync(tasks).length;
+  const fake = await post(s, { type: "setProject", logo: { name: "f.png", data: Buffer.from("<html>pad").toString("base64") } }, { "X-Gitask-Upload": "logo" });
+  assert.match(JSON.stringify(JSON.parse(fake.body).reply), /not a valid png/);
+  assert.equal(readdirSync(tasks).length, before);
 });
