@@ -2,6 +2,30 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-05 · [Core] feat: project identity block in gitask.json
+- Owner: SNLRLONG
+- Task: Core-project-config (T-0071) · Branch/PR: feat/project-config
+- What changed: `Tasks/gitask.json` can carry a `project` block (title, subtitle, logo inside `Tasks/`, layout). Core validates it (no traversal or symlinks, 1 MiB logo cap, invisible characters stripped) and `setProject` writes it. Nothing renders it yet. See `Docs/architecture/config.md`.
+- Needs: Ext-project-header to show it
+
+## 2026-11-05 · [Ext] feat(ui): reorderable tabs, Overview first
+- Owner: SNLRLONG
+- Task: Ext-view-order (T-0070) · Branch/PR: feat/view-order
+- What changed: the tabs open in the order Overview, Board, List, Timeline, and can be dragged or moved with Alt+Left/Right; the order is remembered, with a Reset button. Overview is also the first view in `gitask serve`.
+- Needs: a check in a real VS Code webview and in Firefox (drag does not work on buttons there; Alt+arrows do)
+
+## 2026-11-05 · [Ops] feat(web): one install block and Marketplace buttons
+- Owner: SNLRLONG
+- Task: Ops-web-install-simplify (T-0069) · Branch/PR: feat/web-install-simplify
+- What changed: the hero and navbar link the VS Code Marketplace; the three per-OS install cards and OS detection are replaced by one install block (Marketplace, Open VSX, `code --install-extension`, .vsix fallback, CLI).
+- Needs: light theme and Lighthouse check
+
+## 2026-11-05 · [Ops] fix(web): use a list for the CLI commands
+- Owner: SNLRLONG
+- Task: Ops-web-home-a11y (T-0061) · Branch/PR: fix/web-home-a11y
+- What changed: the CLI commands on the home page are a semantic list instead of an ARIA table, to clear the `aria-required-children` failure.
+- Needs: Lighthouse run to confirm Accessibility 100
+
 ## 2026-11-05 · [Ext] fix(ui): delete uses the in-app dialog in VS Code
 - Owner: SNLRLONG
 - Task: Tasks/4-testing/Ext-delete-dialog.md (T-0068) · Branch/PR: fix/delete-dialog
