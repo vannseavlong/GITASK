@@ -4,6 +4,7 @@ import { randomBytes, timingSafeEqual, createHash } from "node:crypto";
 import { watch, type FSWatcher } from "node:fs";
 import { networkInterfaces } from "node:os";
 import type { AddressInfo } from "node:net";
+import { readLogoBytes } from "gitask-core";
 import { createHandler } from "./handler.ts";
 
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -186,11 +187,20 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
 
     // 2. Every API request needs the token (header; query only for SSE, which cannot set headers).
     if (!path.startsWith("/api/")) return json(res, 404, { error: "not found" });
-    const given = (req.headers["x-gitask-token"] as string | undefined) ?? (path === "/api/events" ? url.searchParams.get("token") ?? "" : "");
+    const given = (req.headers["x-gitask-token"] as string | undefined) ?? (path === "/api/events" || path === "/api/logo" ? url.searchParams.get("token") ?? "" : "");
     if (!given || !safeEqual(given, token)) return json(res, 401, { error: "bad token" });
 
     if (req.method === "GET" && path === "/api/board") {
       try { return json(res, 200, await handler.board()); } catch (e) { return json(res, 500, { error: (e as Error).message }); }
+    }
+    // The project logo (`<img>` cannot send a header, so the token may come in the query like SSE): no path in the request. The core helper reads the configured logo and re-checks it now.
+    // Served with a fixed Content-Type from the allow-list and `sandbox` CSP, so even an SVG opened directly runs no script.
+    if (req.method === "GET" && path === "/api/logo") {
+      let logo;
+      try { logo = await readLogoBytes(o.dir); } catch { logo = undefined; }
+      if (!logo) return json(res, 404, { error: "no logo" });
+      res.writeHead(200, { ...baseHeaders, "Content-Type": logo.mime, "Content-Security-Policy": "default-src 'none'; sandbox", "Content-Length": logo.bytes.length });
+      return void res.end(logo.bytes);
     }
     if (req.method === "GET" && path === "/api/taskBody") {
       const r = await handler.handle({ type: "readTask", path: url.searchParams.get("path") ?? "" });

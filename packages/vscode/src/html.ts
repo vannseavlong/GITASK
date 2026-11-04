@@ -24,11 +24,13 @@ function attr(v: string): string {
  *  - style-src: the extension's own files, plus the nonce for the `<style>` Radix injects (it reads the
  *    page nonce from `data-nonce`). `style-src-attr 'unsafe-inline'` is for style *attributes* only
  *    (Radix and React position elements with them); style elements stay locked down.
+ *  - img-src: the extension's own files plus `data:`, which is how the host hands over the project logo (read and
+ *    re-validated by the extension; the Tasks folder is not a webview resource root). Nothing remote.
  */
 export function uiHtml(views: readonly string[], o: UiHtmlOptions): string {
   const nonce = o.nonce ?? randomBytes(16).toString("base64");
   const initial = views.includes(o.initialView ?? "") ? o.initialView! : DEFAULT_VIEW;
-  const csp = `default-src 'none'; script-src 'nonce-${nonce}' ${o.cspSource}; style-src ${o.cspSource} 'nonce-${nonce}'; style-src-attr 'unsafe-inline';`;
+  const csp = `default-src 'none'; script-src 'nonce-${nonce}' ${o.cspSource}; style-src ${o.cspSource} 'nonce-${nonce}'; style-src-attr 'unsafe-inline'; img-src ${o.cspSource} data:;`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

@@ -63,8 +63,23 @@ const REPORT_FIXTURE = (from: string, to: string) => `<!doctype html><html><head
 
 const slug = (title: string) => title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "new-task";
 
+const MOCK_LOGO = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#0969da"/><path d="M18 34l10 10 18-24" fill="none" stroke="#fff" stroke-width="7"/></svg>')}`;
+
+/** Mock project header; `?align=&size=&logo=&title=&project=none` in the page URL picks the layout to look at. */
+function mockProject(): BoardData["project"] {
+  const q = typeof location === "undefined" ? new URLSearchParams() : new URLSearchParams(location.search);
+  if (q.get("project") === "none") return undefined;
+  const pick = <T extends string>(k: string, ok: readonly T[], d: T): T => (ok.includes(q.get(k) as T) ? (q.get(k) as T) : d);
+  return {
+    title: "Acme Platform", subtitle: "Roadmap and delivery board for the whole team",
+    logo: q.get("logo") === "missing" ? undefined : { path: "assets/logo.svg", mime: "image/svg+xml" },
+    layout: { align: pick("align", ["left", "center", "right"], "left"), size: pick("size", ["sm", "md", "lg"], "md"), logoPosition: pick("logo", ["left", "top", "right", "hidden"], "left"), showTitle: q.get("title") !== "off" },
+  };
+}
+
 export function createMockHost(): Host {
   const board: BoardData = structuredClone(FIXTURE);
+  board.project = mockProject();
   const subs = new Set<(b: BoardData) => void>();
   const msgSubs = new Set<Parameters<Host["onMessage"]>[0]>();
   const find = (path: string) => board.columns.flatMap((c) => c.tasks).find((t) => t.path === path);
@@ -164,6 +179,7 @@ export function createMockHost(): Host {
     },
     onBoard(cb) { subs.add(cb); return () => void subs.delete(cb); },
     onMessage(cb) { msgSubs.add(cb); return () => void msgSubs.delete(cb); },
+    logoSrc: () => Promise.resolve(MOCK_LOGO),
     loadState: () => state,
     saveState: (s) => { state = s; },
   };

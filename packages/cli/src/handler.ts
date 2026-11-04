@@ -74,6 +74,7 @@ export function createHandler(o: HandlerOptions) {
         }
         return { status: 200, changed: true };
       case "view":
+      case "readLogo": // the browser fetches the logo from GET /api/logo (serve.ts), not through a message
         return { status: 200, changed: false };
       case "open":
         return { status: 200, changed: false }; // a browser cannot open a file in an editor

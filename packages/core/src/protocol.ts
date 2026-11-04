@@ -21,6 +21,8 @@ export type WebviewMessage =
   | { type: "editTask"; path: string; patch: EditTaskPatch }
   | { type: "readTask"; path: string }
   | { type: "view"; id: string }
+  /** Ask for the project logo. No path: the host serves only the logo named in `Tasks/gitask.json`. The reply is `logo`. */
+  | { type: "readLogo" }
   | { type: "previewReport"; options: ReportRequest }
   | { type: "exportReport"; options: ReportRequest; format: ReportFormat }
   | { type: "setColumnColor"; column: string; color: string | null }
@@ -54,6 +56,8 @@ export const SUBTASK_DELETE_DETAIL = "Only this checkbox line is removed from th
 /** Messages the extension sends to the webview. */
 export type HostMessage =
   | { type: "board"; board: unknown }
+  /** The logo as a `data:` URL built by the host from `readLogoBytes`; `src` is absent when there is no valid logo. */
+  | { type: "logo"; src?: string }
   | { type: "taskBody"; path: string; text?: string; error?: string }
   /** Sent only after a task was created: the UI opens its detail panel. `path` is the absolute task file. A failed create sends nothing. */
   | { type: "taskCreated"; path: string }
@@ -372,6 +376,8 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       const path = taskPathInside(raw.path, ctx);
       return path ? { ok: true, message: { type: "readTask", path } } : fail("path is not a task file in the Tasks dir");
     }
+    case "readLogo":
+      return { ok: true, message: { type: "readLogo" } };
     case "view": {
       if (typeof raw.id !== "string" || !ctx.views.includes(raw.id)) return fail("unknown view");
       return { ok: true, message: { type: "view", id: raw.id } };

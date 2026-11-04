@@ -44,6 +44,18 @@ export function createVsCodeHost(): Host {
       msgSubs.add(cb);
       return () => void msgSubs.delete(cb);
     },
+    logoSrc() {
+      return new Promise((resolve) => {
+        const off = host.onMessage((m) => {
+          if (m.type !== "logo") return;
+          off();
+          clearTimeout(timer);
+          resolve(m.src);
+        });
+        const timer = setTimeout(() => { off(); resolve(undefined); }, 5000);
+        api.postMessage({ type: "readLogo" } satisfies WebviewMessage);
+      });
+    },
     loadState: () => ((api.getState() as UiState | undefined) ?? {}),
     saveState: (s) => api.setState(s),
   };

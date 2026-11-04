@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadBoard, parseProject, readProject, setProject, isLogoPath, resolveLogo, MAX_LOGO_BYTES } from "../src/index.ts";
@@ -234,4 +234,28 @@ test("setProject never parses a symlinked gitask.json", async () => {
   writeFileSync(join(root, "outside.json"), "SECRET-NOT-JSON");
   symlinkSync(join(root, "outside.json"), join(tasks, "gitask.json"));
   await assert.rejects(setProject(tasks, { title: "x" }), (e: Error) => !/SECRET/.test(e.message));
+});
+
+test("readLogoBytes: serves the configured logo, and re-checks it at serve time", async () => {
+  const { tasks } = setup();
+  const { readLogoBytes, logoDataUrl } = await import("../src/index.ts");
+  assert.equal(await readLogoBytes(tasks), undefined, "no config");
+  cfg(tasks, { project: { title: "A", logo: "logo.png" } });
+  const got = await readLogoBytes(tasks);
+  assert.equal(got?.mime, "image/png");
+  assert.equal(got?.bytes.toString(), "png-bytes");
+  assert.equal(logoDataUrl(got!), `data:image/png;base64,${Buffer.from("png-bytes").toString("base64")}`);
+  // swapped for a symlink after the board loaded: not followed
+  const secret = join(tasks, "..", "secret.png");
+  writeFileSync(secret, "secret");
+  rmSync(join(tasks, "logo.png"));
+  symlinkSync(secret, join(tasks, "logo.png"));
+  assert.equal(await readLogoBytes(tasks), undefined);
+  // grown past the cap after the board loaded
+  rmSync(join(tasks, "logo.png"));
+  writeFileSync(join(tasks, "logo.png"), Buffer.alloc(MAX_LOGO_BYTES + 1));
+  assert.equal(await readLogoBytes(tasks), undefined);
+  // config points at a non-image: dropped by readProject
+  cfg(tasks, { project: { title: "A", logo: "gitask.json" } });
+  assert.equal(await readLogoBytes(tasks), undefined);
 });

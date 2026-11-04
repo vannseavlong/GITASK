@@ -10,6 +10,7 @@ React + TypeScript + Vite + Tailwind + shadcn (Radix) UI. One UI, two transports
 | Shell | `src/shell/` | Tabs, text filter, date-range picker, status chips, remembered state. Pure logic is in `src/shell/logic.ts`. |
 | Views | `src/views/` | One entry per tab in `views/registry.tsx` (`id`, `label`, `component`) in the default order Overview, Board, List, Timeline (Overview is also the view opened when nothing is saved). A view gets the filtered `board`, the `full` board, the `host`, the remembered `ui` state with `update(patch)`, and `openTask(path)`. |
 | Tab order | `src/shell/view-tabs.tsx`, `src/lib/view-order.ts` | Tabs reorder by native HTML5 drag (drop marker on the tab edge, no dependency) or Alt+Left/Right on a focused tab; "Reset tab order" appears once the order differs from the default. The order is `UiState.viewOrder` (view ids), saved through `saveState` like the rest of the UI state, so it lives in webview state in VS Code and in localStorage in `gitask serve`. It is only a preference: `resolveOrder` drops unknown or duplicate ids and appends missing ones, so every view renders once. Ids stay validated by `VIEW_IDS`; the saved default order is stored as absent. Pure logic is tested in `packages/vscode/test/view-order.test.ts`. |
+| Project header | `src/shell/project-header.tsx`, `src/lib/project-header.ts` | Above the tabs on every view; renders nothing without `board.project`. Title and subtitle are React text. `project.layout` maps to classes in `headerClasses` (align, size, logo position, show title; text wraps at narrow width, tested in `packages/vscode/test/project-header.test.ts`). The logo is an `<img>` only (an SVG shown this way runs no script). Its `src` comes from `host.logoSrc`; a missing, rejected or failing logo drops out and the text stays, with no broken-image icon. See "Project logo" below. |
 | Task detail | `src/detail/` | Side panel (Radix Dialog: focus trap, Esc, focus returns) opened by `openTask` from any view. Asks the host for `readTask`, renders the `taskBody` text with `react-markdown` + `remark-gfm` (raw HTML skipped, only http(s) links, images shown as alt text). Checkboxes map to sub-tasks by file line and send `toggleSubtask`. Shows fields, progress, depends-on chips, Open file and Delete. After a task is created the host sends `taskCreated { path }` (VS Code `newTask`, `gitask serve` reply to `new`; never on failure); the shell remembers the path and opens the panel once the board holds that task (`detail/pending-open.ts`). |
 | Components | `src/components/ui/` | shadcn components as source (Button, Dialog, Popover, Command, Calendar, date-range picker, Tabs, Badge, Avatar, Select, Tooltip, Input, Table, Progress). |
 
@@ -35,6 +36,14 @@ default-src 'none'; script-src 'nonce-N' ${cspSource}; style-src ${cspSource} 'n
 - `style-src-attr 'unsafe-inline'` covers style **attributes** only (Radix and React position elements with them). It does not allow `<style>` elements.
 - Radix injects one `<style>` (scroll lock). It gets the page nonce: the page puts it in `data-nonce`, `main.tsx` sets `__webpack_nonce__`.
 - Every webview message still goes through `validateMessage` in `extension.ts`. Tab ids in `views/registry.tsx` must equal `VIEW_IDS` in `packages/vscode/src/view-ids.ts` (a test checks this). The old string-built page and its command are gone.
+
+## Project logo
+
+The board payload carries only `project.logo.path`/`mime`, never bytes. One core helper, `readLogoBytes(dir)` (`packages/core/src/config.ts`), serves it: it takes no path, re-reads `Tasks/gitask.json`, re-runs `resolveLogo` (regular file, not a symlink, inside `Tasks/`, extension allow-list, 1 MiB cap), opens with `O_NOFOLLOW` and checks the size again, so a file swapped after the board loaded is not followed. Config rules: [config.md](config.md).
+
+- **VS Code:** the webview sends `readLogo` (no fields); the extension answers `logo` with a `data:` URL from `readLogoBytes`/`logoDataUrl`. The Tasks folder is not added to `localResourceRoots`, so the webview can read nothing else from it. CSP gains `img-src ${cspSource} data:` and nothing remote.
+- **`gitask serve`:** `GET /api/logo` (token in the header or, because `<img>` cannot send one, `?token=`; any other query is ignored). Fixed `Content-Type` from the allow-list, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`, 404 when there is no valid logo. The page CSP already has `img-src 'self' data:`.
+- `Host.logoSrc(logo)` hides the difference from the UI.
 
 ## Theme
 

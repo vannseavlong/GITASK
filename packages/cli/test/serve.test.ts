@@ -1,7 +1,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { request, type IncomingMessage } from "node:http";
@@ -187,4 +187,27 @@ test("favicon: public, right content types, fixed map, CSP unchanged", async () 
     const r = await call(s, "GET", q, { token: null });
     assert.ok(r.status === 404 || r.status === 401, `${q} -> ${r.status}`);
   }
+});
+
+test("GET /api/logo serves only the configured logo, with the token, and re-checks it", async () => {
+  const { tasks, root } = workspace();
+  const s = await boot(tasks);
+  assert.equal((await call(s, "GET", "/api/logo")).status, 404, "no logo configured");
+  writeFileSync(join(tasks, "logo.svg"), '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  writeFileSync(join(tasks, "gitask.json"), JSON.stringify({ project: { title: "A", logo: "logo.svg" } }));
+  assert.equal((await call(s, "GET", "/api/logo", { token: null })).status, 401);
+  const r = await call(s, "GET", `/api/logo?token=${s.token}&path=../../x`, { token: null });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers["content-type"], "image/svg+xml");
+  assert.match(String(r.headers["content-security-policy"]), /sandbox/);
+  assert.equal(r.headers["x-content-type-options"], "nosniff");
+  assert.match(r.body, /<svg/);
+  // swapped for a symlink to a file outside Tasks after startup: refused
+  writeFileSync(join(root, "secret.svg"), "<svg/>");
+  rmSync(join(tasks, "logo.svg"));
+  symlinkSync(join(root, "secret.svg"), join(tasks, "logo.svg"));
+  assert.equal((await call(s, "GET", "/api/logo")).status, 404);
+  // the page CSP lets images come from this server only
+  const page = await call(s, "GET", "/", { token: null });
+  assert.match(String(page.headers["content-security-policy"]), /img-src 'self' data:/);
 });

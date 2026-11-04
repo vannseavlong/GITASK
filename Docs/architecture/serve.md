@@ -9,7 +9,7 @@ The UI bundle is inlined into `dist/gitask.js` by esbuild (`--loader:.js=text`),
 The server can write to the repo (move, delete, commit), so it is closed by default.
 
 - **Bind:** `127.0.0.1` unless `--host` is passed. `--port 0` picks a free port; a busy port stops with a clear message.
-- **Token:** 32 random bytes (hex), printed in the URL (`/?token=...`). Every `/api/*` request needs it, in header `X-Gitask-Token` (query `token` only for `/api/events`, since `EventSource` cannot set headers). Compared in constant time (hash then `timingSafeEqual`). The page removes it from the address bar and keeps it in `sessionStorage`.
+- **Token:** 32 random bytes (hex), printed in the URL (`/?token=...`). Every `/api/*` request needs it, in header `X-Gitask-Token` (query `token` only for `/api/events` and `/api/logo`, since `EventSource` cannot set headers). Compared in constant time (hash then `timingSafeEqual`). The page removes it from the address bar and keeps it in `sessionStorage`.
 - **Browser launch:** the URL printed for you carries the token, but the URL passed to `open`/`xdg-open` does not (argv is visible to every local user in `ps`). It carries `?code=<one-time>` instead; the page exchanges it with `POST /api/auth {code}` for the token. A code works once and expires after 60 s (`401` otherwise); the page then strips it from the address bar.
 - **Limits:** at most 128 open connections (`server.maxConnections`), 20 concurrent SSE clients (`503` beyond), and a request body must arrive within 10 s (`408`, connection dropped).
 - **Host and Origin:** `Host` must be the bound address (plus `localhost` for loopback); `Origin`, when sent, must be `http://<that address>`. Blocks DNS rebinding and other web pages. No CORS headers are sent, and `POST` needs `Content-Type: application/json`, so a cross-site page cannot even preflight.
@@ -28,6 +28,7 @@ The server can write to the repo (move, delete, commit), so it is closed by defa
 | `GET /api/board` | the board JSON |
 | `POST /api/message` | one `WebviewMessage`; answers `{ ok, reply? }` (`reply` is a `taskBody`, `taskCreated` or `error` host message; `taskCreated { path }` follows a successful `new` and makes the UI open that task's detail panel). `400` when validation rejects it |
 | `GET /api/taskBody?path=` | task file text (`readTask`) |
+| `GET /api/logo` | the project logo from `Tasks/gitask.json`, re-validated per request ([ui.md](ui.md) "Project logo"); no path input; `404` when none |
 | `GET /api/events` | Server-Sent Events: `event: board` on connect and after any change under the Tasks dir (`fs.watch`, 150 ms debounce, unchanged boards are not re-sent) |
 
 Message shapes: [ui.md](ui.md) and `packages/core/src/protocol.ts`. Browser differences: `open` is ignored (a browser cannot open an editor), `new` creates `New-task-<timestamp>` from the template, `view` is kept in `localStorage`.
