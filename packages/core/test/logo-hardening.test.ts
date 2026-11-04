@@ -225,3 +225,22 @@ test("hostile SVGs are refused, one reason each", () => {
 test("an SVG with a huge number of tags is refused instead of walked forever", () => {
   assert.equal(isPlainSvg(svg("<g/>".repeat(30000))), false);
 });
+
+test("svg css split by a comment or a child element is refused, and style stays plain text", () => {
+  const wrap = (inner: string) => `<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+  const bad = [
+    wrap('<style>@im<!---->port "http://evil.example/x.css";</style>'),
+    wrap("<style>rect{fill:ur<!---->l(http://evil.example/a)}</style>"),
+    wrap('<style>@im<title/>port "http://evil.example/x.css";</style>'),
+  ];
+  for (const s of bad) assert.equal(isPlainSvg(s), false, s);
+  assert.equal(isPlainSvg(wrap("<style>rect{fill:url(#a)}</style><rect/>")), true);
+});
+
+test("pathological css finishes fast", () => {
+  const wrap = (inner: string) => `<svg xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+  const inputs = [wrap(`<style>${"url(".repeat(200000)}</style>`), wrap(`<style>url(${" ".repeat(400000)}</style>`), wrap(`<style>${"url ".repeat(150000)}</style>`), wrap(`<style>${"url(#a) ".repeat(60000)}</style>`)];
+  const t = Date.now();
+  for (const s of inputs) isPlainSvg(s);
+  assert.ok(Date.now() - t < 2000, `took ${Date.now() - t} ms`);
+});

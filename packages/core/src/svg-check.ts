@@ -42,7 +42,17 @@ const TAIL = /\s*(\/?)>/y;
 /** CSS (a `style` attribute or <style> text) with nothing that loads, imports, escapes or scripts. */
 function cssIsPlain(css: string): boolean {
   if (/\\|@import|@font-face|expression\s*\(|javascript:|behavior|-moz-binding|<|&/i.test(css)) return false;
-  for (const m of css.matchAll(/url\s*\(\s*([^)]*)\)/gi)) if (!/^["']?\s*#[\w.-]+\s*["']?$/.test(m[1])) return false;
+  // Linear scan (a regex here backtracks quadratically on "url(" repeated): every url(...) must point at a fragment.
+  const lower = css.toLowerCase();
+  for (let at = lower.indexOf("url"); at !== -1; at = lower.indexOf("url", at + 3)) {
+    let j = at + 3;
+    while (j < lower.length && /\s/.test(lower[j])) j++;
+    if (lower[j] !== "(") continue;
+    const close = lower.indexOf(")", j);
+    if (close === -1) return false; // unclosed url(: refuse instead of rescanning the rest for every later "url"
+    if (!/^\s*["']?\s*#[\w.-]+\s*["']?\s*$/.test(css.slice(j + 1, close))) return false;
+    at = close - 2; // the next search starts after the closing paren
+  }
   return !/image-set\s*\(|\bsrc\s*:/i.test(css);
 }
 
@@ -86,6 +96,7 @@ export function isPlainSvg(text: string): boolean {
     if (s.startsWith("<!--", i)) {
       const end = s.indexOf("-->", i + 4);
       if (end === -1) return false;
+      if (stack.includes("style")) return false; // a comment inside <style> would split text the CSS check must see whole
       const body = s.slice(i + 4, end);
       if (body.includes("--") || /[<>&]/.test(body)) return false; // keep comments inert: no markup smuggled in them
       i = end + 3;
@@ -103,6 +114,7 @@ export function isPlainSvg(text: string): boolean {
     const open = OPEN.exec(s);
     if (!open || !ELEMENTS.has(open[1])) return false;
     const name = open[1];
+    if (stack[stack.length - 1] === "style") return false; // <style> holds one run of text, so the CSS check sees all of it
     if (!stack.length) {
       if (name !== "svg" || seenRoot) return false;
       seenRoot = true;
