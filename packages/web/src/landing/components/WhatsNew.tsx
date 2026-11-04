@@ -32,26 +32,28 @@ export default function WhatsNew() {
             )
           })}
         </div>
-        <div className="cli-table" role="table" aria-label="CLI commands">
+        <div className="cli-table">
           <div className="cli-table-head">
             <h3>CLI commands</h3>
             <a className="text-link" href={links.docs}>
               Full reference →
             </a>
           </div>
-          {cliCommands.map((row) => (
-            <div className="cli-row" role="row" key={row.command}>
-              <code role="cell">{row.command}</code>
-              <span role="cell">
-                {row.text}
-                {"isNew" in row && <em className="badge-new">New</em>}
-              </span>
-              <CopyButton
-                value={row.command.split(" | ")[0].split("|")[0]}
-                label={`Copy ${row.command}`}
-              />
-            </div>
-          ))}
+          <ul className="cli-list" aria-label="CLI commands">
+            {cliCommands.map((row) => (
+              <li className="cli-row" key={row.command}>
+                <code>{row.command}</code>
+                <span>
+                  {row.text}
+                  {"isNew" in row && <em className="badge-new">New</em>}
+                </span>
+                <CopyButton
+                  value={row.command.split(" | ")[0].split("|")[0]}
+                  label={`Copy ${row.command}`}
+                />
+              </li>
+            ))}
+          </ul>
         </div>
         <p className="new-foot">
           <Download size={14} /> Update the extension from the Marketplace or run{" "}

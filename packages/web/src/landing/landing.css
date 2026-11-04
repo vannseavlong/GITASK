@@ -1195,6 +1195,12 @@ a,
   padding: 0;
 }
 
+.cli-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .cli-row {
   display: grid;
   grid-template-columns: minmax(220px, 0.9fr) 1.6fr auto;
