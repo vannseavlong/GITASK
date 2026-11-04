@@ -188,12 +188,31 @@ export function WeekBars({ title, weeks, empty }: { title: string; weeks: WeekCo
   );
 }
 
-const CELL = 11, GAP = 3, LEFT = 28, TOP = 16, RIGHT = 6, MONTH_W = 22, MIN_W = 480;
+const GAP = 3, LEFT = 28, TOP = 16, RIGHT = 6, MONTH_W = 22, MIN_CELL = 9, MAX_CELL = 28;
+
+/** The width of an element, kept up to date as it resizes (0 until measured). */
+function useWidth(): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const [w, setW] = React.useState(0);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setW(el.clientWidth);
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setW(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w];
+}
 
 /** GitHub-style contribution grid: weeks are columns, weekdays rows (Mon, Wed, Fri labelled). */
 export function ActivityHeatmap({ heat }: { heat: Heatmap | null }) {
   const tip = useTip();
   const cols = heat?.weeks.length ?? 0;
+  const [box, boxW] = useWidth();
+  // Cells grow with the card (square, between MIN_CELL and MAX_CELL); the labels stay 10px because the SVG is drawn 1:1.
+  const CELL = cols && boxW ? Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor((boxW - LEFT - RIGHT) / cols) - GAP)) : 11;
   const W = LEFT + cols * (CELL + GAP) + RIGHT, H = TOP + 7 * (CELL + GAP);
   const summary = !heat || heat.total === 0
     ? "Activity heatmap: no task changes in the last 12 months."
@@ -204,8 +223,9 @@ export function ActivityHeatmap({ heat }: { heat: Heatmap | null }) {
       {!heat || heat.total === 0 ? (
         <div className="py-3 text-xs opacity-70">No task changes in git history for the last 12 months.</div>
       ) : (
+        <div ref={box} className="w-full">
         <div ref={tip.ref} className="relative overflow-x-auto">
-          <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ minWidth: MIN_W }} className="block" role="img" aria-label={summary}>
+          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block max-w-none" role="img" aria-label={summary}>
             {heat.months.filter((m, i, all) => LEFT + m.col * (CELL + GAP) + MONTH_W <= W && (i === 0 || (m.col - all[i - 1].col) * (CELL + GAP) >= MONTH_W)).map((m) => (
               <text key={m.col} x={LEFT + m.col * (CELL + GAP)} y={10} className="fill-muted-foreground text-[10px]">{m.label}</text>
             ))}
@@ -221,6 +241,7 @@ export function ActivityHeatmap({ heat }: { heat: Heatmap | null }) {
             )))}
           </svg>
           {tip.node}
+        </div>
         </div>
       )}
       <div className="mt-2 flex items-center justify-end gap-1 text-[11px] opacity-80" aria-hidden="true">
