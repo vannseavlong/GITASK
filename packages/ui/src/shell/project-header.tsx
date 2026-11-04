@@ -35,6 +35,7 @@ export function HeaderView({ title, subtitle, layout, hasLogo, src, alt, onLogoE
  */
 export function ProjectHeader({ project, host }: { project: BoardData["project"]; host: Host }) {
   const logoPath = project?.logo?.path;
+  const logoVersion = project?.logo?.version;
   const [src, setSrc] = React.useState<string | undefined>();
   const [failed, setFailed] = React.useState(false);
   const [rev, setRev] = React.useState(0);
@@ -55,9 +56,9 @@ export function ProjectHeader({ project, host }: { project: BoardData["project"]
     setFailed(false);
     if (!logoPath) return;
     let live = true;
-    host.logoSrc({ path: logoPath }).then((s) => { if (live) { setSrc(s); setFailed(!s); } }, () => { if (live) setFailed(true); });
+    host.logoSrc({ path: logoPath, version: logoVersion }).then((s) => { if (live) { setSrc(s); setFailed(!s); } }, () => { if (live) setFailed(true); });
     return () => { live = false; };
-  }, [host, logoPath, rev]);
+  }, [host, logoPath, logoVersion, rev]);
 
   return (
     <header aria-label="Project" className="relative shrink-0 border-b border-border px-3 py-2">

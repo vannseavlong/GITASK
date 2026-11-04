@@ -61,6 +61,8 @@ export type HostMessage =
   | { type: "board"; board: unknown }
   /** The logo as a `data:` URL built by the host from `readLogoBytes`; `src` is absent when there is no valid logo. */
   | { type: "logo"; src?: string }
+  /** Answer to `setProject`: `ok` when saved, else `error` says why. Nothing was written on failure. */
+  | { type: "projectSaved"; ok: boolean; error?: string }
   | { type: "taskBody"; path: string; text?: string; error?: string }
   /** Sent only after a task was created: the UI opens its detail panel. `path` is the absolute task file. A failed create sends nothing. */
   | { type: "taskCreated"; path: string }

@@ -138,9 +138,9 @@ export function createHandler(o: HandlerOptions) {
         try {
           const { type: _t, ...fields } = m;
           await saveProject(o.dir, fields, { commit });
-          return { status: 200, changed: true };
+          return { status: 200, reply: { type: "projectSaved", ok: true }, changed: true };
         } catch (e) {
-          return err(`could not save the project header: ${(e as Error).message}`);
+          return { status: 200, reply: { type: "projectSaved", ok: false, error: `could not save the project header: ${(e as Error).message}` }, changed: false };
         }
       case "setOwner":
       case "addPerson":

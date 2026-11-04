@@ -33,7 +33,7 @@ test("a valid upload is stored under a generated name and committed with gitask.
   assert.deepEqual(readFileSync(join(tasks, name)), PNG);
   const p = await readProject(tasks);
   assert.equal(p?.title, "Acme");
-  assert.deepEqual(p?.logo, { path: name, mime: "image/png" });
+  assert.deepEqual({ ...p?.logo, version: undefined }, { path: name, mime: "image/png", version: undefined });
   assert.equal(p?.layout.align, "center");
   const files = g("show", "--name-only", "--format=", "HEAD").trim().split("\n").sort();
   assert.deepEqual(files, ["Tasks/gitask.json", `Tasks/${name}`]);

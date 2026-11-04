@@ -66,7 +66,8 @@ test("readProject: a good logo resolves to path + mime and no bytes", async () =
   const { tasks } = setup();
   cfg(tasks, { project: { title: "Acme", logo: "logo.png" } });
   const p = await readProject(tasks);
-  assert.deepEqual(p, { title: "Acme", logo: { path: "logo.png", mime: "image/png" }, layout: DEFAULTS });
+  assert.match(p?.logo?.version ?? "", /^\d+-\d+$/);
+  assert.deepEqual(p, { title: "Acme", logo: { path: "logo.png", mime: "image/png", version: p?.logo?.version }, layout: DEFAULTS });
   const board = await loadBoard(tasks);
   assert.deepEqual(board.project, p);
   assert.ok(!JSON.stringify(board.project).includes("png-bytes"));
@@ -131,7 +132,8 @@ test("readProject: svg is allowed and typed as svg+xml (rendered only via <img>)
   const { tasks } = setup();
   writeFileSync(join(tasks, "assets", "l.svg"), '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
   cfg(tasks, { project: { logo: "assets/l.svg" } });
-  assert.deepEqual((await readProject(tasks))?.logo, { path: "assets/l.svg", mime: "image/svg+xml" });
+  const l = (await readProject(tasks))?.logo;
+  assert.deepEqual({ ...l, version: undefined }, { path: "assets/l.svg", mime: "image/svg+xml", version: undefined });
 });
 
 test("setProject: writes, merges layout, keeps unrelated and unknown keys, clears with null", async () => {
@@ -258,4 +260,12 @@ test("readLogoBytes: serves the configured logo, and re-checks it at serve time"
   // config points at a non-image: dropped by readProject
   cfg(tasks, { project: { title: "A", logo: "gitask.json" } });
   assert.equal(await readLogoBytes(tasks), undefined);
+});
+
+test("resolveLogo: the version changes when the file is replaced under the same name", async () => {
+  const { tasks } = setup();
+  const before = (await resolveLogo(tasks, "logo.png")).version;
+  writeFileSync(join(tasks, "logo.png"), "a-longer-png-body");
+  const after = (await resolveLogo(tasks, "logo.png")).version;
+  assert.ok(before && after && before !== after);
 });

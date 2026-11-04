@@ -7,6 +7,12 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - Task: Core-confirm-rule-shared (T-0080) · Branch/PR: refactor/confirm-rule-shared
 - What changed: `unconfirmedDelete` moved to `packages/core/src/confirm.ts`; `gitask serve` and the VS Code extension both call it (same messages, strict `confirmed === true`). Removed the dead `confirmsDelete:false` path in `delete-flow.ts`. Tests cover every delete message type in the protocol. Drop-marker contrast measured at 8.6:1 or better in light, dark and high-contrast, no change needed.
 
+## 2026-11-05 · [Ext] fix: Customize header dialog feedback
+- Owner: SNLRLONG
+- Task: Ext-header-dialog-feedback (T-0078) · Branch/PR: fix/header-dialog-feedback
+- What changed: the dialog stays open until the host answers `setProject` with the new `projectSaved` reply, and on failure keeps the draft and shows the error; only fields that differ are sent (no change sends nothing and makes no commit); `Board.project.logo` carries a `version` (mtime and size) so a logo replaced by hand under the same name is refetched. Diff logic in `packages/ui/src/lib/project-diff.ts`. See `Docs/architecture/ui.md`, `config.md`.
+- Needs: a check in a real VS Code webview
+
 ## 2026-11-05 · [Ext] fix: view tab drag and keyboard polish
 - Owner: SNLRLONG
 - Task: Ext-view-tabs-polish (T-0076) · Branch/PR: fix/view-tabs-polish

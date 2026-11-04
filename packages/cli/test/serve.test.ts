@@ -226,7 +226,7 @@ test("setProject: a logo upload needs the token and the upload header; hostile o
   assert.ok(await tooBig(msg), "no upload header: the normal cap applies");
   const ok = await post(s, msg, { "X-Gitask-Upload": "logo" });
   assert.equal(ok.status, 200);
-  assert.equal(JSON.parse(ok.body).reply, undefined);
+  assert.deepEqual(JSON.parse(ok.body).reply, { type: "projectSaved", ok: true });
   const logo = await call(s, "GET", "/api/logo");
   assert.equal(logo.status, 200);
   assert.equal(logo.headers["content-type"], "image/png");
@@ -241,5 +241,7 @@ test("setProject: a logo upload needs the token and the upload header; hostile o
   const before = readdirSync(tasks).length;
   const fake = await post(s, { type: "setProject", logo: { name: "f.png", data: Buffer.from("<html>pad").toString("base64") } }, { "X-Gitask-Upload": "logo" });
   assert.match(JSON.stringify(JSON.parse(fake.body).reply), /not a valid png/);
+  assert.equal(JSON.parse(fake.body).reply.type, "projectSaved");
+  assert.equal(JSON.parse(fake.body).reply.ok, false);
   assert.equal(readdirSync(tasks).length, before);
 });

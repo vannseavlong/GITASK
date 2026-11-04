@@ -168,7 +168,7 @@ export async function resolveLogo(dir: string, logo: string): Promise<ProjectLog
   }
   if (!st || st.size === 0) throw new Error("logo file is empty");
   if (st.size > MAX_LOGO_BYTES) throw new Error(`logo is larger than ${MAX_LOGO_BYTES / 1024} KiB`);
-  return { path: logo, mime: LOGO_TYPES[logo.slice(logo.lastIndexOf(".") + 1).toLowerCase()] };
+  return { path: logo, mime: LOGO_TYPES[logo.slice(logo.lastIndexOf(".") + 1).toLowerCase()], version: `${Math.trunc(st.mtimeMs)}-${st.size}` };
 }
 
 /**
