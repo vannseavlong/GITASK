@@ -25,7 +25,7 @@ export function createVsCodeHost(): Host {
   });
 
   const host: Host = {
-    confirmsDelete: false, // the extension asks with its own modal
+    confirmsDelete: true, // the in-app dialog asks; the extension refuses a delete without `confirmed`
     getBoard() {
       return new Promise((resolve) => {
         const off = host.onBoard((b) => {
