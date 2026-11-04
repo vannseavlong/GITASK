@@ -26,7 +26,7 @@ export interface UiState {
  * fetch + Server-Sent Events (HttpHost). Screens never import either directly.
  */
 export interface Host {
-  /** True when this host has no native confirm dialog for deletes (the browser); the UI then shows its own. */
+  /** True when the UI shows its own delete confirm (browser and VS Code); the host then refuses a delete without `confirmed`. */
   confirmsDelete: boolean;
   /** Ask for the board and resolve with the next one the host sends. */
   getBoard(): Promise<BoardData>;

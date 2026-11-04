@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, SUBTASK_DELETE_DETAIL, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, moveTask, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
 import { uiHtml } from "./html.ts";
+import { unconfirmedDelete } from "./delete-guard.ts";
 import { handleAddPerson, handleSetOwner, ownerName } from "./owner.ts";
 import { validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
@@ -133,6 +134,11 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       return;
     }
     const cfg = vscode.workspace.getConfiguration("gitask");
+    const unconfirmed = unconfirmedDelete(m); // a delete runs only after the in-app dialog set `confirmed`
+    if (unconfirmed) {
+      log?.appendLine(`Refused: ${unconfirmed}`);
+      return void vscode.window.showErrorMessage(`GITASK: ${unconfirmed}`);
+    }
     switch (m.type) {
       case "ready":
         if (!idsAssigned) {
@@ -170,14 +176,10 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         return send({ type: "deleteImpact", path: m.path, impact, detail: describeDeleteImpact(impact) });
       }
       case "deleteTask": {
+        // The in-app dialog sets `confirmed`; a bare message (no dialog was shown) is refused, same rule as `gitask serve`.
         const name = basename(m.path, ".md");
-        const commit = cfg.get<boolean>("autoCommit", true);
-        const impact = await deleteImpact(m.path, { commit });
-        const detail = describeDeleteImpact(impact);
-        const ok = await vscode.window.showWarningMessage(`Delete task "${name}"?`, { modal: true, detail }, "Delete");
-        if (ok !== "Delete") return;
         try {
-          await deleteTask(dir, m.path, { commit });
+          await deleteTask(dir, m.path, { commit: cfg.get<boolean>("autoCommit", true) });
         } catch (e) {
           vscode.window.showErrorMessage(`GITASK: could not delete ${name}: ${(e as Error).message}`);
         }
@@ -186,8 +188,6 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "deleteColumn": {
         const col = board.columns.find((c) => c.id === m.column);
         if (col?.tasks.length) return void vscode.window.showErrorMessage(`GITASK: cannot delete status "${col.label}": it still has ${col.tasks.length} task(s). Move or delete them first.`);
-        const ok = await vscode.window.showWarningMessage(`Delete the empty status "${col?.label ?? m.column}"?`, { modal: true, detail: `The folder ${m.column}/ is removed.` }, "Delete");
-        if (ok !== "Delete") return;
         try {
           await deleteColumn(dir, m.column, { commit: cfg.get<boolean>("autoCommit", true) });
         } catch (e) {
@@ -263,8 +263,6 @@ function openBoard(ctx: vscode.ExtensionContext): void {
             if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
             if (m.type === "editSubtask") await editSubtask(task, m.index, { text: m.text, assignee: m.assignee, lane: m.lane }, opts);
             else {
-              const ok = await vscode.window.showWarningMessage(`Delete sub-task "${task.subtasks[m.index].text}"?`, { modal: true, detail: SUBTASK_DELETE_DETAIL }, "Delete");
-              if (ok !== "Delete") return;
               await deleteSubtask(task, m.index, opts);
             }
           }
