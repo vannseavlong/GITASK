@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T3 · release and version files; a tag publishes to npm, the Marketplace and Open VSX (auto picker, see `PIPELINE.md`)
-- **Claimed by:** claude session, 2026-11-05
+- **Claimed by:** none
 - **Worktree:** `GITASK/GITASK-release-0-6-0/` · **Branch:** `chore/release-0-6-0`
-- **Started / updated:** 2026-11-05 / 2026-11-05
+- **Started / updated:** 2026-11-05 / 2026-11-05 (live)
 - **Docs:** `Docs/architecture/release.md` (Release workflow), `Tasks/6-deploy/Ops-release-0-5-2.md`, `Tasks/_plans/Ext-ux-and-branding.md`
 - **Depends on:** Ext-verify-in-vscode (manual check done and bugs fixed)
 - **Touches:** `packages/cli/package.json`, `packages/vscode/package.json` (via `pnpm bump 0.6.0`), `packages/vscode/README.md` (listing text for the new features), `CHANGELOG.md`, `packages/web/docs/` (views, task-format, report, new project-header page), `packages/web/sidebars.ts`, `packages/web/src/landing/` ("What's new" for 0.6.0)
@@ -17,17 +17,17 @@ Publish 0.6.0: stay-on-board create, in-app delete dialog, Overview-first reorde
 ## Gates (copy the rows your tier needs; write `Skipped Gn: reason` if you skip one)
 - [x] G1 scope  - [x] G2 static  - [x] G3 tests (453/453)  - [~] G4 run it (`pnpm package` built gitask-vscode-0.6.0.vsix, 286 KB; the same build line was installed and checked by the owner in VS Code before this PR)
 - [ ] G5 code review  - [ ] G6 security  - [x] G7 docs sync
-- [ ] G8 PR message  - [ ] G9 human review  - [x] G10 release plan  - [x] G11 changelog
+- [x] G8 PR message  - [x] G9 human review  - [x] G10 release plan  - [x] G11 changelog
 - Skipped G5/G6 for this PR: it adds a version bump, docs and copy only; the code in the release was reviewed and security-reviewed in each task (see `5-done/`).
 
 ## Done when
 - [x] `pnpm bump 0.6.0` in the PR; `node scripts/check-release.mjs v0.6.0` prints `stable`; typecheck, tests and `pnpm package` green
 - [x] `packages/vscode/README.md` mentions the project header, tab order and Add status; the two screenshots are unchanged (dark, one per view)
 - [x] G10 release plan written (rollback: fix forward with 0.6.1; watch the `release` run, npm, Marketplace upload by hand while `VSCE_PAT` is empty, Open VSX)
-- [ ] Human merges, pulls `main`, tags `v0.6.0`, pushes only the tag, approves the `release` environment
-- [ ] After publish: `npm view gitask-cli version` is 0.6.0; the GitHub Release has exactly one `gitask-vscode-0.6.0.vsix`; Marketplace and Open VSX show 0.6.0
+- [x] Human merges, pulls `main`, tags `v0.6.0`, pushes only the tag, approves the `release` environment
+- [x] After publish: `npm view gitask-cli version` is 0.6.0; the GitHub Release has exactly one `gitask-vscode-0.6.0.vsix`; Marketplace and Open VSX show 0.6.0
 - [x] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] Worktree and branch removed after merge
 
 ## G10 release plan (0.6.0)
 - **Why now:** the UX and branding wave is built, merged on `main` and was checked by hand in VS Code (project header with logo, tab order, Add status, in-app delete, heatmap).
@@ -38,3 +38,6 @@ Publish 0.6.0: stay-on-board create, in-app delete dialog, Overview-first reorde
 - **Not covered by a human check:** Firefox drag in `gitask serve`, a screen reader, touch input.
 - **Website:** deploy separately with `pnpm deploy:web` from `main` after the merge (docs, "What's new" and the project-header page); it does not take part in the tag.
 - **Known gap:** the `VSCE_PAT` secret is not set, so the tag does not publish to the Marketplace by itself.
+
+## Result
+v0.6.0 is live: npm `gitask-cli` 0.6.0, the GitHub Release has one `gitask-vscode-0.6.0.vsix`, the Marketplace and Open VSX show 0.6.0 (checked 2026-11-05), and the website (docs page `/docs/project-header` and "New in 0.6.0") is deployed.
