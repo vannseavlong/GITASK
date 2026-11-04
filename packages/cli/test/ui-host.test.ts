@@ -21,7 +21,7 @@ test("http host sends ready after getBoard so the server backfills ids and peopl
   }
 });
 
-test("delete flow: browser asks first and only the confirm sends confirmed:true; VS Code sends plain", () => {
+test("delete flow: browser asks first and only the confirm sends confirmed:true; a host with its own confirm gets the plain message", () => {
   const sent: unknown[] = [];
   const browser = { confirmsDelete: true, send: (m: unknown) => void sent.push(m) } as never;
   requestDelete(browser, { kind: "task", path: "/t/2-todo/a.md", label: "a" });
