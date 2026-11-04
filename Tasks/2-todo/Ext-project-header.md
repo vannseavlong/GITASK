@@ -22,6 +22,7 @@ Render the project title, subtitle and logo as a header above the tabs, shown on
 ## Done when
 - [ ] Header shows title, subtitle and logo on Board, List, Timeline and Overview, in light, dark and high contrast
 - [ ] Logo loads in VS Code through a webview URI and in the browser through a fixed route that serves only the configured logo file; CSP gains `img-src` for those sources only; SVG is shown through `<img>` so no script can run
+- [ ] Every host serves the logo through one core helper that re-runs `resolveLogo` (regular file, cap, inside `Tasks/`) at serve time, so a file swapped after the board loaded is not followed (Core-project-config review, TOCTOU)
 - [ ] A missing or broken logo falls back to the title only, with no broken-image icon
 - [ ] All layout options (align, size, logo position, hide title) render correctly at narrow webview width
 - [ ] Root `CHANGELOG.md` entry added
