@@ -24,6 +24,10 @@ Every task has a tier (T0 to T3). The tier decides the gates it passes; see `Tas
 
 **Releases:** a tag publishes. Follow "Release workflow" in `Docs/architecture/release.md`: bump versions with `pnpm bump` inside the PR, never `npm version`, and leave committing, tagging and approving to the human.
 
+## Commit messages
+
+Keep them simple and short: one line, imperative, no body. Never add a `Co-Authored-By` line or any other attribution (commits and PR descriptions).
+
 ## Docs (keep in sync)
 
 `Docs/README.md` is the index. One fact lives in one place; update it there and link, never copy.
