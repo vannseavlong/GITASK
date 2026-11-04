@@ -6,7 +6,7 @@
 - **Tier:** T3 · release and version files; a tag publishes to npm, the Marketplace and Open VSX (auto picker, see `PIPELINE.md`)
 - **Claimed by:** claude session, 2026-11-02
 - **Worktree:** `GITASK/GITASK-release-0-5-2/` · **Branch:** `chore/release-0-5-2`
-- **Started / updated:** 2026-11-02 / 2026-11-02
+- **Started / updated:** 2026-11-02 / 2026-11-05
 - **Due:** 2026-11-04
 - **Docs:** `Docs/architecture/release.md` (Release workflow), `Tasks/6-deploy/Ops-release-0-5-1.md`
 - **Depends on:** none (0.5.1 is published)
@@ -18,16 +18,16 @@ Fix the Marketplace listing: 0.5.1 showed the dark and the light screenshot one 
 ## Gates (copy the rows your tier needs; write `Skipped Gn: reason` if you skip one)
 - [x] G1 scope  - [x] G2 static  - [x] G3 tests (352/352)  - [~] G4 run it (`pnpm package` built gitask-vscode-0.5.2.vsix, 270 KB; not installed in VS Code)
 - [ ] G5 code review  - [ ] G6 security  - [ ] G7 docs sync
-- [ ] G8 PR message  - [ ] G9 human review  - [ ] G10 release plan  - [ ] G11 changelog
+- [x] G8 PR message (#20)  - [x] G9 human review (PR #20 merged)  - [x] G10 release plan  - [x] G11 changelog
 
 ## Done when
 - [x] `packages/vscode/README.md` has one dark image for the board and one for the task detail, no `#gh-*-mode-only` fragments, no light images
 - [x] `pnpm bump 0.5.2`; `node scripts/check-release.mjs v0.5.2` prints `stable`; typecheck, tests and `pnpm package` green
 - [x] Human merges, pulls `main`, tags `v0.5.2`, pushes only the tag; approves the `release` environment; uploads the .vsix to the Marketplace by hand while `VSCE_PAT` is not set
 - [x] After publish: `npm view gitask-cli version` is 0.5.2; the GitHub Release has exactly one `gitask-vscode-0.5.2.vsix`; Marketplace and Open VSX show 0.5.2 with one image per view
-- [ ] G10 release plan (below) written
-- [ ] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] G10 release plan (below) written
+- [x] Root `CHANGELOG.md` entry added
+- [x] Worktree and branch removed after merge (no worktree or local branch left)
 
 ## G10 release plan (0.5.2)
 - **Why now:** the 0.5.1 listing README shows every screenshot twice (seen on the Marketplace). Nothing else in shipped code changed.
