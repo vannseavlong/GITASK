@@ -14,6 +14,7 @@ import { DeleteConfirm } from "@/components/delete-confirm.tsx";
 import { EditDialogs } from "@/components/edit-dialogs.tsx";
 import { GithubDialog } from "@/components/github-dialog.tsx";
 import { ThemeControls } from "@/theme/theme-controls.tsx";
+import { readyToOpen } from "@/detail/pending-open.ts";
 import { hasVsCodeApi } from "@/host/vscode-host.ts";
 import { DetailPanel } from "@/detail/detail-panel.tsx";
 
@@ -22,6 +23,7 @@ const DEFAULT_ORDER = VIEWS.map((v) => v.id);
 export function App({ host, initialView }: { host: Host; initialView: string }) {
   const [raw, setRaw] = React.useState<BoardData | null>(null);
   const [error, setError] = React.useState("");
+  const [pendingOpen, setPendingOpen] = React.useState<string | null>(null); // a just-created task, opened once the board has it
   const [ui, setUi] = React.useState<UiState>(() => host.loadState());
   const view = VIEWS.some((v) => v.id === ui.view) ? ui.view! : VIEWS.some((v) => v.id === initialView) ? initialView : DEFAULT_VIEW;
 
@@ -29,7 +31,10 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
 
   React.useEffect(() => {
     const offBoard = host.onBoard((b) => { setRaw(b); setError(""); });
-    const offMsg = host.onMessage((m) => { if (m.type === "error") setError(m.message); });
+    const offMsg = host.onMessage((m) => {
+      if (m.type === "error") setError(m.message);
+      else if (m.type === "taskCreated" && typeof m.path === "string") setPendingOpen(m.path);
+    });
     host.getBoard().then((b) => { setRaw(b); setError(""); }).catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
     return () => { offBoard(); offMsg(); };
   }, [host]);
@@ -43,6 +48,10 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
   }, [host]);
 
   const [detailPath, setDetailPath] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const p = readyToOpen(raw, pendingOpen);
+    if (p) { setDetailPath(p); setPendingOpen(null); }
+  }, [raw, pendingOpen]);
   const closeDetail = React.useCallback(() => setDetailPath(null), []);
   const [exportOpen, setExportOpen] = React.useState(false);
   const [githubOpen, setGithubOpen] = React.useState(false);

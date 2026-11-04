@@ -21,3 +21,9 @@ test("newTask offers a non-modal, non-blocking Open file action", () => {
 test("newTask errors still show an error message", () => {
   assert.match(body, /showErrorMessage/);
 });
+
+test("newTask sends taskCreated after the board, only on success", () => {
+  const i = body.indexOf("taskCreatedMessage");
+  assert.ok(i > body.indexOf("await post()"), "sent after the board is posted");
+  assert.ok(i < body.indexOf("catch"), "not sent from the error path");
+});

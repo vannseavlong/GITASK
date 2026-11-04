@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
@@ -80,7 +80,7 @@ export function createHandler(o: HandlerOptions) {
       case "new":
         try {
           const id = m.id ?? slug(m.title ?? `New-task-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}`);
-          await createTaskWithFields(o.dir, m.column ?? "1-backlog", id, {
+          const file = await createTaskWithFields(o.dir, m.column ?? "1-backlog", id, {
             title: m.title,
             description: m.description,
             start: m.start,
@@ -88,7 +88,7 @@ export function createHandler(o: HandlerOptions) {
             tier: m.tier,
             owner: await ownerName(o.dir, m.owner),
           });
-          return { status: 200, changed: true };
+          return { status: 200, reply: taskCreatedMessage(file, o.dir) ?? undefined, changed: true };
         } catch (e) {
           return err((e as Error).message);
         }

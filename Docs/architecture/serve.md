@@ -26,7 +26,7 @@ The server can write to the repo (move, delete, commit), so it is closed by defa
 | `GET /` , `/ui.js`, `/ui.css` | the app (no token; contains no data) |
 | `POST /api/auth` | exchange a one-time `code` for the token (no token needed; `401` when spent, expired or wrong) |
 | `GET /api/board` | the board JSON |
-| `POST /api/message` | one `WebviewMessage`; answers `{ ok, reply? }` (`reply` is a `taskBody` or `error` host message). `400` when validation rejects it |
+| `POST /api/message` | one `WebviewMessage`; answers `{ ok, reply? }` (`reply` is a `taskBody`, `taskCreated` or `error` host message; `taskCreated { path }` follows a successful `new` and makes the UI open that task's detail panel). `400` when validation rejects it |
 | `GET /api/taskBody?path=` | task file text (`readTask`) |
 | `GET /api/events` | Server-Sent Events: `event: board` on connect and after any change under the Tasks dir (`fs.watch`, 150 ms debounce, unchanged boards are not re-sent) |
 

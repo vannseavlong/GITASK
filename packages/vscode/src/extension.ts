@@ -8,7 +8,7 @@ import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./gi
 import { uiHtml } from "./html.ts";
 import { unconfirmedDelete } from "./delete-guard.ts";
 import { handleAddPerson, handleSetOwner, ownerName } from "./owner.ts";
-import { validateMessage, type HostMessage } from "./protocol.ts";
+import { taskCreatedMessage, validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";
 import { resolveTasksDir } from "./tasks-dir.ts";
 import { buildReportFile } from "./report-request.ts";
@@ -76,6 +76,8 @@ async function newTask(ctx: vscode.ExtensionContext, id?: string, column?: strin
     });
     openBoard(ctx); // stay on (or reveal) the board; the new card shows in its column
     await post();
+    const created = taskCreatedMessage(file, dir);
+    if (created) send(created); // after the board, so the card exists when the UI opens its detail panel
     // Non-modal and not awaited: the board must not wait for the user to dismiss it.
     void vscode.window.showInformationMessage(`GITASK: created ${basename(file)}.`, "Open file").then((pick) => {
       if (pick === "Open file") return vscode.window.showTextDocument(vscode.Uri.file(file));
