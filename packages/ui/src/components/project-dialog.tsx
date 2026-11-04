@@ -35,6 +35,9 @@ function Choice({ label, value, values, onChange }: { label: string; value: stri
  * `HeaderView` as the real header. Save sends one `setProject` message with only the changed fields and waits for the host's `projectSaved` reply; the host validates it again. A picked logo is
  * sent as base64 (the host copies it into Tasks/ under a name it generates).
  */
+/** How long the dialog waits for the host before it gives the draft back. */
+const SAVE_TIMEOUT_MS = 15_000;
+
 export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChange, onSaved }: { host: Host; project: BoardData["project"]; currentLogoSrc?: string; open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
   const [title, setTitle] = React.useState("");
   const [subtitle, setSubtitle] = React.useState("");
@@ -55,6 +58,7 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
       setSaving(false);
       unsub.current?.(); // a late reply to an earlier, cancelled save is ignored
       unsub.current = undefined;
+      clearTimeout(timer.current);
     }
     wasOpen.current = open;
   }, [open, project]);
@@ -80,7 +84,8 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
   // The dialog stays open until the host answers: it closes on success and keeps the draft and the error otherwise.
   // Subscribe before sending, so a reply that comes back at once is not missed.
   const unsub = React.useRef<(() => void) | undefined>(undefined);
-  React.useEffect(() => () => unsub.current?.(), []);
+  const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  React.useEffect(() => () => { unsub.current?.(); clearTimeout(timer.current); }, []);
 
   const save = () => {
     const changes = projectChanges(
@@ -91,12 +96,21 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
     setError("");
     setSaving(true);
     unsub.current?.();
+    clearTimeout(timer.current);
+    // No answer at all (a lost message): give the user the draft back instead of waiting forever.
+    timer.current = setTimeout(() => {
+      unsub.current?.();
+      unsub.current = undefined;
+      setSaving(false);
+      setError("The host did not answer. Check that it is still running and try again.");
+    }, SAVE_TIMEOUT_MS);
     unsub.current = host.onMessage((m) => {
       // A message the host rejects before it reaches the save (too large, invalid) comes back as a plain `error`.
       const r = projectSavedReply(m) ?? (m.type === "error" ? { ok: false as const, error: m.message } : undefined);
       if (!r) return;
       unsub.current?.();
       unsub.current = undefined;
+      clearTimeout(timer.current);
       setSaving(false);
       if (r.ok) { onSaved(); onOpenChange(false); } else setError(r.error);
     });
