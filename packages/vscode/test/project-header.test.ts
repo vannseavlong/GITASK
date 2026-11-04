@@ -26,7 +26,11 @@ test("every layout combination yields classes; position and alignment map as doc
         assert.ok(c.root.includes("min-w-0") && c.title.includes("break-words"), "long text wraps at narrow width");
       }
   assert.match(headerClasses({ ...L, logoPosition: "top", align: "center" }).root, /flex-col items-center/);
-  assert.match(headerClasses({ ...L, logoPosition: "right", align: "right" }).root, /flex-row-reverse.*justify-end/);
+  const right = headerClasses({ ...L, logoPosition: "right", align: "right" });
+  assert.match(right.root, /flex-row .*justify-end/, "content sits on the right edge");
+  assert.doesNotMatch(right.root, /reverse/, "a reversed row would swap the justify edges");
+  assert.match(right.logo, /order-last/, "the logo goes after the text without reversing the row");
+  assert.match(headerClasses({ ...L, logoPosition: "right", align: "left" }).root, /justify-start/);
   assert.match(headerClasses({ ...L, logoPosition: "left" }).root, /flex-row .*justify-start/);
   assert.match(headerClasses({ ...L, size: "lg" }).logo, /h-16/);
 });

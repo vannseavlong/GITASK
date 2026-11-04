@@ -20,11 +20,11 @@ const SUB = { sm: "text-xs", md: "text-sm", lg: "text-base" } as const;
 
 export function headerClasses(l: ProjectLayout): HeaderClasses {
   const top = l.logoPosition === "top";
-  const dir = top ? `flex-col ${ALIGN_COL[l.align]}` : `${l.logoPosition === "right" ? "flex-row-reverse" : "flex-row"} items-center ${ALIGN_ROW[l.align]}`;
+  const dir = top ? `flex-col ${ALIGN_COL[l.align]}` : `flex-row items-center ${ALIGN_ROW[l.align]}`;
   return {
     root: `flex min-w-0 gap-3 ${dir}`,
     text: `min-w-0 ${ALIGN_TEXT[l.align]}`,
-    logo: `${LOGO[l.size]} w-auto shrink-0 object-contain`,
+    logo: `${LOGO[l.size]} w-auto shrink-0 object-contain${l.logoPosition === "right" ? " order-last" : ""}`,
     title: `${TITLE[l.size]} font-semibold leading-tight break-words`,
     subtitle: `${SUB[l.size]} text-muted-foreground break-words`,
   };
