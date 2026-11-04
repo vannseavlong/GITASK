@@ -216,6 +216,16 @@ test("editSubtask and deleteSubtask validate index, line, text, assignee, lane a
   }
 });
 
+test("taskCreatedMessage accepts a task file in a status folder and rejects anything else", async () => {
+  const { taskCreatedMessage } = await import("../src/protocol.ts");
+  assert.deepEqual(taskCreatedMessage(ok, tasksDir), { type: "taskCreated", path: ok });
+  assert.equal(taskCreatedMessage(join("/", "etc", "passwd"), tasksDir), null);
+  assert.equal(taskCreatedMessage(join(tasksDir, "..", "x", "a.md"), tasksDir), null);
+  assert.equal(taskCreatedMessage(join(tasksDir, "2-todo", "a.txt"), tasksDir), null);
+  assert.equal(taskCreatedMessage(join(tasksDir, "2-todo", "sub", "a.md"), tasksDir), null);
+  assert.equal(taskCreatedMessage("2-todo/a.md", tasksDir), null);
+});
+
 test("editTask rejects checkbox syntax in title and claimed by", () => {
   const ctx = { tasksDir: "/t/Tasks", columns: ["1-backlog"], views: ["board"] };
   const path = "/t/Tasks/1-backlog/A.md";

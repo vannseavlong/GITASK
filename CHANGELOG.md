@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-05 · [Ext] feat: new task opens its detail panel
+- Owner: SNLRLONG
+- Task: Ext-new-task-open-detail (T-0075) · Branch/PR: feat/new-task-open-detail
+- What changed: after a task is created from the board, the host sends a `taskCreated { path }` message (VS Code and `gitask serve`; nothing on failure) and the UI opens that task's detail panel once the card is on the board.
+- Needs: a check in a real VS Code webview and in a browser
+
 ## 2026-11-05 · [Core] feat: project identity block in gitask.json
 - Owner: SNLRLONG
 - Task: Core-project-config (T-0071) · Branch/PR: feat/project-config

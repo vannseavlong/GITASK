@@ -2,7 +2,7 @@
 // so node:test can run it. Every webview message goes through `validateMessage` before it
 // touches the filesystem or git.
 import type { DeleteImpact } from "./delete.ts";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 /** Messages the webview may send. */
 export type WebviewMessage =
@@ -55,6 +55,8 @@ export const SUBTASK_DELETE_DETAIL = "Only this checkbox line is removed from th
 export type HostMessage =
   | { type: "board"; board: unknown }
   | { type: "taskBody"; path: string; text?: string; error?: string }
+  /** Sent only after a task was created: the UI opens its detail panel. `path` is the absolute task file. A failed create sends nothing. */
+  | { type: "taskCreated"; path: string }
   | { type: "deleteImpact"; path: string; impact: DeleteImpact; detail: string }
   | { type: "reportPreview"; html: string; error?: string }
   | { type: "reportExported"; ok: boolean; path?: string; error?: string }
@@ -426,4 +428,11 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
     default:
       return fail(`unknown message type`);
   }
+}
+
+/** Build the `taskCreated` message, or `null` when `path` is not a task file inside the Tasks folder (same check as the webview-to-host paths). */
+export function taskCreatedMessage(path: string, tasksDir: string): Extract<HostMessage, { type: "taskCreated" }> | null {
+  const column = basename(dirname(path)); // the folder it was just created in; the layout check below still pins it to `<tasksDir>/<column>/<file>.md`
+  const abs = taskPathInside(path, { tasksDir, columns: [column], views: [] });
+  return abs ? { type: "taskCreated", path: abs } : null;
 }
