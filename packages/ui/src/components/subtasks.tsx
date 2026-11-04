@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Person, Task } from "gitask-core";
-import { isSubSection, involvedPeople, listSubtasks, SPLIT_TEMPLATE } from "@host-src/subtask-logic.ts";
+import { isSubSection, involvedPeople, listSubtasks } from "@host-src/subtask-logic.ts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,7 @@ export function SubtaskRows({ task, host, people }: { task: Task; host: Host; pe
   );
 }
 
-/** Detail panel section: add, tick, assign, set lane, plus the split template. */
+/** Detail panel section: add, tick, assign, set lane. */
 export function SubtasksSection({ task, host, people }: { task: Task; host: Host; people?: readonly Person[] }) {
   const rows = listSubtasks(task);
   const [text, setText] = React.useState("");
@@ -114,15 +114,10 @@ export function SubtasksSection({ task, host, people }: { task: Task; host: Host
     host.send({ type: "addSubtask", path: task.path, text: t });
     setText("");
   };
-  const split = () => {
-    const have = new Set(rows.map((r) => r.sub.lane?.toLowerCase()));
-    for (const s of SPLIT_TEMPLATE) if (!have.has(s.lane)) host.send({ type: "addSubtask", path: task.path, text: s.text, lane: s.lane });
-  };
   return (
     <section className="border-b border-border px-4 py-3" aria-label="Sub-tasks" data-testid="subtasks-section">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="m-0 text-xs font-semibold uppercase opacity-80">Sub-tasks</h3>
-        <Button size="sm" variant="secondary" onClick={split} title="Add a sub-task each for backend, UX/UI and frontend">Split into backend / UX/UI / frontend</Button>
       </div>
       {rows.length === 0 && <p className="m-0 mb-2 text-xs opacity-70">No sub-tasks yet.</p>}
       <ul className="m-0 list-none space-y-1.5 p-0">

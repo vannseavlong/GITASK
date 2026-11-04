@@ -188,13 +188,13 @@ export function WeekBars({ title, weeks, empty }: { title: string; weeks: WeekCo
   );
 }
 
-const CELL = 11, GAP = 3, LEFT = 28, TOP = 16;
+const CELL = 11, GAP = 3, LEFT = 28, TOP = 16, RIGHT = 6, MONTH_W = 22, MIN_W = 480;
 
 /** GitHub-style contribution grid: weeks are columns, weekdays rows (Mon, Wed, Fri labelled). */
 export function ActivityHeatmap({ heat }: { heat: Heatmap | null }) {
   const tip = useTip();
   const cols = heat?.weeks.length ?? 0;
-  const W = LEFT + cols * (CELL + GAP), H = TOP + 7 * (CELL + GAP);
+  const W = LEFT + cols * (CELL + GAP) + RIGHT, H = TOP + 7 * (CELL + GAP);
   const summary = !heat || heat.total === 0
     ? "Activity heatmap: no task changes in the last 12 months."
     : `Activity heatmap: ${plural(heat.total, "change")} between ${heat.from} and ${heat.to}, at most ${heat.max} on one day.`;
@@ -205,8 +205,8 @@ export function ActivityHeatmap({ heat }: { heat: Heatmap | null }) {
         <div className="py-3 text-xs opacity-70">No task changes in git history for the last 12 months.</div>
       ) : (
         <div ref={tip.ref} className="relative overflow-x-auto">
-          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-none" role="img" aria-label={summary}>
-            {heat.months.map((m) => (
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ minWidth: MIN_W }} className="block" role="img" aria-label={summary}>
+            {heat.months.filter((m, i, all) => LEFT + m.col * (CELL + GAP) + MONTH_W <= W && (i === 0 || (m.col - all[i - 1].col) * (CELL + GAP) >= MONTH_W)).map((m) => (
               <text key={m.col} x={LEFT + m.col * (CELL + GAP)} y={10} className="fill-muted-foreground text-[10px]">{m.label}</text>
             ))}
             {[1, 3, 5].map((d) => (

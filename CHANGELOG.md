@@ -2,6 +2,11 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-05 · [Ext] fix: responsive Activity heatmap, no split button
+- Owner: SNLRLONG
+- Task: Ext-ui-polish-2 (T-0081) · Branch/PR: fix/ui-polish-2
+- What changed: the Activity heatmap now scales to the card width (aspect kept, 480 px minimum then scrolls) and no month label can clip. Removed the "Split into backend / UX/UI / frontend" button and `SPLIT_TEMPLATE`; sub-tasks are added by hand.
+
 ## 2026-11-05 · [Core] refactor: one shared "delete needs confirmed" rule
 - Owner: SNLRLONG
 - Task: Core-confirm-rule-shared (T-0080) · Branch/PR: refactor/confirm-rule-shared

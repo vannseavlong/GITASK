@@ -43,10 +43,3 @@ export const expandAll = (paths: readonly string[]): string[] => [...new Set(pat
 export const collapseAll = (): string[] => [];
 /** Drop remembered paths that no longer exist, so the state does not grow without bound. */
 export const pruneExpanded = (list: readonly string[] | undefined, existing: readonly string[]): string[] => (list ?? []).filter((p) => existing.includes(p));
-
-/** The "split into" template: one sub-task per lane. */
-export const SPLIT_TEMPLATE: readonly { lane: string; text: string }[] = [
-  { lane: "backend", text: "Backend" },
-  { lane: "uxui", text: "UX/UI" },
-  { lane: "frontend", text: "Frontend" },
-];
