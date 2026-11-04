@@ -1,8 +1,8 @@
 import { constants } from "node:fs";
-import { open, readFile, writeFile } from "node:fs/promises";
+import { open, readFile, realpath, stat, writeFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import type { Project, ProjectLayout, ProjectLogo } from "./types.ts";
-import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
+import { gitAdd, gitCommitPaths, gitRm, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
 import { assertRegularFile } from "./taskfile.ts";
 import { LOGO_TYPES, MAX_LOGO_BYTES, MAX_SUBTITLE, MAX_TITLE, PROJECT_ENUMS as ENUMS, PROJECT_LAYOUT_DEFAULTS, UNSAFE_TEXT, cleanText } from "./project-rules.ts";
@@ -186,6 +186,7 @@ export async function readLogoBytes(dir: string): Promise<{ bytes: Buffer; mime:
   try {
     const st = await fh.stat();
     if (!st.isFile() || st.size === 0 || st.size > MAX_LOGO_BYTES) return undefined;
+    if (!(await openedUnder(dir, resolve(dir, ...checked.path.split("/")), st))) return undefined;
     const buf = Buffer.alloc(MAX_LOGO_BYTES + 1);
     const { bytesRead } = await fh.read(buf, 0, buf.length, 0);
     if (bytesRead === 0 || bytesRead > MAX_LOGO_BYTES) return undefined;
@@ -193,6 +194,24 @@ export async function readLogoBytes(dir: string): Promise<{ bytes: Buffer; mime:
     return { bytes, mime: checked.mime };
   } finally {
     await fh.close();
+  }
+}
+
+/**
+ * After the open: is the file we hold really the one at `file`, and does that path really live under the real `dir`?
+ * O_NOFOLLOW only covers the last path segment; a parent folder swapped for a symlink between `resolveLogo` and the open
+ * is caught here, because the real path then leaves `dir` or points at a different file (device and inode differ).
+ */
+export async function openedUnder(dir: string, file: string, opened: { dev: number; ino: number }): Promise<boolean> {
+  try {
+    const realDir = await realpath(dir);
+    const real = await realpath(file);
+    const rel = relative(realDir, real);
+    if (!rel || rel.startsWith("..") || isAbsolute(rel)) return false;
+    const now = await stat(real);
+    return now.dev === opened.dev && now.ino === opened.ino;
+  } catch {
+    return false;
   }
 }
 
@@ -277,6 +296,12 @@ export interface ProjectOptions {
   commit?: boolean;
   /** Absolute path of one more file to commit with the config (a logo this call chose). Its path is re-checked by `resolveLogo`, never taken from a caller. */
   withFile?: string;
+  /**
+   * Absolute path of an orphaned generated logo to delete in the same commit (`git rm` plus `gitask.json`, by pathspec).
+   * The caller (`saveProject`) has already checked its name, content hash and that nothing references it. Only acted on
+   * when the commit runs (config tracked, `commit` not false) and the file is tracked; otherwise the file is left alone.
+   */
+  removeFile?: string;
 }
 
 export const PROJECT_MESSAGE = "board: update project settings";
@@ -284,7 +309,7 @@ export const PROJECT_MESSAGE = "board: update project settings";
 /**
  * Update the `project` block of `<dir>/gitask.json`. Validates everything first (throws, writes nothing),
  * keeps every other key, and commits that file only, and only when it is already tracked.
- * A logo must pass `resolveLogo`; the logo file itself is not committed.
+ * A logo must pass `resolveLogo`; the logo file itself is committed only through `opts.withFile`, and removed only through `opts.removeFile`.
  */
 export async function setProject(dir: string, input: ProjectInput, opts: ProjectOptions = {}): Promise<{ committed: boolean }> {
   if (!isRecord(input)) throw new Error("project settings must be an object");
@@ -345,8 +370,13 @@ export async function setProject(dir: string, input: ProjectInput, opts: Project
     const files = opts.withFile ? [file, opts.withFile] : [file];
     let dirty = false;
     for (const f of files) dirty ||= await hasLocalChanges(root, f);
-    if (!dirty) return { committed: false }; // same content again: nothing to commit
+    const drop = opts.removeFile && (await isTracked(dir, opts.removeFile)) ? opts.removeFile : undefined;
+    if (!dirty && !drop) return { committed: false }; // same content again: nothing to commit
     await gitAdd(root, ...files);
+    if (drop) {
+      await gitRm(root, drop);
+      files.push(drop);
+    }
     await gitCommitPaths(root, PROJECT_MESSAGE, ...files);
     return { committed: true };
   }

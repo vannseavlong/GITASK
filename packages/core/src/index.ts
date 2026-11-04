@@ -15,6 +15,7 @@ export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf, 
 export { parseColors, colorOf, readColors, setColumnColor, isColor, CONFIG_FILE } from "./config.ts";
 export { parseProject, readProject, setProject, resolveLogo, readLogoBytes, logoDataUrl, isLogoPath } from "./config.ts";
 export { saveProject, checkLogoUpload } from "./project-save.ts";
+export { isPlainSvg } from "./svg-check.ts";
 export type { ColorOptions, ParsedProject, ProjectInput, ProjectOptions } from "./config.ts";
 export { assignIds, setIdField, nextDisplayId, formatDisplayId, DISPLAY_ID, ASSIGN_IDS_MESSAGE } from "./ids.ts";
 export type { AssignIdsOptions, AssignIdsResult } from "./ids.ts";

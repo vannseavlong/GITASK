@@ -43,9 +43,9 @@ export const gitAdd = (cwd: string, ...paths: string[]) => git(cwd, ["add", "--"
 export const gitCommitPaths = (cwd: string, message: string, ...paths: string[]) =>
   git(cwd, ["commit", "-m", message, "--", ...paths]);
 
-/** Remove a file from the index and the working tree, even with local edits (the caller has confirmed). */
 /** Take paths back out of the index (the working tree is not touched). */
 export const gitUnstage = (cwd: string, ...paths: string[]) => git(cwd, ["reset", "-q", "--", ...paths]);
+/** Remove a file from the index and the working tree, even with local edits (the caller has confirmed). */
 export const gitRm = (cwd: string, file: string) => git(cwd, ["rm", "-q", "-f", "--", file]);
 
 /** True when the file has uncommitted changes (modified, staged or untracked). */

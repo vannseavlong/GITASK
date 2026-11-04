@@ -4,22 +4,10 @@ import { constants } from "node:fs";
 import { lstat, open, readFile, unlink, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
-import { CONFIG_FILE, setProject, resolveLogo, type ProjectInput, type ProjectOptions } from "./config.ts";
+import { CONFIG_FILE, parseProject, setProject, resolveLogo, type ProjectInput, type ProjectOptions } from "./config.ts";
 import { gitUnstage, repoRoot } from "./git.ts";
-import { LOGO_TYPES, MAX_LOGO_BASE64, MAX_LOGO_BYTES, extOf, type LogoUpload, type ProjectFields } from "./project-rules.ts";
-
-/**
- * Things an SVG logo must not contain. This is a deny-list and is not a sanitiser: the real protection is that a logo is only
- * ever shown through <img> (scripts do not run there) and served with a sandbox CSP. It stops the obvious payloads from being
- * committed into the repo, where some other tool might open the file directly.
- */
-const UNSAFE_SVG: RegExp[] = [
-  /<\s*(?:[a-z0-9_.-]+:)?(?:script|foreignObject|iframe|embed|object|set|animate|animateTransform|animateMotion|handler|listener)\b/i,
-  /[\s"'/]on[a-z]+\s*=/i,
-  /(?:href|src|action|formaction)\s*=\s*["']?\s*(?:javascript:|vbscript:|data:(?!image\/))/i,
-  /javascript:/i,
-  /<!ENTITY/i,
-];
+import { isPlainSvg } from "./svg-check.ts";
+import { GENERATED_LOGO_RE, LOGO_HASH_HEX, LOGO_TYPES, MAX_LOGO_BASE64, MAX_LOGO_BYTES, extOf, type LogoUpload, type ProjectFields } from "./project-rules.ts";
 
 const SIGS: Record<string, (b: Buffer) => boolean> = {
   png: (b) => b.length > 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
@@ -27,8 +15,14 @@ const SIGS: Record<string, (b: Buffer) => boolean> = {
   gif: (b) => b.length > 6 && /^GIF8[79]a$/.test(b.subarray(0, 6).toString("latin1")),
   webp: (b) => b.length > 12 && b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP",
   svg: (b) => {
-    const t = b.toString("utf8").replace(/^﻿/, "").trimStart();
-    return (t.startsWith("<svg") || t.startsWith("<?xml")) && /<svg[\s>]/.test(t) && !UNSAFE_SVG.some((re) => re.test(t));
+    // Strict UTF-8 only (a UTF-16 or Latin-1 file could hide markup from a byte-oriented tool), then the element/attribute allow-list.
+    let text: string;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true }).decode(b);
+    } catch {
+      return false;
+    }
+    return isPlainSvg(text);
   },
 };
 
@@ -48,7 +42,7 @@ export function checkLogoUpload(up: LogoUpload): { bytes: Buffer; ext: string } 
 
 /** Copy the upload into `dir` under a generated name (`logo-<hash>.<ext>`); returns the name and whether the file is new. */
 async function storeLogo(dir: string, bytes: Buffer, ext: string): Promise<{ name: string; created: boolean }> {
-  const name = `logo-${createHash("sha256").update(bytes).digest("hex").slice(0, 12)}.${ext}`;
+  const name = `logo-${createHash("sha256").update(bytes).digest("hex").slice(0, LOGO_HASH_HEX)}.${ext}`;
   const file = resolve(dir, name);
   try {
     // O_EXCL | O_NOFOLLOW: never overwrite, never write through a symlink planted at the generated name.
@@ -73,31 +67,67 @@ async function storeLogo(dir: string, bytes: Buffer, ext: string): Promise<{ nam
 
 /**
  * Apply a validated `setProject` message: store the uploaded logo (if any), update the config and commit
- * `gitask.json` plus that one logo file by pathspec. If saving fails, a logo file created by this call is removed again.
+ * `gitask.json` plus that one logo file by pathspec. When the logo is replaced or removed, the previous generated file
+ * (`logo-<hex>.<ext>`, see `orphanOf`) is deleted in the same commit. If saving fails, a logo file created by this call is
+ * removed again and a deleted orphan is put back.
  */
 export async function saveProject(dir: string, fields: ProjectFields, opts: ProjectOptions = {}): Promise<{ committed: boolean }> {
   const { logo, ...rest } = fields;
   const input: ProjectInput = { ...rest };
   if (logo === undefined) return setProject(dir, input, opts);
-  if (logo === null) {
-    input.logo = null;
-    return setProject(dir, input, opts);
-  }
-  const { bytes, ext } = checkLogoUpload(logo);
-  const stored = await storeLogo(dir, bytes, ext);
   const config = join(resolve(dir), CONFIG_FILE);
   const before = await readRegular(config);
+  const previous = before !== null && before !== "symlink" ? parseProject(before.toString("utf8")).logo : undefined;
+  let stored: { name: string; created: boolean } | undefined;
+  if (logo === null) input.logo = null;
+  else {
+    const { bytes, ext } = checkLogoUpload(logo);
+    stored = await storeLogo(dir, bytes, ext);
+  }
+  const keep = stored?.name;
+  const orphan = previous && previous !== keep ? await orphanOf(dir, previous) : undefined;
   try {
-    await resolveLogo(dir, stored.name);
-    input.logo = stored.name;
-    return await setProject(dir, input, { ...opts, withFile: join(resolve(dir), stored.name) });
+    if (stored) {
+      await resolveLogo(dir, stored.name);
+      input.logo = stored.name;
+    }
+    return await setProject(dir, input, {
+      ...opts,
+      ...(stored ? { withFile: join(resolve(dir), stored.name) } : {}),
+      ...(orphan ? { removeFile: orphan.file } : {}),
+    });
   } catch (e) {
     // The config may already name the logo we are about to delete (the commit can fail after the write): put it back.
     if (before !== "symlink") await restore(config, before).catch(() => undefined);
     const root = await repoRoot(dir);
-    if (root) await gitUnstage(root, config, join(resolve(dir), stored.name)).catch(() => undefined);
-    if (stored.created) await unlink(join(resolve(dir), stored.name)).catch(() => undefined);
+    if (orphan) {
+      await gitUnstage(root ?? dir, orphan.file).catch(() => undefined); // only if the deletion was staged
+      await writeFile(orphan.file, orphan.bytes, { flag: "wx" }).catch(() => undefined); // wx: a no-op when the file is still there
+    }
+    if (root && stored) await gitUnstage(root, config, join(resolve(dir), stored.name)).catch(() => undefined);
+    else if (root) await gitUnstage(root, config).catch(() => undefined);
+    if (stored?.created) await unlink(join(resolve(dir), stored.name)).catch(() => undefined);
     throw e;
+  }
+}
+
+/**
+ * The file behind the logo path that is about to stop being referenced, when (and only when) it is ours to delete: the
+ * path is a bare generated name in `dir` itself (`logo-<12|16 hex>.<ext>`, no folder), it is a plain file (never a
+ * symlink), and its content hashes to the hex in its name, so a hand-made file that merely looks the same is kept.
+ */
+async function orphanOf(dir: string, logoPath: string): Promise<{ file: string; bytes: Buffer } | undefined> {
+  const m = GENERATED_LOGO_RE.exec(logoPath);
+  if (!m) return undefined;
+  const file = join(resolve(dir), logoPath);
+  try {
+    const st = await lstat(file);
+    if (!st.isFile() || st.size === 0 || st.size > MAX_LOGO_BYTES) return undefined;
+    const bytes = await readFile(file);
+    if (!createHash("sha256").update(bytes).digest("hex").startsWith(m[1])) return undefined;
+    return { file, bytes };
+  } catch {
+    return undefined;
   }
 }
 

@@ -29,7 +29,7 @@ test("a valid upload is stored under a generated name and committed with gitask.
   const r = await saveProject(tasks, { title: "Acme", layout: { align: "center" }, logo: up("My Logo (final).PNG", PNG) });
   assert.deepEqual(r, { committed: true });
   const [name] = logos(tasks);
-  assert.match(name, /^logo-[0-9a-f]{12}\.png$/, "name is generated, never the uploaded name");
+  assert.match(name, /^logo-[0-9a-f]{16}\.png$/, "name is generated, never the uploaded name");
   assert.deepEqual(readFileSync(join(tasks, name)), PNG);
   const p = await readProject(tasks);
   assert.equal(p?.title, "Acme");
@@ -71,7 +71,7 @@ test("hostile uploads are refused and leave no file behind", async () => {
   }
   // the traversal name is harmless (only its extension is used) and the stored name is generated:
   await saveProject(tasks, { logo: up("../../evil.png", PNG) });
-  assert.ok(logos(tasks).every((f) => /^logo-[0-9a-f]{12}\.png$/.test(f)));
+  assert.ok(logos(tasks).every((f) => /^logo-[0-9a-f]{16}\.png$/.test(f)));
   assert.equal(existsSync(join(tasks, "..", "..", "evil.png")), false);
   assert.equal(checkLogoUpload(up("a.gif", "GIF89a-ok")).ext, "gif");
 });
@@ -86,7 +86,7 @@ test("a rejected upload removes the file it created; a failed config write keeps
 
 test("a symlink at the generated name is not written through, a different file there is not replaced", async () => {
   const { root, tasks } = setup();
-  const name = `logo-${(await import("node:crypto")).createHash("sha256").update(PNG).digest("hex").slice(0, 12)}.png`;
+  const name = `logo-${(await import("node:crypto")).createHash("sha256").update(PNG).digest("hex").slice(0, 16)}.png`;
   writeFileSync(join(root, "secret.png"), "secret");
   symlinkSync(join(root, "secret.png"), join(tasks, name));
   await assert.rejects(saveProject(tasks, { logo: up("a.png", PNG) }));
@@ -134,7 +134,7 @@ test("validateMessage setProject: valid, invalid and hostile input", () => {
   for (const m of bad) assert.equal(v(m).ok, false, JSON.stringify(m).slice(0, 80));
 });
 
-test("svg bypass forms from the review are refused, plain svg and embedded images pass", () => {
+test("svg bypass forms from the review are refused, plain svg passes", () => {
   const svg = (inner: string, attrs = "") => up("x.svg", `<svg xmlns="http://www.w3.org/2000/svg"${attrs}>${inner}</svg>`);
   const bad: [string, { name: string; data: string }][] = [
     ["slash before handler", up("x.svg", '<svg xmlns="http://www.w3.org/2000/svg"/onload=alert(1)>')],
@@ -148,7 +148,7 @@ test("svg bypass forms from the review are refused, plain svg and embedded image
   ];
   for (const [label, u] of bad) assert.throws(() => checkLogoUpload(u), label);
   assert.equal(checkLogoUpload(svg('<rect width="1" height="1"/>')).ext, "svg");
-  assert.equal(checkLogoUpload(svg('<image href="data:image/png;base64,AAAA"/>')).ext, "svg");
+  assert.throws(() => checkLogoUpload(svg('<image href="data:image/png;base64,AAAA"/>')), "no <image>: embedded rasters are not on the allow-list");
 });
 
 test("a failed commit restores gitask.json, unstages and removes the new logo", async () => {
