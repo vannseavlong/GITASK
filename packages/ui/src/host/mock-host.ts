@@ -85,6 +85,7 @@ export function createMockHost(): Host {
   const find = (path: string) => board.columns.flatMap((c) => c.tasks).find((t) => t.path === path);
   const emit = () => { for (const cb of subs) cb(structuredClone(board)); };
   let state: UiState = {};
+  const logos = new Map<string, string>();
   return {
     confirmsDelete: true,
     getBoard: () => Promise.resolve(structuredClone(board)),
@@ -175,11 +176,21 @@ export function createMockHost(): Host {
         col.tasks.push({ id, title: m.title ?? id, path: `/fixture/Tasks/${m.column}/${id}.md`, column: col.id, fields: {}, prefix: id.split("-")[0], subtasks: [], progress: { done: 0, total: 0 }, dependsOn: [] });
         emit();
       }
+      if (m.type === "setProject") {
+        const p = board.project ?? { layout: { align: "left" as const, size: "md" as const, logoPosition: "left" as const, showTitle: true } };
+        if (m.title !== undefined) p.title = m.title ?? undefined;
+        if (m.subtitle !== undefined) p.subtitle = m.subtitle ?? undefined;
+        if (m.layout) p.layout = { ...p.layout, ...m.layout };
+        if (m.logo === null) p.logo = undefined;
+        else if (m.logo) { const path = `logo-${m.logo.name}`; logos.set(path, `data:${m.logo.name.endsWith(".svg") ? "image/svg+xml" : "image/png"};base64,${m.logo.data}`); p.logo = { path, mime: "image/png" }; }
+        board.project = p.title || p.subtitle || p.logo ? p : undefined;
+        emit();
+      }
       if (m.type === "setColumnColor") { const c = board.columns.find((x) => x.id === m.column); if (c) { c.color = m.color ?? undefined; emit(); } }
     },
     onBoard(cb) { subs.add(cb); return () => void subs.delete(cb); },
     onMessage(cb) { msgSubs.add(cb); return () => void msgSubs.delete(cb); },
-    logoSrc: () => Promise.resolve(MOCK_LOGO),
+    logoSrc: (l) => Promise.resolve(logos.get(l.path) ?? MOCK_LOGO),
     loadState: () => state,
     saveState: (s) => { state = s; },
   };

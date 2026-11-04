@@ -4,7 +4,7 @@ import { randomBytes, timingSafeEqual, createHash } from "node:crypto";
 import { watch, type FSWatcher } from "node:fs";
 import { networkInterfaces } from "node:os";
 import type { AddressInfo } from "node:net";
-import { readLogoBytes } from "gitask-core";
+import { LOGO_BODY_BYTES, readLogoBytes } from "gitask-core";
 import { createHandler } from "./handler.ts";
 
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -86,7 +86,7 @@ function indexHtml(nonce: string): string {
 <script type="module" nonce="${nonce}" src="/ui.js"></script></body></html>`;
 }
 
-function readBody(req: IncomingMessage, timeoutMs = BODY_TIMEOUT_MS): Promise<string> {
+function readBody(req: IncomingMessage, timeoutMs = BODY_TIMEOUT_MS, maxBytes = MAX_BODY_BYTES): Promise<string> {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks: Buffer[] = [];
@@ -95,7 +95,7 @@ function readBody(req: IncomingMessage, timeoutMs = BODY_TIMEOUT_MS): Promise<st
     req.on("close", () => clearTimeout(timer));
     req.on("data", (c: Buffer) => {
       size += c.length;
-      if (size > MAX_BODY_BYTES) { reject(Object.assign(new Error("body too large"), { status: 413 })); req.destroy(); return; }
+      if (size > maxBytes) { reject(Object.assign(new Error("body too large"), { status: 413 })); req.destroy(); return; }
       chunks.push(c);
     });
     req.on("end", () => { clearTimeout(timer); resolve(Buffer.concat(chunks).toString("utf8")); });
@@ -218,7 +218,9 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
     if (req.method === "POST" && path === "/api/message") {
       if (!/^application\/json\b/i.test(req.headers["content-type"] ?? "")) return json(res, 415, { error: "content-type must be application/json" });
       let raw: unknown;
-      try { raw = JSON.parse(await readBody(req, o.bodyTimeoutMs)); } catch (e) {
+      // Only a logo upload may be larger than a normal message, and only when the client says so; the handler validates the content anyway.
+      const max = req.headers["x-gitask-upload"] === "logo" ? LOGO_BODY_BYTES : MAX_BODY_BYTES;
+      try { raw = JSON.parse(await readBody(req, o.bodyTimeoutMs, max)); } catch (e) {
         const status = (e as { status?: number }).status ?? 400;
         return json(res, status, { error: status === 413 ? "body too large" : status === 408 ? "request timeout" : "malformed JSON" });
       }

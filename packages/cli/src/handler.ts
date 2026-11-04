@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, saveProject, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
@@ -134,6 +134,14 @@ export function createHandler(o: HandlerOptions) {
           return { status: 200, changed: true };
         } catch (e) {
           return err(`could not save the colour: ${(e as Error).message}`);
+        }
+      case "setProject":
+        try {
+          const { type: _t, ...fields } = m;
+          await saveProject(o.dir, fields, { commit });
+          return { status: 200, changed: true };
+        } catch (e) {
+          return err(`could not save the project header: ${(e as Error).message}`);
         }
       case "setOwner":
       case "addPerson":

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
@@ -245,6 +245,15 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           vscode.window.showErrorMessage(`GITASK: could not save the colour: ${(e as Error).message}`);
         }
         return post();
+      case "setProject": {
+        const { type: _t, ...fields } = m;
+        try {
+          await saveProject(dir, fields, { commit: cfg.get<boolean>("autoCommit", true) });
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not save the project header: ${(e as Error).message}`);
+        }
+        return post();
+      }
       case "addSubtask":
       case "setSubtaskAssignee":
       case "setSubtaskLane": {
