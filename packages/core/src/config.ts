@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import type { Project, ProjectLayout, ProjectLogo } from "./types.ts";
-import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
+import { gitAdd, gitCommitPaths, hasLocalChanges, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
 import { assertRegularFile } from "./taskfile.ts";
 
@@ -144,8 +144,8 @@ export const MAX_LOGO_BYTES = 1024 * 1024;
 export const LOGO_TYPES: Readonly<Record<string, string>> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml" };
 
 // Control characters, line breaks and bidi controls never belong in a one-line heading (ZWJ stays: emoji need it).
-const UNSAFE_TEXT = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
-const UNSAFE_TEXT_ALL = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/gu;
+const UNSAFE_TEXT = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200b\u200e\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff\u{e0000}-\u{e007f}]/u;
+const UNSAFE_TEXT_ALL = /[\p{Cc}\p{Zl}\p{Zp}\u061c\u200b\u200e\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff\u{e0000}-\u{e007f}]/gu;
 
 /** Trimmed one-line text, or `undefined` when empty. `strict` throws instead of truncating or dropping. */
 function cleanText(v: unknown, max: number, label: string, strict: boolean): string | undefined {
@@ -316,6 +316,7 @@ export async function setProject(dir: string, input: ProjectInput, opts: Project
   }
 
   const file = join(dir, CONFIG_FILE);
+  await assertRegularFile(file, dir, { missingOk: true }); // before the read: a symlinked config is never parsed
   let json: Record<string, unknown> = {};
   try {
     const parsed: unknown = JSON.parse(await readFile(file, "utf8"));
@@ -343,6 +344,7 @@ export async function setProject(dir: string, input: ProjectInput, opts: Project
 
   const root = await repoRoot(dir);
   if (root && opts.commit !== false && (await isTracked(dir, file))) {
+    if (!(await hasLocalChanges(root, file))) return { committed: false }; // same content again: nothing to commit
     await gitAdd(root, file);
     await gitCommitPaths(root, PROJECT_MESSAGE, file);
     return { committed: true };
