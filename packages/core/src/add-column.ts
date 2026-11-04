@@ -2,7 +2,7 @@ import { lstat, mkdir, readdir, writeFile } from "node:fs/promises";
 import { join, relative, resolve, sep, isAbsolute } from "node:path";
 import { columnLabel } from "./board.ts";
 import { isColor, setColumnColor } from "./config.ts";
-import { gitAdd, gitCommitPaths, repoRoot } from "./git.ts";
+import { gitAdd, gitCommitPaths, repoRoot, gitUnstage } from "./git.ts";
 import { fillTemplate } from "./template.ts";
 import { validateStatusName } from "./status-name.ts";
 
@@ -48,6 +48,8 @@ export interface AddColumnResult {
   id: string;
   path: string;
   committed: boolean;
+  /** Set when the folder was created but saving its colour failed (the status exists; only the colour is missing). */
+  colorError?: string;
 }
 
 /**
@@ -80,9 +82,18 @@ export async function addColumn(tasksDir: string, name: string, opts: AddColumnO
       await gitCommitPaths(repo, fillTemplate(ADD_COLUMN_MESSAGE, { id }), keep);
       committed = true;
     } catch {
-      // e.g. Tasks/ is ignored: the folder exists, it is just not committed.
+      // e.g. Tasks/ is ignored or a hook refused: the folder exists, it is just not committed. Do not leave the placeholder staged for the next commit.
+      await gitUnstage(repo, keep).catch(() => undefined);
     }
   }
-  if (opts.color) await setColumnColor(tasksDir, id, opts.color, { commit: opts.commit });
-  return { id, path: dir, committed };
+  // The folder is already there, so a colour failure must not turn into "the add failed" (a retry would say it exists).
+  let colorError: string | undefined;
+  if (opts.color) {
+    try {
+      await setColumnColor(tasksDir, id, opts.color, { commit: opts.commit });
+    } catch (e) {
+      colorError = (e as Error).message;
+    }
+  }
+  return { id, path: dir, committed, ...(colorError ? { colorError } : {}) };
 }

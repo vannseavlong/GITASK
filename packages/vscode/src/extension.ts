@@ -205,6 +205,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         try {
           const r = await addColumn(dir, m.name, { commit: cfg.get<boolean>("autoCommit", true), after: m.after, color: m.color });
           send({ type: "columnAdded", ok: true, column: r.id });
+          if (r.colorError) void vscode.window.showWarningMessage(`GITASK: status added, but its colour was not saved: ${r.colorError}`);
         } catch (e) {
           send({ type: "columnAdded", ok: false, error: (e as Error).message });
         }

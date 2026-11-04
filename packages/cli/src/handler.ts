@@ -126,7 +126,7 @@ export function createHandler(o: HandlerOptions) {
       case "addColumn":
         try {
           const r = await addColumn(o.dir, m.name, { commit, after: m.after, color: m.color });
-          return { status: 200, reply: { type: "columnAdded", ok: true, column: r.id }, changed: true };
+          return { status: 200, reply: { type: "columnAdded", ok: true, column: r.id, ...(r.colorError ? { error: `Status added, but its colour was not saved: ${r.colorError}` } : {}) }, changed: true };
         } catch (e) {
           return { status: 200, reply: { type: "columnAdded", ok: false, error: (e as Error).message }, changed: false };
         }
