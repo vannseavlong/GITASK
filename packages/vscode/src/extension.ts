@@ -1,12 +1,11 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask } from "gitask-core";
+import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
 import { uiHtml } from "./html.ts";
-import { unconfirmedDelete } from "./delete-guard.ts";
 import { handleAddPerson, handleSetOwner, ownerName } from "./owner.ts";
 import { taskCreatedMessage, validateMessage, type HostMessage } from "./protocol.ts";
 import { readTaskBody } from "./taskfile.ts";

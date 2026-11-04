@@ -1,5 +1,4 @@
-// Delete confirmation through the in-app dialog (browser and VS Code). A host with its own native confirm
-// (`confirmsDelete: false`) just gets the plain message. No React here, so node:test can run it.
+// Delete confirmation through the in-app dialog (browser and VS Code). No React here, so node:test can run it.
 import type { Host, WebviewMessage } from "../host/index.ts";
 
 export type DeleteRequest =
@@ -7,7 +6,7 @@ export type DeleteRequest =
   | { kind: "column"; column: string; label: string }
   | { kind: "subtask"; path: string; index: number; line: number; label: string };
 
-type DeleteHost = Pick<Host, "confirmsDelete" | "send">;
+type DeleteHost = Pick<Host, "send">;
 
 let pending: { host: DeleteHost; req: DeleteRequest } | null = null;
 const listeners = new Set<() => void>();
@@ -22,9 +21,8 @@ export function deleteMessage(req: DeleteRequest, confirmed: boolean): WebviewMe
   return confirmed ? { type: "deleteColumn", column: req.column, confirmed: true } : { type: "deleteColumn", column: req.column };
 }
 
-/** Ask to delete. A host with its own native confirm gets the plain message; otherwise the dialog opens first. */
+/** Ask to delete: the dialog opens first. Both hosts use it (the VS Code popup was replaced), so there is no native-confirm path. */
 export function requestDelete(host: DeleteHost, req: DeleteRequest): void {
-  if (!host.confirmsDelete) return host.send(deleteMessage(req, false));
   pending = { host, req };
   if (req.kind === "task") host.send({ type: "deleteImpact", path: req.path });
   emit();

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { join } from "node:path";
-import { unconfirmedDelete } from "../src/delete-guard.ts";
+import { DELETE_MESSAGE_TYPES, unconfirmedDelete } from "../../core/src/confirm.ts";
 import { validateMessage, type ValidationContext } from "../src/protocol.ts";
 import { createVsCodeHost } from "../../ui/src/host/vscode-host.ts";
 import { cancelDelete, confirmDelete, requestDelete } from "../../ui/src/lib/delete-flow.ts";
@@ -68,4 +68,26 @@ test("extension.ts runs the confirm guard before the message switch", async () =
   const guard = src.indexOf("unconfirmedDelete(");
   const dispatch = src.indexOf("switch (m.type)");
   assert.ok(guard > 0 && dispatch > 0 && guard < dispatch, "unconfirmedDelete must be called before switch (m.type)");
+});
+
+test("every delete message type in the protocol is covered by the shared rule", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("../../core/src/protocol.ts", import.meta.url), "utf8");
+  // Find every message type that deletes (type name starts with "delete" and is a WebviewMessage member with `confirmed?`).
+  const members = [...src.matchAll(/\| \{ type: "(delete\w+)"[^}]*\}/g)].map((x) => ({ type: x[1], confirmable: x[0].includes("confirmed?: true") }));
+  const confirmable = members.filter((x) => x.confirmable).map((x) => x.type).sort();
+  assert.deepEqual(confirmable, [...DELETE_MESSAGE_TYPES].sort(), "a delete type in the protocol is missing from DELETE_MESSAGE_TYPES (or the reverse)");
+  // Non-confirmable delete-named members must be read-only (deleteImpact), never a silent delete.
+  assert.deepEqual(members.filter((x) => !x.confirmable).map((x) => x.type).filter((t) => t !== "deleteImpact"), []);
+  const bases: Record<string, object> = { deleteTask: { path }, deleteColumn: { column: "1-backlog" }, deleteSubtask: { path, index: 0, line: 3 } };
+  for (const type of DELETE_MESSAGE_TYPES) {
+    assert.match(checked({ type, ...bases[type] })!, /confirm dialog/, `${type} without confirmed must be refused`);
+    assert.equal(checked({ type, ...bases[type], confirmed: true }), undefined, `${type} with confirmed:true must pass`);
+  }
+});
+
+test("refusal wording is exactly what both hosts have always returned", () => {
+  assert.equal(checked({ type: "deleteTask", path }), "Ext-x was not deleted: deleting needs the confirm dialog.");
+  assert.equal(checked({ type: "deleteColumn", column: "1-backlog" }), "status 1-backlog was not deleted: deleting needs the confirm dialog.");
+  assert.equal(checked({ type: "deleteSubtask", path, index: 0, line: 3 }), "the sub-task was not deleted: deleting needs the confirm dialog.");
 });
