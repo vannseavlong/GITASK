@@ -209,20 +209,22 @@ export async function resolveLogo(dir: string, logo: string): Promise<ProjectLog
 /**
  * The bytes of the configured logo, for a host to serve. Reads the project config and runs `resolveLogo` NOW (regular
  * file, extension, size, inside `dir`), so a file swapped after the board loaded is not followed. Nothing is taken
- * from the caller: there is no path argument. Returns `undefined` when no valid logo is configured. The length is
- * checked again after the read, so a file that grew in between is refused.
+ * from the caller: there is no path argument. Returns `undefined` when no logo is configured and throws when the
+ * configured one is not valid. The read stops one byte past the cap, so a file that grew in between is refused.
  */
 export async function readLogoBytes(dir: string): Promise<{ bytes: Buffer; mime: string } | undefined> {
   const logo = (await readProject(dir))?.logo;
   if (!logo) return undefined;
   const checked = await resolveLogo(dir, logo.path);
   // O_NOFOLLOW: a symlink put in place after `resolveLogo` is refused by the open itself (no-op flag on Windows).
-  const fh = await open(resolve(dir, ...checked.path.split("/")), constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  const fh = await open(resolve(dir, ...checked.path.split("/")), constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
   try {
     const st = await fh.stat();
     if (!st.isFile() || st.size === 0 || st.size > MAX_LOGO_BYTES) return undefined;
-    const bytes = await fh.readFile();
-    if (bytes.length === 0 || bytes.length > MAX_LOGO_BYTES) return undefined;
+    const buf = Buffer.alloc(MAX_LOGO_BYTES + 1);
+    const { bytesRead } = await fh.read(buf, 0, buf.length, 0);
+    if (bytesRead === 0 || bytesRead > MAX_LOGO_BYTES) return undefined;
+    const bytes = buf.subarray(0, bytesRead);
     return { bytes, mime: checked.mime };
   } finally {
     await fh.close();
