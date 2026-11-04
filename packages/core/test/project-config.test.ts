@@ -217,3 +217,21 @@ test("setProject does not commit an untracked config", async () => {
   assert.equal((await setProject(tasks, { title: "x" })).committed, false);
   assert.equal(execFileSync("git", ["rev-parse", "HEAD"], { cwd: root }).toString(), head);
 });
+
+test("setProject with the same values twice does not fail on an empty commit", async () => {
+  const { tasks } = setup(true);
+  assert.equal((await setProject(tasks, { title: "Acme" })).committed, true);
+  assert.equal((await setProject(tasks, { title: "Acme" })).committed, false);
+});
+
+test("a title of only zero-width characters is not a title", () => {
+  const zw = String.fromCharCode(0x200b, 0x2060, 0xfeff);
+  assert.equal(parseProject(JSON.stringify({ project: { title: zw } })).title, undefined);
+});
+
+test("setProject never parses a symlinked gitask.json", async () => {
+  const { root, tasks } = setup();
+  writeFileSync(join(root, "outside.json"), "SECRET-NOT-JSON");
+  symlinkSync(join(root, "outside.json"), join(tasks, "gitask.json"));
+  await assert.rejects(setProject(tasks, { title: "x" }), (e: Error) => !/SECRET/.test(e.message));
+});
