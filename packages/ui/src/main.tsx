@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { App } from "./shell/App.tsx";
+import { DEFAULT_VIEW } from "./views/registry.tsx";
 import { createHost } from "./host/index.ts";
 import { hasVsCodeApi } from "./host/vscode-host.ts";
 
@@ -14,6 +15,6 @@ if (hasVsCodeApi()) document.documentElement.classList.add("vscode-theme");
 
 createRoot(root).render(
   <StrictMode>
-    <App host={createHost()} initialView={root.dataset.initialView ?? "board"} />
+    <App host={createHost()} initialView={root.dataset.initialView ?? DEFAULT_VIEW} />
   </StrictMode>,
 );

@@ -1,10 +1,12 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { BoardData, Host, UiState } from "@/host/index.ts";
 import { DEFAULT_VIEW, VIEWS } from "@/views/registry.tsx";
 import { SV, derive } from "./logic.ts";
+import { ViewTabs } from "./view-tabs.tsx";
+import { resolveOrder, sameOrder } from "@/lib/view-order.ts";
 import { FilterBar } from "./filter-bar.tsx";
 import { StatusBar } from "./status-bar.tsx";
 import { ExportDialog } from "@/components/export-dialog.tsx";
@@ -15,11 +17,15 @@ import { ThemeControls } from "@/theme/theme-controls.tsx";
 import { hasVsCodeApi } from "@/host/vscode-host.ts";
 import { DetailPanel } from "@/detail/detail-panel.tsx";
 
+const DEFAULT_ORDER = VIEWS.map((v) => v.id);
+
 export function App({ host, initialView }: { host: Host; initialView: string }) {
   const [raw, setRaw] = React.useState<BoardData | null>(null);
   const [error, setError] = React.useState("");
   const [ui, setUi] = React.useState<UiState>(() => host.loadState());
   const view = VIEWS.some((v) => v.id === ui.view) ? ui.view! : VIEWS.some((v) => v.id === initialView) ? initialView : DEFAULT_VIEW;
+
+  const tabs = React.useMemo(() => resolveOrder(ui.viewOrder, DEFAULT_ORDER).map((id) => VIEWS.find((v) => v.id === id)!), [ui.viewOrder]);
 
   React.useEffect(() => {
     const offBoard = host.onBoard((b) => { setRaw(b); setError(""); });
@@ -49,9 +55,11 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
           value={view}
           onValueChange={(id) => { update({ view: id }); host.send({ type: "view", id }); }}
         >
-          <TabsList aria-label="Views">
-            {VIEWS.map((v) => <TabsTrigger key={v.id} value={v.id}>{v.label}</TabsTrigger>)}
-          </TabsList>
+          <ViewTabs
+            items={tabs}
+            defaultOrder={DEFAULT_ORDER}
+            onOrder={(order) => update({ viewOrder: sameOrder(order, DEFAULT_ORDER) ? undefined : order })}
+          />
           {error && <div role="alert" className="shrink-0 px-3 pt-1 text-destructive">{error}</div>}
           <FilterBar ui={ui} range={d.range} board={d.visible} onChange={update} extra={<span className="ml-auto flex gap-1.5">{!hasVsCodeApi() && <ThemeControls />}<Button variant="outline" size="sm" onClick={() => setGithubOpen(true)}>Sync to GitHub</Button><Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>Export</Button></span>} />
           <StatusBar raw={raw} ui={ui} onChange={update} />
