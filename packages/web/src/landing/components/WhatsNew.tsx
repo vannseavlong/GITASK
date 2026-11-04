@@ -1,12 +1,12 @@
-import { Download, FileBarChart, GitPullRequest, Globe, Users } from "lucide-react"
+import { Download, Image as ImageIcon, LayoutGrid, ListPlus, ShieldCheck } from "lucide-react"
 import { cliCommands, links, whatsNew } from "../content"
 import { CopyButton, SectionHeading } from "./Shared"
 
 const icons = {
-  users: Users,
-  report: FileBarChart,
-  browser: Globe,
-  github: GitPullRequest,
+  header: ImageIcon,
+  tabs: LayoutGrid,
+  status: ListPlus,
+  dialog: ShieldCheck,
 }
 
 export default function WhatsNew() {
@@ -15,8 +15,8 @@ export default function WhatsNew() {
       <div className="container">
         <SectionHeading
           eyebrow={`New in ${whatsNew.version}`}
-          title="Plan the work, then report on it."
-          text="People, sub-tasks, reports, a browser board and GitHub sync, in the extension and the CLI."
+          title="Make the board yours."
+          text="A project header, tabs in your order, new statuses and a clearer delete, in the extension and in the browser."
         />
         <div className="new-grid">
           {whatsNew.items.map((item) => {

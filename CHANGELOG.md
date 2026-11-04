@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-05 · [Ext] chore(release): 0.6.0, project header, tab order, Add status
+- Owner: SNLRLONG
+- Task: Ops-release-0-6-0 (T-0077) · Branch/PR: chore/release-0-6-0
+- What changed: version 0.6.0 for `gitask-cli` and `gitask-vscode`. New: project title, subtitle and logo header with a settings dialog and report header; Overview-first tabs you can reorder; Add status; create keeps you on the board; in-app delete dialog; responsive Activity chart. Extension README, user docs (new project-header page) and the website "What's new" updated. Details are in the entries below.
+- Needs: owner merges, tags `v0.6.0`, approves the `release` environment, uploads the .vsix to the Marketplace by hand (`VSCE_PAT` is not set), then runs `pnpm deploy:web` from `main`
+
 ## 2026-11-05 · [Ext] fix: responsive Activity heatmap, no split button
 - Owner: SNLRLONG
 - Task: Ext-ui-polish-2 (T-0081) · Branch/PR: fix/ui-polish-2
