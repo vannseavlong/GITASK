@@ -9,7 +9,7 @@
 - **Started / updated:** 2026-11-03 / 2026-11-02
 - **Due:** 2026-11-04
 - **Docs:** `Docs/architecture/ui.md`
-- **Depends on:** none
+- **Depends on:** Ext-new-task-stay-on-board, Ext-delete-dialog, Ext-view-order (run it once on the build that contains them; its "new task" check is the new stay-on-board behaviour)
 - **Touches:** `packages/vscode/**` (fixes found only)
 
 ## Goal
