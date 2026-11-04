@@ -7,7 +7,7 @@ import { cancelDelete, confirmDelete, pendingDelete, subscribeDelete } from "@/l
 
 const COLUMN_DETAIL = (column: string) => `The folder ${column}/ is removed.`;
 
-/** Confirm dialog for deletes in the browser. The host answers `deleteImpact` with the same wording VS Code shows. */
+/** Confirm dialog for deletes, in the browser and in VS Code. The host answers `deleteImpact` with the impact wording. */
 export function DeleteConfirm({ host }: { host: Host }) {
   const req = React.useSyncExternalStore(subscribeDelete, pendingDelete, pendingDelete);
   const [detail, setDetail] = React.useState("");

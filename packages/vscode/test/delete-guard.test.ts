@@ -61,3 +61,11 @@ test("VS Code host uses the in-app dialog: nothing deletes until the dialog conf
     delete (globalThis as { window?: unknown }).window;
   }
 });
+
+test("extension.ts runs the confirm guard before the message switch", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("../src/extension.ts", import.meta.url), "utf8");
+  const guard = src.indexOf("unconfirmedDelete(");
+  const dispatch = src.indexOf("switch (m.type)");
+  assert.ok(guard > 0 && dispatch > 0 && guard < dispatch, "unconfirmedDelete must be called before switch (m.type)");
+});

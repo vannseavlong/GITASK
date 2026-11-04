@@ -22,7 +22,7 @@ const COLUMN = /^\d+-[^\\/]+$/;
 
 export type DeleteImpact = "recoverable" | "permanent" | "loses-local-edits";
 
-/** The sentence shown in the delete confirmation (VS Code modal and browser dialog), one wording for both. */
+/** The sentence shown in the delete confirmation (the in-app dialog). */
 export function describeDeleteImpact(impact: DeleteImpact): string {
   return impact === "recoverable" ? "The file is removed and the removal is committed, so it can be restored from git history."
     : impact === "loses-local-edits" ? "This file has uncommitted edits. They will be lost; only the last committed version stays in git history."

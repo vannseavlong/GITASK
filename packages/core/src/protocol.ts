@@ -15,7 +15,7 @@ export type WebviewMessage =
   | { type: "setSubtaskAssignee"; path: string; index: number; line: number; assignee: string | null }
   | { type: "setSubtaskLane"; path: string; index: number; line: number; lane: string | null }
   | { type: "editSubtask"; path: string; index: number; line: number; text?: string; assignee?: string | null; lane?: string | null }
-  /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` refuses a delete without it. */
+  /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` and the VS Code extension refuse a delete without it. */
   | { type: "deleteSubtask"; path: string; index: number; line: number; confirmed?: true }
   /** Edit the title and header fields of a task. Absent field = unchanged, `null` = clear. */
   | { type: "editTask"; path: string; patch: EditTaskPatch }
@@ -26,7 +26,7 @@ export type WebviewMessage =
   | { type: "setColumnColor"; column: string; color: string | null }
   /** Ask what deleting this task would cost (for a confirm dialog). The host answers with `deleteImpact`. */
   | { type: "deleteImpact"; path: string }
-  /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` refuses a delete without it. */
+  /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` and the VS Code extension refuse a delete without it. */
   | { type: "deleteTask"; path: string; confirmed?: true }
   | { type: "deleteColumn"; column: string; confirmed?: true }
   | { type: "setOwner"; path: string; person: string | null }
@@ -48,7 +48,7 @@ export interface EditTaskPatch {
   claimedBy?: string | null;
 }
 
-/** What a sub-task delete dialog says (VS Code modal and the browser dialog share it). */
+/** What a sub-task delete dialog says (the in-app dialog shows it). */
 export const SUBTASK_DELETE_DETAIL = "Only this checkbox line is removed from the task file. If the file is tracked by git the removal is committed, so it can be restored from history.";
 
 /** Messages the extension sends to the webview. */
