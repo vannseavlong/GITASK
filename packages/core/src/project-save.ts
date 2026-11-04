@@ -102,7 +102,7 @@ export async function saveProject(dir: string, fields: ProjectFields, opts: Proj
     const root = await repoRoot(dir);
     if (orphan) {
       await gitUnstage(root ?? dir, orphan.file).catch(() => undefined); // only if the deletion was staged
-      await writeFile(orphan.file, orphan.bytes, { flag: "wx" }).catch(() => undefined); // wx: a no-op when the file is still there
+      await writeFile(orphan.file, orphan.bytes, { flag: "wx", mode: orphan.mode }).catch(() => undefined); // wx: a no-op when the file is still there
     }
     if (root && stored) await gitUnstage(root, config, join(resolve(dir), stored.name)).catch(() => undefined);
     else if (root) await gitUnstage(root, config).catch(() => undefined);
@@ -116,7 +116,7 @@ export async function saveProject(dir: string, fields: ProjectFields, opts: Proj
  * path is a bare generated name in `dir` itself (`logo-<12|16 hex>.<ext>`, no folder), it is a plain file (never a
  * symlink), and its content hashes to the hex in its name, so a hand-made file that merely looks the same is kept.
  */
-async function orphanOf(dir: string, logoPath: string): Promise<{ file: string; bytes: Buffer } | undefined> {
+async function orphanOf(dir: string, logoPath: string): Promise<{ file: string; bytes: Buffer; mode: number } | undefined> {
   const m = GENERATED_LOGO_RE.exec(logoPath);
   if (!m) return undefined;
   const file = join(resolve(dir), logoPath);
@@ -125,7 +125,7 @@ async function orphanOf(dir: string, logoPath: string): Promise<{ file: string; 
     if (!st.isFile() || st.size === 0 || st.size > MAX_LOGO_BYTES) return undefined;
     const bytes = await readFile(file);
     if (!createHash("sha256").update(bytes).digest("hex").startsWith(m[1])) return undefined;
-    return { file, bytes };
+    return { file, bytes, mode: st.mode & 0o777 };
   } catch {
     return undefined;
   }
