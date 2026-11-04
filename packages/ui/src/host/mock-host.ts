@@ -176,6 +176,7 @@ export function createMockHost(): Host {
         col.tasks.push({ id, title: m.title ?? id, path: `/fixture/Tasks/${m.column}/${id}.md`, column: col.id, fields: {}, prefix: id.split("-")[0], subtasks: [], progress: { done: 0, total: 0 }, dependsOn: [] });
         emit();
       }
+      if (m.type === "setProject" && typeof location !== "undefined" && new URLSearchParams(location.search).get("saveError")) { for (const cb of msgSubs) cb({ type: "projectSaved", ok: false, error: "could not save the project header: mock failure" }); return; }
       if (m.type === "setProject") {
         const p = board.project ?? { layout: { align: "left" as const, size: "md" as const, logoPosition: "left" as const, showTitle: true } };
         if (m.title !== undefined) p.title = m.title ?? undefined;
@@ -185,6 +186,7 @@ export function createMockHost(): Host {
         else if (m.logo) { const path = `logo-${m.logo.name}`; logos.set(path, `data:${m.logo.name.endsWith(".svg") ? "image/svg+xml" : "image/png"};base64,${m.logo.data}`); p.logo = { path, mime: "image/png" }; }
         board.project = p.title || p.subtitle || p.logo ? p : undefined;
         emit();
+        for (const cb of msgSubs) cb({ type: "projectSaved", ok: true });
       }
       if (m.type === "setColumnColor") { const c = board.columns.find((x) => x.id === m.column); if (c) { c.color = m.color ?? undefined; emit(); } }
     },

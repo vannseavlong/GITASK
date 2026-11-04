@@ -41,9 +41,9 @@ export interface Host {
   /** Remembered UI state (VS Code webview state, or localStorage in a browser). */
   /**
    * A URL the page may put in an `<img>` for the project logo, or `undefined` when there is none. The host re-checks the
-   * file when it serves it (core `readLogoBytes`); the logo path is only a cache key, never used to find a file.
+   * file when it serves it (core `readLogoBytes`); the logo path and version are only a cache key, never used to find a file.
    */
-  logoSrc(logo: { path: string }): Promise<string | undefined>;
+  logoSrc(logo: { path: string; version?: string }): Promise<string | undefined>;
   loadState(): UiState;
   saveState(state: UiState): void;
 }

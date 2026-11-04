@@ -248,8 +248,9 @@ function openBoard(ctx: vscode.ExtensionContext): void {
         const { type: _t, ...fields } = m;
         try {
           await saveProject(dir, fields, { commit: cfg.get<boolean>("autoCommit", true) });
+          send({ type: "projectSaved", ok: true });
         } catch (e) {
-          vscode.window.showErrorMessage(`GITASK: could not save the project header: ${(e as Error).message}`);
+          send({ type: "projectSaved", ok: false, error: `could not save the project header: ${(e as Error).message}` });
         }
         return post();
       }

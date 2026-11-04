@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import type { BoardData, Host } from "@/host/index.ts";
 import { logoFileProblem, toBase64 } from "@/lib/logo-file.ts";
+import { hasChanges, projectChanges, projectSavedReply } from "@/lib/project-diff.ts";
 import { HeaderView } from "@/shell/project-header.tsx";
 import { MAX_SUBTITLE, MAX_TITLE, PROJECT_LAYOUT_DEFAULTS } from "@host-src/protocol.ts";
 
@@ -31,7 +32,7 @@ function Choice({ label, value, values, onChange }: { label: string; value: stri
 
 /**
  * "Customize header": edits the project title, subtitle, layout and logo with a live preview that uses the same
- * `HeaderView` as the real header. Save sends one `setProject` message; the host validates it again. A picked logo is
+ * `HeaderView` as the real header. Save sends one `setProject` message with only the changed fields and waits for the host's `projectSaved` reply; the host validates it again. A picked logo is
  * sent as base64 (the host copies it into Tasks/ under a name it generates).
  */
 export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChange, onSaved }: { host: Host; project: BoardData["project"]; currentLogoSrc?: string; open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
@@ -40,6 +41,7 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
   const [layout, setLayout] = React.useState<ProjectLayout>({ ...PROJECT_LAYOUT_DEFAULTS });
   const [logo, setLogo] = React.useState<Logo>({ kind: "keep" });
   const [error, setError] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
   const wasOpen = React.useRef(false);
 
   // Start from the saved values each time the dialog opens.
@@ -50,6 +52,9 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
       setLayout({ ...PROJECT_LAYOUT_DEFAULTS, ...project?.layout });
       setLogo({ kind: "keep" });
       setError("");
+      setSaving(false);
+      unsub.current?.(); // a late reply to an earlier, cancelled save is ignored
+      unsub.current = undefined;
     }
     wasOpen.current = open;
   }, [open, project]);
@@ -72,16 +77,30 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
   const previewSrc = logo.kind === "new" ? logo.preview : logo.kind === "keep" ? currentLogoSrc : undefined;
   const hasLogo = logo.kind === "new" || (logo.kind === "keep" && !!project?.logo);
 
+  // The dialog stays open until the host answers: it closes on success and keeps the draft and the error otherwise.
+  // Subscribe before sending, so a reply that comes back at once is not missed.
+  const unsub = React.useRef<(() => void) | undefined>(undefined);
+  React.useEffect(() => () => unsub.current?.(), []);
+
   const save = () => {
-    host.send({
-      type: "setProject",
-      title: title.trim() || null,
-      subtitle: subtitle.trim() || null,
-      layout,
-      ...(logo.kind === "new" ? { logo: { name: logo.name, data: logo.data } } : logo.kind === "remove" ? { logo: null } : {}),
+    const changes = projectChanges(
+      { title: project?.title, subtitle: project?.subtitle, layout: { ...PROJECT_LAYOUT_DEFAULTS, ...project?.layout }, hasLogo: !!project?.logo },
+      { title, subtitle, layout, logo },
+    );
+    if (!hasChanges(changes)) return onOpenChange(false); // nothing changed: send nothing, commit nothing
+    setError("");
+    setSaving(true);
+    unsub.current?.();
+    unsub.current = host.onMessage((m) => {
+      // A message the host rejects before it reaches the save (too large, invalid) comes back as a plain `error`.
+      const r = projectSavedReply(m) ?? (m.type === "error" ? { ok: false as const, error: m.message } : undefined);
+      if (!r) return;
+      unsub.current?.();
+      unsub.current = undefined;
+      setSaving(false);
+      if (r.ok) { onSaved(); onOpenChange(false); } else setError(r.error);
     });
-    onSaved();
-    onOpenChange(false);
+    host.send({ type: "setProject", ...changes });
   };
 
   const set = <K extends keyof ProjectLayout>(k: K, v: ProjectLayout[K]) => setLayout((l) => ({ ...l, [k]: v }));
@@ -124,7 +143,7 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => { setLayout({ ...PROJECT_LAYOUT_DEFAULTS }); setError(""); }}>Reset layout</Button>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="button" onClick={save}>Save</Button>
+          <Button type="button" onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

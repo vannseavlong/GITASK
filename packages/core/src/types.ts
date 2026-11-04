@@ -68,6 +68,8 @@ export interface ProjectLogo {
   /** Relative to the Tasks dir, `/` separated, no `..`. */
   path: string;
   mime: string;
+  /** File mtime (ms) and size, so a host can refetch a logo replaced by hand under the same name. */
+  version?: string;
 }
 
 /** Project identity from `Tasks/gitask.json`. Present on a board only when a title, subtitle or logo is set. */

@@ -109,7 +109,7 @@ export function createHttpHost(base = ""): Host {
     onMessage(cb) { msgSubs.add(cb); return () => void msgSubs.delete(cb); },
     async logoSrc(logo) {
       await ready;
-      return `${base}/api/logo?token=${encodeURIComponent(token)}&v=${encodeURIComponent(logo.path)}`;
+      return `${base}/api/logo?token=${encodeURIComponent(token)}&v=${encodeURIComponent(`${logo.path}|${logo.version ?? ""}`)}`;
     },
     loadState() {
       try { return JSON.parse(localStorage.getItem("gitask.ui") ?? "{}") as UiState; } catch { return {}; }
