@@ -91,27 +91,27 @@ export const commands = [
 export const extensionId = "vannseavlong.gitask-vscode"
 
 export const whatsNew = {
-  version: "0.5.0",
+  version: "0.6.0",
   items: [
     {
-      icon: "users",
-      title: "People and sub-tasks",
-      text: "Assign an owner, split a task into checkbox sub-tasks and give each one a person and a lane.",
+      icon: "header",
+      title: "Your project, on every view",
+      text: "Add a title, subtitle and logo above the board and in reports, and choose the alignment, size and logo position.",
     },
     {
-      icon: "report",
-      title: "Done reports",
-      text: "Export what each person finished as HTML, Markdown or CSV, with a live preview.",
+      icon: "tabs",
+      title: "Tabs in your order",
+      text: "Overview comes first now. Drag the tabs, or use Alt and the arrow keys, to arrange the views the way you work.",
     },
     {
-      icon: "browser",
-      title: "Board in your browser",
-      text: "gitask serve opens the same board on localhost, protected by a one-time token.",
+      icon: "status",
+      title: "Add a status",
+      text: "Create a new column from the board. GITASK makes the next numbered folder and keeps it in git.",
     },
     {
-      icon: "github",
-      title: "GitHub Issues sync",
-      text: "Opt in, see a dry run, then create issues so assignees are notified. It never pushes.",
+      icon: "dialog",
+      title: "Calmer create and delete",
+      text: "A new task keeps you on the board and opens its detail. Deleting shows what will be removed in a clear dialog.",
     },
   ],
 } as const

@@ -8,6 +8,8 @@ After this page you can produce a report of the work finished in a period, group
 
 The report covers tasks in `5-done` and `6-deploy`. It shows a title, the period and the generated date, three numbers (tasks done, sub-tasks done, people) and one section per person: the tasks they finished with the date, and below them the sub-tasks they finished with the task each belongs to. A small `late` tag appears next to a task only when it has a `Due` date and was done after it. People without an owner appear under `Unassigned`, only when there are such tasks. People are shown by GitHub name, never by email.
 
+With a [project header](./project-header.md) set (GITASK 0.6.0), the HTML and Markdown reports start with its title and subtitle, and the HTML report also shows the logo. Clear **Include project header** in the Export dialog to leave it out. `gitask report` includes it whenever a project is set.
+
 The done date is the date of the git commit that moved the task into `5-done` or `6-deploy`. If git has no such move, GITASK falls back to the `Started / updated` date. Sub-tasks are credited to the person named by `@` on the line and count in their task's period.
 
 ## From the board

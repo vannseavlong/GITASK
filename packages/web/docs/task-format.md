@@ -15,7 +15,7 @@ Tasks/
   1-backlog/ 2-todo/ 3-in-progress/ 4-testing/ 5-done/ 6-deploy/
 ```
 
-Folders that start with `_`, and files such as `_TEMPLATE.md`, are not columns. To add a status, use "Add status" on the board: it creates the next numbered folder (for example `7-review` after `6-deploy`), keeps it in version control with a `.gitkeep`, and accepts letters, digits, spaces and hyphens (up to 40 characters). Choosing a position "after" a status works only when the next number is free; otherwise rename folders to leave a gap. You can also create the folder by hand with a number that puts it where you want it, for example `35-review` between `3-in-progress` and `4-testing`. Only `.md` files directly inside a column folder are tasks. The file name without `.md` is the task's id, for example `Web-login-page`; the part before the first `-` is its prefix.
+Folders that start with `_`, and files such as `_TEMPLATE.md`, are not columns. To add a status (GITASK 0.6.0), use **+ Add status** on the board: it creates the next numbered folder (for example `7-review` after `6-deploy`), keeps it in version control with a `.gitkeep`, and accepts letters, digits, spaces and hyphens (up to 40 characters). Choosing a position "after" a status works only when the next number is free; otherwise rename folders to leave a gap. You can also create the folder by hand with a number that puts it where you want it, for example `35-review` between `3-in-progress` and `4-testing`. Only `.md` files directly inside a column folder are tasks. The file name without `.md` is the task's id, for example `Web-login-page`; the part before the first `-` is its prefix.
 
 ## The file
 

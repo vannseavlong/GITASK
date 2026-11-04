@@ -4,13 +4,14 @@ A Kanban board for a plain-Markdown `Tasks/` folder, inside VS Code. One Markdow
 
 Built for workspaces where humans and coding agents share one board ([My-Agent-SetUp](https://github.com/vannseavlong/Agent-SetUp)).
 
-## Getting started in 5 steps
+## Getting started in 6 steps
 
 1. **Initialize:** run **GITASK: Initialize Tasks Folder**.
 2. **Create:** run **GITASK: New Task**.
 3. **Move:** run **GITASK: Open Board** and drag a card to another column.
 4. **Assign and split:** click the owner on a card; add `- [ ] text @person #lane` under `## Sub-tasks`.
 5. **Export:** click **Export** for a report by person.
+6. **Make it yours (0.6.0):** click **Add project header** for a title and logo, drag the tabs into your order, and use **+ Add status** for a new column.
 
 Full walkthrough, including use with coding agents: [Use GITASK from install to a finished task](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/getting-started.md).
 
@@ -37,6 +38,13 @@ A task is a Markdown file. The `#` heading is the title and the `- **Key:** valu
 - **Tier:** T2 · new screen
 - **Started / updated:** 2026-10-01 / 2026-10-17
 ```
+
+## Make the board yours
+
+- **Project header:** a title, subtitle and logo above every view and in reports, with your choice of alignment, size and logo position. See [Add a project title and logo](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/project-header.md).
+- **Tabs:** Overview comes first. Drag a tab, or press Alt+Left and Alt+Right on a focused tab, to reorder; your order is remembered.
+- **Add status:** **+ Add status** on the board creates the next numbered status folder.
+- **Create and delete:** a new task keeps you on the board and opens its detail; deleting asks in a dialog that says what will be removed.
 
 ## People, sub-tasks and reports
 
