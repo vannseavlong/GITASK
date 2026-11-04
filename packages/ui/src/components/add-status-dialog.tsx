@@ -41,7 +41,8 @@ export function AddStatusDialog({ host, columns, open, onOpenChange }: { host: H
     timer.current = setTimeout(() => { stop(); setSaving(false); setError("The host did not answer. Check that it is still running and try again."); }, REPLY_TIMEOUT_MS);
     unsub.current = host.onMessage((m) => {
       const r = m as { type: string; ok?: boolean; error?: string; message?: string };
-      if (r.type !== "columnAdded" && r.type !== "error") return;
+      // Only this request's answers: `columnAdded`, or the host's "Rejected: ..." for a message it refused. Other errors are not ours.
+      if (r.type !== "columnAdded" && !(r.type === "error" && r.message?.startsWith("Rejected: "))) return;
       stop();
       setSaving(false);
       if (r.type === "columnAdded" && r.ok) onOpenChange(false);

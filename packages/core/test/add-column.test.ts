@@ -118,3 +118,22 @@ test("validateMessage addColumn: shared rules, unknown after, bad colour", () =>
     { type: "addColumn", name: "ok", after: "9-x" }, { type: "addColumn", name: "ok", color: "blue" }, { type: "addColumn", name: "ok", after: {} },
   ]) assert.equal(validateMessage(m, ctx).ok, false, JSON.stringify(m));
 });
+
+test("a colour that cannot be saved does not turn the add into a failure", async () => {
+  const { tasks } = ws(true);
+  writeFileSync(join(tasks, "gitask.json"), "[]\n"); // not a JSON object: setColumnColor refuses it
+  const r = await addColumn(tasks, "Review", { color: "#336699" });
+  assert.equal(r.id, "7-review");
+  assert.ok(r.colorError && r.colorError.length > 0, "the colour problem is reported");
+  assert.ok(existsSync(join(tasks, "7-review", ".gitkeep")), "the status exists");
+  await assert.rejects(addColumn(tasks, "Review"), /exists|already/i); // a retry would fail, so the first call must report success
+});
+
+test("a refused commit leaves nothing staged", async () => {
+  const { root, tasks, g } = ws(true);
+  writeFileSync(join(root, ".git", "hooks", "pre-commit"), "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+  const r = await addColumn(tasks, "Review");
+  assert.equal(r.committed, false);
+  assert.ok(existsSync(join(tasks, "7-review", ".gitkeep")));
+  assert.equal(g("diff", "--cached", "--name-only"), "", "the placeholder is not left in the index for the next commit");
+});
