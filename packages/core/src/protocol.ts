@@ -2,6 +2,7 @@
 // so node:test can run it. Every webview message goes through `validateMessage` before it
 // touches the filesystem or git.
 import type { DeleteImpact } from "./delete.ts";
+import { validateStatusName } from "./status-name.ts";
 import { validateProjectFields, type ProjectFields } from "./project-rules.ts";
 import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
@@ -34,6 +35,8 @@ export type WebviewMessage =
   /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` and the VS Code extension refuse a delete without it. */
   | { type: "deleteTask"; path: string; confirmed?: true }
   | { type: "deleteColumn"; column: string; confirmed?: true }
+  /** Create a status folder. `name` becomes a folder slug (see `validateStatusName`); `after` is an existing column id; `color` is `#rrggbb`. The host answers with `columnAdded`. */
+  | { type: "addColumn"; name: string; after?: string; color?: string }
   | { type: "setOwner"; path: string; person: string | null }
   | { type: "addPerson"; name: string; path?: string }
   /** Dry run: ask what a GitHub sync would do. Never sends anything to GitHub. */
@@ -63,6 +66,8 @@ export type HostMessage =
   | { type: "logo"; src?: string }
   /** Answer to `setProject`: `ok` when saved, else `error` says why. Nothing was written on failure. */
   | { type: "projectSaved"; ok: boolean; error?: string }
+  /** Answer to `addColumn`: `ok` with the new folder id, else `error` says why. Nothing was created on failure. */
+  | { type: "columnAdded"; ok: boolean; column?: string; error?: string }
   | { type: "taskBody"; path: string; text?: string; error?: string }
   /** Sent only after a task was created: the UI opens its detail panel. `path` is the absolute task file. A failed create sends nothing. */
   | { type: "taskCreated"; path: string }
@@ -411,6 +416,13 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (typeof raw.column !== "string" || !ctx.columns.includes(raw.column)) return fail("unknown column");
       if (raw.confirmed !== undefined && raw.confirmed !== true) return fail("confirmed must be true");
       return { ok: true, message: raw.confirmed ? { type: "deleteColumn", column: raw.column, confirmed: true } : { type: "deleteColumn", column: raw.column } };
+    }
+    case "addColumn": {
+      const v = validateStatusName(raw.name, ctx.columns);
+      if (!v.ok) return fail(v.error);
+      if (raw.after !== undefined && (typeof raw.after !== "string" || !ctx.columns.includes(raw.after))) return fail("unknown column");
+      if (raw.color !== undefined && (typeof raw.color !== "string" || !/^#[0-9a-fA-F]{6}$/.test(raw.color))) return fail("colour must be #rrggbb");
+      return { ok: true, message: { type: "addColumn", name: (raw.name as string).trim(), ...(raw.after !== undefined ? { after: raw.after as string } : {}), ...(raw.color !== undefined ? { color: raw.color as string } : {}) } };
     }
     case "previewReport": {
       const r = validateReportRequest(raw.options);

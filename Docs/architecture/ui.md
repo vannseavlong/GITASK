@@ -46,6 +46,15 @@ The board payload carries only `project.logo.path`/`mime`, never bytes. One core
 - **`gitask serve`:** `GET /api/logo` (token in the header or, because `<img>` cannot send one, `?token=`; any other query is ignored). Fixed `Content-Type` from the allow-list, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`, 404 when there is no valid logo. The page CSP already has `img-src 'self' data:`.
 - `Host.logoSrc(logo)` hides the difference from the UI.
 
+## Add status
+
+The board's "+ Add status" button opens `components/add-status-dialog.tsx` (name, optional `#rrggbb` colour, position). It sends `addColumn { name, after?, color? }` and waits for the host's `columnAdded { ok, column?, error? }`; on failure the dialog stays open and shows the message. Both hosts call one core function, `addColumn` (`packages/core/src/add-column.ts`), and `validateMessage` runs the same `validateStatusName` first, so the rules exist once:
+
+- Name: ASCII letters, digits, spaces and hyphens, at most 40 characters; the folder is `<number>-<lower-case slug>`. Refused: empty, `..`, separators, a leading `_` or `.`, non-ASCII, reserved names (`con`, `nul`, `com1`, `gitkeep`, ...), and any name whose slug matches an existing status, ignoring case.
+- Number: one past the highest existing number (so `7-review` after `6-deploy`; gaps are never filled). With `after`, the number right after that status, only if it is free, so no folder is renamed; if not, the dialog says so. Reordering existing statuses is done by renaming folders.
+- Safety: the final path must be a direct child of `Tasks/`; the folder is created non-recursively and never overwrites.
+- Commit: a `.gitkeep` is written (as in `initTasks`) and committed by pathspec as `status(<id>): add`, only inside a repo with `autoCommit` on. A colour goes through `setColumnColor`.
+
 ## Theme
 
 `src/index.css` maps shadcn tokens to VS Code variables (`--background: var(--vscode-editor-background, ...)`). Light, dark and high contrast follow the VS Code theme; outside VS Code the fallbacks and `prefers-color-scheme` apply.
