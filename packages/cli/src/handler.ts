@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, saveProject, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete, validateMessage } from "gitask-core";
+import { addColumn, addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, saveProject, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
@@ -123,6 +123,13 @@ export function createHandler(o: HandlerOptions) {
           return err((e as Error).message);
         }
       }
+      case "addColumn":
+        try {
+          const r = await addColumn(o.dir, m.name, { commit, after: m.after, color: m.color });
+          return { status: 200, reply: { type: "columnAdded", ok: true, column: r.id }, changed: true };
+        } catch (e) {
+          return { status: 200, reply: { type: "columnAdded", ok: false, error: (e as Error).message }, changed: false };
+        }
       case "readTask": {
         const r = await readTaskBody(m.path, o.dir);
         return { status: 200, reply: { type: "taskBody", path: m.path, ...r }, changed: false };

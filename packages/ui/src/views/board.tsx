@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { requestDelete } from "@/lib/delete-flow.ts";
 import { requestEdit } from "@/lib/edit-flow.ts";
 import { ActionMenu } from "@/components/action-menu.tsx";
+import { AddStatusDialog } from "@/components/add-status-dialog.tsx";
 import { NewTaskDialog } from "@/components/new-task-dialog.tsx";
 import { cn } from "@/lib/utils";
 import type { Host } from "@/host/index.ts";
@@ -127,12 +128,14 @@ export function BoardView({ board, full, host, ui, update, openTask }: ViewProps
   const dragging = React.useRef<Task | null>(null);
   const [over, setOver] = React.useState<string | null>(null);
   const [newTaskOpen, setNewTaskOpen] = React.useState(false);
+  const [addStatusOpen, setAddStatusOpen] = React.useState(false);
   // A status is only deletable when it has no tasks at all, not merely none that pass the filters.
   const total = new Map(full.columns.map((c) => [c.id, c.tasks.length]));
   return (
     <div className="p-3">
-      <div className="mb-3">
+      <div className="mb-3 flex gap-2">
         <Button size="sm" onClick={() => setNewTaskOpen(true)}>+ New task</Button>
+        <Button size="sm" variant="secondary" onClick={() => setAddStatusOpen(true)}>+ Add status</Button>
       </div>
       <div role="list" className="flex items-start gap-2.5 overflow-x-auto">
         {board.columns.map((col) => (
@@ -172,6 +175,7 @@ export function BoardView({ board, full, host, ui, update, openTask }: ViewProps
           </section>
         ))}
       </div>
+      <AddStatusDialog host={host} columns={full.columns} open={addStatusOpen} onOpenChange={setAddStatusOpen} />
       <NewTaskDialog host={host} columns={full.columns} people={board?.people} open={newTaskOpen} onOpenChange={setNewTaskOpen} />
     </div>
   );

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete } from "gitask-core";
+import { addColumn, addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
@@ -198,6 +198,15 @@ function openBoard(ctx: vscode.ExtensionContext): void {
           await deleteColumn(dir, m.column, { commit: cfg.get<boolean>("autoCommit", true) });
         } catch (e) {
           vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
+        }
+        return post();
+      }
+      case "addColumn": {
+        try {
+          const r = await addColumn(dir, m.name, { commit: cfg.get<boolean>("autoCommit", true), after: m.after, color: m.color });
+          send({ type: "columnAdded", ok: true, column: r.id });
+        } catch (e) {
+          send({ type: "columnAdded", ok: false, error: (e as Error).message });
         }
         return post();
       }

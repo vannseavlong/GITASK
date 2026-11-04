@@ -168,6 +168,22 @@ export function createMockHost(): Host {
       if (m.type === "deleteImpact") for (const cb of msgSubs) cb({ type: "deleteImpact", path: m.path, impact: "recoverable", detail: "The file is removed and the removal is committed, so it can be restored from git history." });
       if (m.type === "deleteTask") { for (const c of board.columns) c.tasks = c.tasks.filter((t) => t.path !== m.path); emit(); }
       if (m.type === "deleteColumn") { board.columns = board.columns.filter((c) => c.id !== m.column); emit(); }
+      if (m.type === "addColumn") {
+        const ids = board.columns.map((c) => c.id);
+        // Mock only: the real rules live in core `validateStatusName`.
+        const slugged = String(m.name).trim().toLowerCase().replace(/[ -]+/g, "-");
+        const bad = !/^[A-Za-z0-9][A-Za-z0-9 -]*$/.test(String(m.name).trim()) ? "Use only letters (A-Z), digits, spaces and hyphens." : ids.some((i) => i.replace(/^\d+-/, "") === slugged) ? `A status named "${slugged}" already exists (names are compared ignoring case).` : "";
+        if (bad) { for (const cb of msgSubs) cb({ type: "columnAdded", ok: false, error: bad }); return; }
+        const v = { slug: slugged };
+        const nums = ids.map((i) => parseInt(i, 10));
+        const afterIdx = m.after ? ids.indexOf(m.after) : -1;
+        const n = afterIdx >= 0 ? nums[afterIdx] + 1 : Math.max(0, ...nums) + 1;
+        if (nums.includes(n)) { for (const cb of msgSubs) cb({ type: "columnAdded", ok: false, error: "There is no free number after that status." }); return; }
+        const col = { id: `${n}-${v.slug}`, label: v.slug, ...(m.color ? { color: m.color } : {}), tasks: [] };
+        board.columns.splice(afterIdx >= 0 ? afterIdx + 1 : board.columns.length, 0, col);
+        emit();
+        for (const cb of msgSubs) cb({ type: "columnAdded", ok: true, column: col.id });
+      }
       if (m.type === "new") {
         const id = m.id ?? slug(m.title ?? "new-task");
         const col = board.columns.find((c) => c.id === m.column);
