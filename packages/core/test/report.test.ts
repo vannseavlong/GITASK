@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, renameSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, renameSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { buildReport, renderHtml, renderMarkdown, renderCsv, csvCell, loadBoard } from "../src/index.ts";
+import { buildReport, renderHtml, renderMarkdown, renderCsv, csvCell, loadBoard, loadReportHeader } from "../src/index.ts";
 import type { Person } from "../src/index.ts";
 
 const FOLDERS = ["1-backlog", "2-todo", "3-in-progress", "4-testing", "5-done", "6-deploy"];
@@ -338,4 +338,85 @@ test("CSV: flat columns, one row per task and per finished sub-task, no source/t
   assert.ok(without.slice(1).every((c) => c[2] === "" && c[4] === ""));
   const flat = renderCsv(await buildReport(await loadBoard(r.tasks), { people, includeSubtasks: true }));
   for (const gone of ["T2", "git", "on-time", "late", "source", "tier"]) assert.ok(!flat.includes(gone), `csv has ${gone}`);
+});
+
+// ---------- project header ----------
+
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+
+async function reportFor(r: ReturnType<typeof repo>) {
+  const board = await loadBoard(r.tasks);
+  return buildReport(board, { includeSubtasks: false, people: [] as Person[], repo: "demo" });
+}
+
+test("header: no project means no header in any format", async () => {
+  const r = repo(false);
+  assert.equal(await loadReportHeader(r.tasks), undefined);
+  const rep = await reportFor(r);
+  assert.equal(renderHtml(rep), renderHtml(rep, undefined));
+  assert.ok(!renderHtml(rep).includes("<header"));
+  assert.ok(renderMarkdown(rep).startsWith("# demo: work completed"));
+});
+
+test("header: title, subtitle and logo are embedded and escaped", async () => {
+  const r = repo(false);
+  mkdirSync(join(r.tasks, "assets"));
+  writeFileSync(join(r.tasks, "assets", "logo.png"), PNG);
+  writeFileSync(join(r.tasks, "gitask.json"), JSON.stringify({ project: { title: "Acme <b>&\"'", subtitle: "Road *map*", logo: "assets/logo.png", layout: { align: "center", size: "lg", logoPosition: "top" } } }));
+  const h = await loadReportHeader(r.tasks);
+  assert.ok(h?.logoUri?.startsWith("data:image/png;base64,"));
+  const rep = await reportFor(r);
+  const html = renderHtml(rep, h);
+  assert.ok(html.includes("Acme &lt;b&gt;&amp;&quot;&#39;"));
+  assert.ok(!html.includes("<b>"));
+  assert.ok(html.includes('<img class="plogo" alt="" src="data:image/png;base64,'));
+  assert.ok(html.includes("flex-direction:column") && html.includes("text-align:center") && html.includes("height:72px"));
+  assert.ok(html.includes("img-src data:"));
+  assert.ok(!/(href|src)="(?!data:)/i.test(html));
+  const md = renderMarkdown(rep, h);
+  assert.ok(md.startsWith("# Acme &lt;b&gt;"));
+  assert.ok(md.includes("Road \\*map\\*"));
+  assert.ok(!md.includes("base64"));
+});
+
+test("header: hidden logo and showTitle=false", async () => {
+  const r = repo(false);
+  writeFileSync(join(r.tasks, "logo.png"), PNG);
+  writeFileSync(join(r.tasks, "gitask.json"), JSON.stringify({ project: { title: "Acme", logo: "logo.png", layout: { logoPosition: "hidden", showTitle: false } } }));
+  const h = await loadReportHeader(r.tasks);
+  assert.equal(h?.logoUri, undefined);
+  const rep = await reportFor(r);
+  assert.ok(!renderHtml(rep, h).includes("<img"));
+  assert.ok(!renderMarkdown(rep, h).includes("# Acme"));
+});
+
+test("header: hostile logos are dropped at report time", async () => {
+  const r = repo(false);
+  writeFileSync(join(r.tasks, "gitask.json"), JSON.stringify({ project: { title: "Acme", logo: "logo.png" } }));
+  writeFileSync(join(r.tasks, "logo.png"), PNG);
+  assert.ok((await loadReportHeader(r.tasks))?.logoUri);
+  writeFileSync(join(r.root, "secret.png"), PNG);
+  rmSync(join(r.tasks, "logo.png"));
+  symlinkSync(join(r.root, "secret.png"), join(r.tasks, "logo.png"));
+  const h = await loadReportHeader(r.tasks);
+  assert.equal(h?.logoUri, undefined);
+  assert.equal(h?.title, "Acme");
+  rmSync(join(r.tasks, "logo.png"));
+  writeFileSync(join(r.tasks, "logo.png"), Buffer.alloc(1024 * 1024 + 1));
+  assert.equal((await loadReportHeader(r.tasks))?.logoUri, undefined);
+  for (const logo of ["../secret.png", "gitask.json", "/etc/passwd", "a\\b.png"]) {
+    writeFileSync(join(r.tasks, "gitask.json"), JSON.stringify({ project: { title: "Acme", logo } }));
+    assert.equal((await loadReportHeader(r.tasks))?.logoUri, undefined, logo);
+  }
+});
+
+test("header: an svg logo only travels inside an img data URI", async () => {
+  const r = repo(false);
+  writeFileSync(join(r.tasks, "l.svg"), `<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`);
+  writeFileSync(join(r.tasks, "gitask.json"), JSON.stringify({ project: { logo: "l.svg" } }));
+  const h = await loadReportHeader(r.tasks);
+  const html = renderHtml(await reportFor(r), h);
+  assert.ok(h?.logoUri?.startsWith("data:image/svg+xml;base64,"));
+  assert.ok(!html.includes("<script"));
+  assert.ok(!html.includes("<svg"));
 });

@@ -35,10 +35,16 @@ test("protocol: accepts good options and drops extras", () => {
   assert.equal(validateMessage({ type: "previewReport", options: good }, ctx).ok, true);
 });
 
+test("protocol: includeHeader is kept only when it is a boolean", () => {
+  const r = validateReportRequest({ ...good, includeHeader: false });
+  assert.deepEqual(r.ok && r.options.includeHeader, false);
+  assert.equal("includeHeader" in (validateReportRequest(good) as { options: object }).options, false);
+});
+
 test("protocol: rejects bad dates, reversed range, bad enums, huge or hostile people", () => {
   const bad = (o: object) => assert.equal(validateReportRequest({ ...good, ...o }).ok, false, JSON.stringify(o));
   bad({ from: "2026-13-01" }); bad({ to: "2026-02-30" }); bad({ from: "10/01/2026" }); bad({ from: 5 }); bad({ from: "2026-11-01" });
-  bad({ dateField: "created" }); bad({ includeSubtasks: "yes" });
+  bad({ dateField: "created" }); bad({ includeSubtasks: "yes" }); bad({ includeHeader: "no" });
   bad({ people: Array.from({ length: 201 }, (_, i) => `p${i}`) });
   bad({ people: ["a@b.co"] }); bad({ people: ["../x"] }); bad({ people: [5] }); bad({ people: "all" }); bad({ people: ["<script>"] });
   assert.equal(validateReportRequest(null).ok, false);

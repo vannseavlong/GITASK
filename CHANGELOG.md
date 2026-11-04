@@ -8,6 +8,11 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - What changed: after a task is created from the board, the host sends a `taskCreated { path }` message (VS Code and `gitask serve`; nothing on failure) and the UI opens that task's detail panel once the card is on the board.
 - Needs: a check in a real VS Code webview and in a browser
 
+## 2026-11-05 · [Core] feat: project header in reports
+- Owner: SNLRLONG
+- Task: Core-report-header (T-0074) · Branch/PR: feat/report-header
+- What changed: HTML reports show the project title, subtitle and logo (logo re-validated at report time and inlined as a `data:` image, per `project.layout`); Markdown reports start with the title; CSV unchanged. Export dialog gets an "Include project header" toggle (`includeHeader` in the report request). See `Docs/architecture/config.md`.
+
 ## 2026-11-05 · [Core] feat: project identity block in gitask.json
 - Owner: SNLRLONG
 - Task: Core-project-config (T-0071) · Branch/PR: feat/project-config

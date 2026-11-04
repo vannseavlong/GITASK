@@ -27,7 +27,8 @@ export { updateTask, editTaskText, isRealDay, EDIT_TASK_MESSAGE, MAX_TITLE, MAX_
 export type { TaskPatch, TaskEditOptions, TaskEditResult } from "./taskedit.ts";
 export { buildReport, reportDate, inReportRange, UNASSIGNED_KEY, UNASSIGNED_NAME } from "./report.ts";
 export type { Report, ReportOptions, ReportTask, ReportSubtask, ReportSummary, PersonRow, ReportDateField, DateSource, Timeliness } from "./report.ts";
-export { renderHtml, renderMarkdown, renderCsv, escapeHtml, escapeMd, csvCell, CSV_HEADER } from "./report-render.ts";
+export { loadReportHeader, renderHtml, renderMarkdown, renderCsv, escapeHtml, escapeMd, csvCell, CSV_HEADER } from "./report-render.ts";
+export type { ReportHeader } from "./report-render.ts";
 export { fileHistory } from "./git.ts";
 export type { FileChange } from "./git.ts";
 export { parseGithubConfig, readGithubConfig, isRepoSlug } from "./config.ts";

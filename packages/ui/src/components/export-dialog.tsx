@@ -100,6 +100,12 @@ export function ExportDialog({ host, board, ui, open, onOpenChange }: { host: Ho
               <input type="checkbox" checked={req.includeSubtasks} onChange={(e) => setReq((c) => ({ ...c, includeSubtasks: e.target.checked }))} />
               Include sub-tasks
             </label>
+            {board?.project && (
+              <label className="flex items-center gap-1.5">
+                <input type="checkbox" checked={req.includeHeader !== false} onChange={(e) => setReq((c) => ({ ...c, includeHeader: e.target.checked }))} />
+                Include project header
+              </label>
+            )}
             <div className="grid gap-1">
               <span>Format</span>
               <Select value={format} onValueChange={(v) => setFormat(v as ReportFormat)}>
