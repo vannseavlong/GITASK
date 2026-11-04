@@ -9,6 +9,8 @@ export type { HostMessage, WebviewMessage };
 /** Remembered UI state. Small, JSON only. */
 export interface UiState {
   view?: string;
+  /** Tab order chosen by the user (view ids). Only a preference: unknown or missing ids are repaired on read. */
+  viewOrder?: string[];
   filter?: string;
   hiddenStatuses?: string[];
   range?: { from?: string; to?: string; field?: string };

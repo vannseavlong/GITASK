@@ -36,7 +36,7 @@ test("UI page: nonce is random per page and handed to the app; initial view is c
   const b = uiHtml(VIEW_IDS, { cspSource: "x", scriptUri: "a", styleUri: "b" });
   assert.notEqual(a.match(/data-nonce="([^"]+)"/)![1], b.match(/data-nonce="([^"]+)"/)![1]);
   assert.ok(page({ initialView: "timeline" }).includes('data-initial-view="timeline"'));
-  assert.ok(page({ initialView: '"><script>' }).includes('data-initial-view="board"'));
+  assert.ok(page({ initialView: '"><script>' }).includes('data-initial-view="overview"'));
 });
 
 test("UI page: hostile uri or cspSource cannot break out of the attribute", () => {

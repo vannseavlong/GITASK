@@ -24,12 +24,13 @@ export interface ViewDef {
   component: ComponentType<ViewProps>;
 }
 
-/** Tab order. A view is one entry: `{ id, label, component }`. */
+/** Default tab order (the user can reorder; see lib/view-order.ts). A view is one entry: `{ id, label, component }`. */
 export const VIEWS: readonly ViewDef[] = [
+  { id: "overview", label: "Overview", component: OverviewView },
   { id: "board", label: "Board", component: BoardView },
   { id: "list", label: "List", component: ListView },
   { id: "timeline", label: "Timeline", component: TimelineView },
-  { id: "overview", label: "Overview", component: OverviewView },
 ];
 
-export const DEFAULT_VIEW = "board";
+/** Opened for a user with no saved view: the first tab. */
+export const DEFAULT_VIEW = "overview";
