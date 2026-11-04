@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-05 · [Ext] fix: view tab drag and keyboard polish
+- Owner: SNLRLONG
+- Task: Ext-view-tabs-polish (T-0076) · Branch/PR: fix/view-tabs-polish
+- What changed: tabs reorder by pointer events (works in Firefox); dragging no longer activates the tab or sends a `view` message; drops in the gap, on the strip and on Reset land; Alt+Arrow and drag moves are announced via an `aria-live` region; the drop marker uses the foreground colour; focus returns to the active tab after Reset. Pure logic in `packages/ui/src/lib/view-order.ts`, tests in `packages/vscode/test/view-order.test.ts`.
+- Needs: a check in a real VS Code webview and Firefox
+
 ## 2026-11-05 · [Ext] feat: new task opens its detail panel
 - Owner: SNLRLONG
 - Task: Ext-new-task-open-detail (T-0075) · Branch/PR: feat/new-task-open-detail
