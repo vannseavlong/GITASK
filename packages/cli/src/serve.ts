@@ -81,7 +81,7 @@ function indexHtml(nonce: string): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GITASK</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" href="/favicon.png"><link rel="stylesheet" href="/ui.css"><script nonce="${nonce}">${THEME_INIT}</script></head>
-<body><div id="root" data-nonce="${nonce}" data-initial-view="board"></div>
+<body><div id="root" data-nonce="${nonce}" data-initial-view="overview"></div>
 <script type="module" nonce="${nonce}" src="/ui.js"></script></body></html>`;
 }
 
