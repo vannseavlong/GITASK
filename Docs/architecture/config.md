@@ -13,7 +13,7 @@ One JSON file in the Tasks folder holds board settings. Code: `packages/core/src
 
 ```json
 { "project": { "title": "Acme", "subtitle": "Roadmap", "logo": "assets/logo.png",
-  "layout": { "align": "left", "size": "md", "logoPosition": "left", "showTitle": true } } }
+  "layout": { "align": "left", "size": "md", "logoPosition": "left" } } }
 ```
 
 | Field | Rule | Default |
@@ -24,9 +24,8 @@ One JSON file in the Tasks folder holds board settings. Code: `packages/core/src
 | `layout.align` | `left` `center` `right` | `left` |
 | `layout.size` | `sm` `md` `lg` | `md` |
 | `layout.logoPosition` | `left` `top` `right` `hidden` | `left` |
-| `layout.showTitle` | boolean | `true` |
 
-**Reading** (`parseProject` for text, `readProject` for the folder, used by `loadBoard`): every field is checked alone, so one bad value falls back to its default or is dropped without affecting the others. Control characters, line breaks and bidi marks in text become spaces. `Board.project` is present only when a title, subtitle or valid logo exists, so a board without the block looks as before.
+**Reading** (`parseProject` for text, `readProject` for the folder, used by `loadBoard`): every field is checked alone, so one bad value falls back to its default or is dropped without affecting the others. Control characters, line breaks and bidi marks in text become spaces. `Board.project` is present only when a title, subtitle or valid logo exists, so a board without the block looks as before. An old `layout.showTitle` key (the option was removed) is ignored on read, refused in a new `setProject` message, and dropped from the file the next time `setProject` rewrites the project block.
 
 **Logo** (`isLogoPath` for syntax, `resolveLogo` for the disk). Accepted only when all hold:
 - relative, `/` separated, no `..`, `.` or empty segment, no absolute path, drive letter, backslash, URL or control character, at most 255 characters;

@@ -227,7 +227,6 @@ function parseLayout(v: unknown): ProjectLayout {
     const x = v[k];
     if (typeof x === "string" && (ENUMS[k] as readonly string[]).includes(x)) (out as unknown as Record<string, string>)[k] = x;
   }
-  if (typeof v.showTitle === "boolean") out.showTitle = v.showTitle;
   return out;
 }
 
@@ -328,9 +327,7 @@ export async function setProject(dir: string, input: ProjectInput, opts: Project
     if (!isRecord(input.layout)) throw new Error("layout must be an object");
     for (const [k, v] of Object.entries(input.layout)) {
       if (v === undefined) continue;
-      if (k === "showTitle") {
-        if (typeof v !== "boolean") throw new Error("layout.showTitle must be true or false");
-      } else if (Object.hasOwn(ENUMS, k)) {
+      if (Object.hasOwn(ENUMS, k)) {
         const allowed = ENUMS[k as keyof typeof ENUMS] as readonly string[];
         if (typeof v !== "string" || !allowed.includes(v)) throw new Error(`layout.${k} must be one of ${allowed.join(", ")}`);
       } else throw new Error(`Unknown layout field: ${k}`);
@@ -359,6 +356,11 @@ export async function setProject(dir: string, input: ProjectInput, opts: Project
     const layout = new Map<string, unknown>(isRecord(old) ? Object.entries(old) : []);
     for (const [k, v] of layoutPatch) layout.set(k, v);
     entry.set("layout", Object.fromEntries(layout));
+  }
+  const oldLayout = entry.get("layout");
+  if (isRecord(oldLayout) && "showTitle" in oldLayout) { // removed option: a stale key from an older file is dropped on save
+    const { showTitle: _drop, ...rest } = oldLayout;
+    entry.set("layout", rest);
   }
   if (entry.size) json.project = Object.fromEntries(entry);
   else delete json.project;

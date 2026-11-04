@@ -33,8 +33,7 @@ export function headerClasses(l: ProjectLayout): HeaderClasses {
 /** What the header shows. `null` means render nothing (no project, or every part hidden). */
 export function headerParts(p: { title?: string; subtitle?: string; logo?: unknown; layout: ProjectLayout } | undefined, logoFailed: boolean): { title?: string; subtitle?: string; logo: boolean } | null {
   if (!p) return null;
-  const title = p.layout.showTitle ? p.title : undefined;
   const logo = !!p.logo && p.layout.logoPosition !== "hidden" && !logoFailed;
-  if (!title && !p.subtitle && !logo) return null;
-  return { title, subtitle: p.subtitle, logo };
+  if (!p.title && !p.subtitle && !logo) return null;
+  return { title: p.title, subtitle: p.subtitle, logo };
 }

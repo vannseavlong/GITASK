@@ -117,7 +117,7 @@ test("validateMessage setProject: valid, invalid and hostile input", () => {
     { type: "setProject", subtitle: "a\nb" },
     { type: "setProject", title: "‮evil" },
     { type: "setProject", layout: { align: "middle" } },
-    { type: "setProject", layout: { showTitle: "yes" } },
+    { type: "setProject", layout: { showTitle: true } },
     { type: "setProject", layout: { evil: 1 } },
     { type: "setProject", layout: [] },
     { type: "setProject", path: "/etc/passwd", title: "A" },

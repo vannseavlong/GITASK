@@ -15,3 +15,8 @@ export function toBase64(bytes: Uint8Array): string {
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(s);
 }
+
+/** File size for the upload area ("812 B", "3.4 KiB", "0.9 MiB"). */
+export function formatBytes(n: number): string {
+  return n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(n < 10 * 1024 ? 1 : 0)} KiB` : `${(n / 1024 / 1024).toFixed(1)} MiB`;
+}

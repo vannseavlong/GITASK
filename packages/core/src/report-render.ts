@@ -85,7 +85,7 @@ function headerHtml(h: ReportHeader | undefined): string {
   if (!h) return "";
   const l = h.layout;
   const logo = h.logoUri && l.logoPosition !== "hidden" ? `<img class="plogo" alt="" src="${escapeHtml(h.logoUri)}" style="height:${LOGO_PX[l.size]}px">` : "";
-  const title = l.showTitle && h.title ? `<div class="ptitle" style="font-size:${TITLE_PX[l.size]}px">${escapeHtml(h.title)}</div>` : "";
+  const title = h.title ? `<div class="ptitle" style="font-size:${TITLE_PX[l.size]}px">${escapeHtml(h.title)}</div>` : "";
   const sub = h.subtitle ? `<div class="psub">${escapeHtml(h.subtitle)}</div>` : "";
   if (!logo && !title && !sub) return "";
   const text = title || sub ? `<div class="ptext">${title}${sub}</div>` : "";
@@ -188,7 +188,7 @@ export function renderMarkdown(r: Report, header?: ReportHeader): string {
   const s = r.summary;
   const m = escapeMd;
   const out: string[] = [
-    ...(header?.layout.showTitle && header.title ? [`# ${m(header.title)}`, ""] : []),
+    ...(header?.title ? [`# ${m(header.title)}`, ""] : []),
     ...(header?.subtitle ? [m(header.subtitle), ""] : []),
     `# ${m(r.repo ? `${r.repo}: work completed` : "Work completed")}`,
     "",

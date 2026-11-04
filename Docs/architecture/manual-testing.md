@@ -59,8 +59,8 @@ In VS Code run **Developer: Reload Window**, then open the board with the GITASK
   - Overview is the first tab on a fresh install.
   - Dragging a tab reorders it and does not switch the view. Alt+Left and Alt+Right move a focused tab. Reset tab order restores the default.
   - The order survives Reload Window.
-- **Project header** ("Add project header" / "Customize header")
-  - Title, subtitle, every alignment, size and logo position, and hide title. The preview matches the real header.
+- **Project header** (the kebab menu in the header corner has "Customize header"; with no project, the quiet "Add project header" action)
+  - Title, subtitle, every alignment, size and logo position. The logo area works by drop, by click, and by Enter or Space; a bad file shows its reason inside the area. The preview matches the real header.
   - A PNG upload shows in the header on all four views and `Tasks/` gets one `logo-<hash>.png`. `git log` shows one commit with `gitask.json` and that file only.
   - Replacing the logo deletes the old `logo-*` file in the same commit. A hand-named file in `Tasks/` is never deleted.
   - Refused with a clear message in the dialog (draft stays open): a text file renamed `.png`, an SVG with a script, a file over 1 MiB.
