@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, saveProject, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, validateMessage } from "gitask-core";
+import { addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, saveProject, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
@@ -65,6 +65,8 @@ export function createHandler(o: HandlerOptions) {
     const m = v.message;
     const unsafe = await guardMessagePath(m, o.dir); // a symlink in Tasks/ must never be opened, moved or edited
     if (unsafe) return { status: 400, reply: { type: "error", message: `Rejected: ${unsafe}` }, changed: false };
+    const unconfirmed = unconfirmedDelete(m); // a delete runs only after the in-app dialog set `confirmed`
+    if (unconfirmed) return err(unconfirmed);
     switch (m.type) {
       case "ready":
         if (!idsAssigned) {
@@ -105,8 +107,6 @@ export function createHandler(o: HandlerOptions) {
         return { status: 200, reply: { type: "deleteImpact", path: m.path, impact, detail: describeDeleteImpact(impact) }, changed: false };
       }
       case "deleteTask":
-        // The browser UI shows a confirm dialog and then sets `confirmed`; a bare delete is refused.
-        if (!m.confirmed) return err(`${basename(m.path, ".md")} was not deleted: deleting needs the confirm dialog.`);
         try {
           await deleteTask(o.dir, m.path, { commit });
           return { status: 200, changed: true };
@@ -114,7 +114,6 @@ export function createHandler(o: HandlerOptions) {
           return err(`could not delete ${basename(m.path, ".md")}: ${(e as Error).message}`);
         }
       case "deleteColumn": {
-        if (!m.confirmed) return err(`status ${m.column} was not deleted: deleting needs the confirm dialog.`);
         const col = (await loadBoard(o.dir)).columns.find((c) => c.id === m.column);
         if (col?.tasks.length) return err(`cannot delete status "${col.label}": it still has ${col.tasks.length} task(s). Move or delete them first.`);
         try {
@@ -183,7 +182,6 @@ export function createHandler(o: HandlerOptions) {
       case "editSubtask":
       case "deleteSubtask":
         try {
-          if (m.type === "deleteSubtask" && !m.confirmed) return err(`the sub-task was not deleted: deleting needs the confirm dialog.`);
           const task = (await loadBoard(o.dir)).columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
           if (!task) throw new Error("task not found");
           if (m.type === "editTask") await updateTask(task, m.patch, { commit });
