@@ -7,6 +7,11 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - Task: Tasks/4-testing/Ext-delete-dialog.md (T-0068) · Branch/PR: fix/delete-dialog
 - What changed: deleting a task, an empty status or a sub-task in VS Code now shows the themed in-app confirm dialog (impact text, red Delete, Esc cancels) instead of the native popup. The extension refuses any delete not marked `confirmed: true`, as `gitask serve` does.
 - Needs: none
+
+## 2026-11-05 · [Ext] fix: creating a task keeps you on the board
+- Owner: SNLRLONG
+- Task: Ext-new-task-stay-on-board (T-0067) · Branch/PR: fix/new-task-stay-on-board
+- What changed: "New task" (board or `GITASK: New Task`) no longer opens the raw `.md`. The board is revealed, the card appears, and a non-modal notice offers "Open file". Errors still show an error message.
 ## 2026-11-02 · [Ext] chore(release): 0.5.2, one screenshot per view in the listing README
 - Owner: SNLRLONG
 - Task: Ops-release-0-5-2 (T-0066) · Branch/PR: chore/release-0-5-2

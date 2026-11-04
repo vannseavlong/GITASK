@@ -55,7 +55,7 @@ async function post(): Promise<void> {
   }
 }
 
-async function newTask(id?: string, column?: string, fields?: { title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null }): Promise<void> {
+async function newTask(ctx: vscode.ExtensionContext, id?: string, column?: string, fields?: { title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null }): Promise<void> {
   const dir = tasksDir();
   if (!dir) return;
   if (!id) {
@@ -74,11 +74,16 @@ async function newTask(id?: string, column?: string, fields?: { title?: string; 
       tier: fields?.tier,
       owner: await ownerName(dir, fields?.owner),
     });
-    await vscode.window.showTextDocument(vscode.Uri.file(file));
+    openBoard(ctx); // stay on (or reveal) the board; the new card shows in its column
+    await post();
+    // Non-modal and not awaited: the board must not wait for the user to dismiss it.
+    void vscode.window.showInformationMessage(`GITASK: created ${basename(file)}.`, "Open file").then((pick) => {
+      if (pick === "Open file") return vscode.window.showTextDocument(vscode.Uri.file(file));
+    });
   } catch (e) {
     vscode.window.showErrorMessage(`GITASK: ${(e as Error).message}`);
+    await post();
   }
-  await post();
 }
 
 async function initTasksFolder(ctx: vscode.ExtensionContext): Promise<void> {
@@ -160,7 +165,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
       case "open":
         return void vscode.window.showTextDocument(vscode.Uri.file(m.path));
       case "new":
-        return newTask(m.id, m.column, { title: m.title, description: m.description, start: m.start, due: m.due, tier: m.tier, owner: m.owner });
+        return newTask(ctx, m.id, m.column, { title: m.title, description: m.description, start: m.start, due: m.due, tier: m.tier, owner: m.owner });
       case "move":
         try {
           await moveTask(dir, m.path, m.to, {
@@ -332,7 +337,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
   ctx.subscriptions.push(log);
   ctx.subscriptions.push(
     vscode.commands.registerCommand("gitask.openBoard", () => openBoard(ctx)),
-    vscode.commands.registerCommand("gitask.newTask", () => newTask()),
+    vscode.commands.registerCommand("gitask.newTask", () => newTask(ctx)),
     vscode.commands.registerCommand("gitask.initTasks", () => initTasksFolder(ctx)),
     vscode.commands.registerCommand("gitask.syncGithub", () => syncGithub(tasksDir(), log)),
   );
