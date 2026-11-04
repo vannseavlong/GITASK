@@ -30,12 +30,5 @@ Run the extension (F5 on packages/vscode) and `gitask serve` on a workspace with
 - [ ] Landing page (built site): Marketplace links in hero, navbar and install section, light and dark, mobile width; Lighthouse accessibility on `/`
 - [ ] Ext-webview-board moved to 5-done
 
-## How to run it (no F5 needed)
-1. From the repo root: `pnpm install && pnpm build`.
-2. Build a test .vsix with a version higher than the published one, without touching `package.json`:
-   `cd packages/vscode && pnpm exec vsce package 0.6.0 --no-dependencies --no-git-tag-version --no-update-package-json --out /tmp/gitask-0.6.0-test.vsix`
-3. Make a throwaway workspace: `mkdir ~/gitask-sandbox && cd ~/gitask-sandbox && git init -b main && node <repo>/packages/cli/dist/gitask.js init && node <repo>/packages/cli/dist/gitask.js new Web-login-page && git add -A && git commit -m init`.
-4. Install: `code --install-extension /tmp/gitask-0.6.0-test.vsix --force`, then in VS Code run "Developer: Reload Window" and open the sandbox folder. Uninstall afterwards to go back to the Marketplace version.
-5. CLI and browser board: `node <repo>/packages/cli/dist/gitask.js serve --no-open` and open the printed URL (it contains the access token).
-6. Website: `pnpm --filter gitask-web build && pnpm --filter gitask-web serve`.
-Then walk through "Done when" above.
+## How to run it
+Build, install and the full checklist: `Docs/architecture/manual-testing.md`. Walk through it, then tick "Done when" above.
