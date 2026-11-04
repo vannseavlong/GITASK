@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { hasChanges, projectChanges, projectSavedReply, type ProjectDraft } from "../../ui/src/lib/project-diff.ts";
 
-const L = { align: "left", size: "md", logoPosition: "left", showTitle: true } as const;
+const L = { align: "left", size: "md", logoPosition: "left" } as const;
 const cur = { title: "Acme", subtitle: "Roadmap", layout: { ...L }, hasLogo: true };
 const same: ProjectDraft = { title: "Acme", subtitle: "Roadmap", layout: { ...L }, logo: { kind: "keep" } };
 
@@ -23,8 +23,8 @@ test("empty text clears a set field and is no change on an unset one", () => {
 });
 
 test("Reset layout sends only what moved away from the defaults", () => {
-  const c = { ...cur, layout: { ...L, align: "right" as const, showTitle: false } };
-  assert.deepEqual(projectChanges(c, { ...same, layout: { ...L } }), { layout: { align: "left", showTitle: true } });
+  const c = { ...cur, layout: { ...L, align: "right" as const, size: "lg" as const } };
+  assert.deepEqual(projectChanges(c, { ...same, layout: { ...L } }), { layout: { align: "left", size: "md" } });
 });
 
 test("logo: new uploads, remove clears only an existing logo", () => {

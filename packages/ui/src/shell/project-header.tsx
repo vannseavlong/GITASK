@@ -1,7 +1,8 @@
 import * as React from "react";
-import { Pencil } from "lucide-react";
+import { MoreVertical, Pencil, Plus } from "lucide-react";
 import type { ProjectLayout } from "gitask-core";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { BoardData, Host } from "@/host/index.ts";
 import { headerClasses, headerParts } from "@/lib/project-header.ts";
 import { ProjectDialog } from "@/components/project-dialog.tsx";
@@ -29,8 +30,8 @@ export function HeaderView({ title, subtitle, layout, hasLogo, src, alt, onLogoE
 }
 
 /**
- * Project header above the tabs, on every view, with a "Customize header" button. Without `board.project` only the
- * button shows. The logo source comes from the host (`logoSrc`), which re-validates the file when it serves it.
+ * Project header above the tabs, on every view, with a kebab menu in its corner ("Customize header"). Without `board.project`
+ * only a quiet "Add project header" action shows. The logo source comes from the host (`logoSrc`), which re-validates the file when it serves it.
  * The logo is fetched again after a save, and after a board update when the last fetch failed.
  */
 export function ProjectHeader({ project, host }: { project: BoardData["project"]; host: Host }) {
@@ -60,16 +61,35 @@ export function ProjectHeader({ project, host }: { project: BoardData["project"]
     return () => { live = false; };
   }, [host, logoPath, logoVersion, rev]);
 
+  // The menu closes before the dialog opens, so focus returns to the trigger cleanly when the dialog closes.
   return (
-    <header aria-label="Project" className="relative shrink-0 border-b border-border px-3 py-2">
-      {project && (
-        <div className="pr-36">
-          <HeaderView title={project.title} subtitle={project.subtitle} layout={project.layout} hasLogo={!!project.logo} src={src} alt={project.title} onLogoError={() => setFailed(true)} />
-        </div>
+    <header aria-label="Project" className={project ? "relative shrink-0 border-b border-border px-3 py-2" : "flex shrink-0 justify-end border-b border-border px-3 py-0.5"}>
+      {project ? (
+        <>
+          <div className="pr-8">
+            <HeaderView title={project.title} subtitle={project.subtitle} layout={project.layout} hasLogo={!!project.logo} src={src} alt={project.title} onLogoError={() => setFailed(true)} />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Project header actions"
+                data-testid="header-menu"
+                className="absolute right-2 top-1.5 grid size-6 place-items-center rounded-sm opacity-60 outline-none hover:bg-accent hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:opacity-100"
+              >
+                <MoreVertical className="size-4" aria-hidden />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => setOpen(true)}><Pencil />Customize header</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      ) : (
+        <Button variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs text-muted-foreground" onClick={() => setOpen(true)}>
+          <Plus className="size-3" aria-hidden />Add project header
+        </Button>
       )}
-      <Button variant="ghost" size="sm" className={`h-7 gap-1 text-xs text-muted-foreground ${project ? "absolute right-2 top-1.5" : ""}`} onClick={() => setOpen(true)}>
-        <Pencil className="size-3" aria-hidden />{project ? "Customize header" : "Add project header"}
-      </Button>
       <ProjectDialog host={host} project={project} currentLogoSrc={src} open={open} onOpenChange={setOpen} onSaved={() => { refresh.current = true; }} />
     </header>
   );

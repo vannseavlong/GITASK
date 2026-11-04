@@ -379,7 +379,7 @@ test("header: title, subtitle and logo are embedded and escaped", async () => {
   assert.ok(!md.includes("base64"));
 });
 
-test("header: hidden logo and showTitle=false", async () => {
+test("header: hidden logo, and an old showTitle key is ignored", async () => {
   const r = repo(false);
   writeFileSync(join(r.tasks, "logo.png"), PNG);
   writeFileSync(join(r.tasks, "gitask.json"), JSON.stringify({ project: { title: "Acme", logo: "logo.png", layout: { logoPosition: "hidden", showTitle: false } } }));
@@ -387,7 +387,7 @@ test("header: hidden logo and showTitle=false", async () => {
   assert.equal(h?.logoUri, undefined);
   const rep = await reportFor(r);
   assert.ok(!renderHtml(rep, h).includes("<img"));
-  assert.ok(!renderMarkdown(rep, h).includes("# Acme"));
+  assert.ok(renderMarkdown(rep, h).includes("# Acme"));
 });
 
 test("header: hostile logos are dropped at report time", async () => {

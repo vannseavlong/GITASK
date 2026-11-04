@@ -73,7 +73,7 @@ function mockProject(): BoardData["project"] {
   return {
     title: "Acme Platform", subtitle: "Roadmap and delivery board for the whole team",
     logo: q.get("logo") === "missing" ? undefined : { path: "assets/logo.svg", mime: "image/svg+xml" },
-    layout: { align: pick("align", ["left", "center", "right"], "left"), size: pick("size", ["sm", "md", "lg"], "md"), logoPosition: pick("logo", ["left", "top", "right", "hidden"], "left"), showTitle: q.get("title") !== "off" },
+    layout: { align: pick("align", ["left", "center", "right"], "left"), size: pick("size", ["sm", "md", "lg"], "md"), logoPosition: pick("logo", ["left", "top", "right", "hidden"], "left") },
   };
 }
 
@@ -178,7 +178,7 @@ export function createMockHost(): Host {
       }
       if (m.type === "setProject" && typeof location !== "undefined" && new URLSearchParams(location.search).get("saveError")) { for (const cb of msgSubs) cb({ type: "projectSaved", ok: false, error: "could not save the project header: mock failure" }); return; }
       if (m.type === "setProject") {
-        const p = board.project ?? { layout: { align: "left" as const, size: "md" as const, logoPosition: "left" as const, showTitle: true } };
+        const p = board.project ?? { layout: { align: "left" as const, size: "md" as const, logoPosition: "left" as const } };
         if (m.title !== undefined) p.title = m.title ?? undefined;
         if (m.subtitle !== undefined) p.subtitle = m.subtitle ?? undefined;
         if (m.layout) p.layout = { ...p.layout, ...m.layout };

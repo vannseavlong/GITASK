@@ -3,13 +3,14 @@ import type { ProjectLayout } from "gitask-core";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { LogoDrop } from "@/components/logo-drop.tsx";
 import type { BoardData, Host } from "@/host/index.ts";
 import { logoFileProblem, toBase64 } from "@/lib/logo-file.ts";
 import { hasChanges, projectChanges, projectSavedReply } from "@/lib/project-diff.ts";
 import { HeaderView } from "@/shell/project-header.tsx";
 import { MAX_SUBTITLE, MAX_TITLE, PROJECT_LAYOUT_DEFAULTS } from "@host-src/protocol.ts";
 
-type Logo = { kind: "keep" } | { kind: "remove" } | { kind: "new"; name: string; data: string; preview: string };
+type Logo = { kind: "keep" } | { kind: "remove" } | { kind: "new"; name: string; data: string; preview: string; size: number };
 
 const OPTIONS: { key: "align" | "size" | "logoPosition"; label: string; values: readonly string[] }[] = [
   { key: "align", label: "Alignment", values: ["left", "center", "right"] },
@@ -44,6 +45,7 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
   const [layout, setLayout] = React.useState<ProjectLayout>({ ...PROJECT_LAYOUT_DEFAULTS });
   const [logo, setLogo] = React.useState<Logo>({ kind: "keep" });
   const [error, setError] = React.useState("");
+  const [fileError, setFileError] = React.useState("");
   const [saving, setSaving] = React.useState(false);
   const wasOpen = React.useRef(false);
 
@@ -55,6 +57,7 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
       setLayout({ ...PROJECT_LAYOUT_DEFAULTS, ...project?.layout });
       setLogo({ kind: "keep" });
       setError("");
+      setFileError("");
       setSaving(false);
       unsub.current?.(); // a late reply to an earlier, cancelled save is ignored
       unsub.current = undefined;
@@ -66,15 +69,15 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
   const pick = async (file: File | undefined) => {
     if (!file) return;
     const problem = logoFileProblem(file.name, file.size);
-    if (problem) return setError(problem);
+    if (problem) return setFileError(problem);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const data = toBase64(bytes);
       // The preview is an <img> data URL; the browser's own file type is not trusted, the host checks the content.
-      setLogo({ kind: "new", name: file.name, data, preview: `data:${file.type || "application/octet-stream"};base64,${data}` });
-      setError("");
+      setLogo({ kind: "new", name: file.name, data, preview: `data:${file.type || "application/octet-stream"};base64,${data}`, size: file.size });
+      setFileError("");
     } catch {
-      setError("Could not read that file.");
+      setFileError("Could not read that file.");
     }
   };
 
@@ -126,7 +129,7 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
           <DialogTitle>Customize header</DialogTitle>
           <DialogDescription id="project-dialog-desc">Shown above every view. Saved in Tasks/gitask.json; a new logo is copied into Tasks/.</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3">
+        <div className="grid min-w-0 gap-3">
           <section aria-label="Preview" className="min-h-14 rounded-md border border-border bg-background p-3">
             <HeaderView title={title.trim() || undefined} subtitle={subtitle.trim() || undefined} layout={layout} hasLogo={hasLogo} src={previewSrc} alt="Logo preview" />
             {!title.trim() && !subtitle.trim() && !(hasLogo && previewSrc) && <span className="text-xs text-muted-foreground">Nothing to show yet.</span>}
@@ -140,22 +143,21 @@ export function ProjectDialog({ host, project, currentLogoSrc, open, onOpenChang
           <div className="flex flex-wrap gap-x-6 gap-y-3">
             {OPTIONS.map((o) => <Choice key={o.key} label={o.label} value={layout[o.key]} values={o.values} onChange={(v) => set(o.key, v as never)} />)}
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={!layout.showTitle} onChange={(e) => set("showTitle", !e.target.checked)} />
-            Hide the title (keep subtitle and logo)
-          </label>
-          <div className="grid gap-1">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
             <span className="text-sm">Logo</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <input aria-label="Logo file" type="file" accept=".png,.jpg,.jpeg,.webp,.gif,.svg,image/png,image/jpeg,image/webp,image/gif,image/svg+xml" className="text-xs" onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} />
-              {hasLogo && <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setLogo({ kind: "remove" })}>Remove logo</Button>}
-            </div>
-            <span className="text-xs text-muted-foreground">png, jpg, webp, gif or svg, at most 1 MiB.</span>
+            <LogoDrop
+              preview={hasLogo ? previewSrc : undefined}
+              name={logo.kind === "new" ? logo.name : hasLogo ? project?.logo?.path.split("/").pop() : undefined}
+              size={logo.kind === "new" ? logo.size : undefined}
+              error={fileError}
+              onFile={(f) => void pick(f)}
+              onRemove={() => { setLogo({ kind: "remove" }); setFileError(""); }}
+            />
           </div>
           {error && <div role="alert" className="text-xs text-destructive">{error}</div>}
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => { setLayout({ ...PROJECT_LAYOUT_DEFAULTS }); setError(""); }}>Reset layout</Button>
+          <Button type="button" variant="outline" onClick={() => { setLayout({ ...PROJECT_LAYOUT_DEFAULTS }); setError(""); setFileError(""); }}>Reset layout</Button>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button type="button" onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
         </DialogFooter>

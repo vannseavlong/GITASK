@@ -1,7 +1,7 @@
 // Pure rules for the `project` block (no node imports, so the browser bundle can use them too).
 import type { ProjectLayout } from "./types.ts";
 
-export const PROJECT_LAYOUT_DEFAULTS: ProjectLayout = { align: "left", size: "md", logoPosition: "left", showTitle: true };
+export const PROJECT_LAYOUT_DEFAULTS: ProjectLayout = { align: "left", size: "md", logoPosition: "left" };
 export const PROJECT_ENUMS = {
   align: ["left", "center", "right"],
   size: ["sm", "md", "lg"],
@@ -86,9 +86,7 @@ export function validateProjectFields(raw: Record<string, unknown>): { ok: true;
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(l)) {
       if (v === undefined) continue;
-      if (k === "showTitle") {
-        if (typeof v !== "boolean") return { ok: false, reason: "layout.showTitle must be true or false" };
-      } else if (Object.hasOwn(PROJECT_ENUMS, k)) {
+      if (Object.hasOwn(PROJECT_ENUMS, k)) {
         const allowed = PROJECT_ENUMS[k as keyof typeof PROJECT_ENUMS] as readonly string[];
         if (typeof v !== "string" || !allowed.includes(v)) return { ok: false, reason: `layout.${k} must be one of ${allowed.join(", ")}` };
       } else return { ok: false, reason: `unknown layout field: ${k}` };

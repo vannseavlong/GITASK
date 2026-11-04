@@ -60,7 +60,6 @@ export interface ProjectLayout {
   align: "left" | "center" | "right";
   size: "sm" | "md" | "lg";
   logoPosition: "left" | "top" | "right" | "hidden";
-  showTitle: boolean;
 }
 
 /** A validated logo: a file inside `Tasks/` (no bytes here; hosts serve it). */

@@ -7,6 +7,12 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - Task: Ext-ui-polish-2 (T-0081) · Branch/PR: fix/ui-polish-2
 - What changed: the Activity heatmap now scales to the card width (aspect kept, 480 px minimum then scrolls) and no month label can clip. Removed the "Split into backend / UX/UI / frontend" button and `SPLIT_TEMPLATE`; sub-tasks are added by hand.
 
+## 2026-11-05 · [Ext] fix: project header polish
+- Owner: SNLRLONG
+- Task: Ext-project-header-polish (T-0083) · Branch/PR: fix/project-header-polish
+- What changed: The logo upload is now a drop zone (idle, drag-over, selected with checkerboard thumbnail, name, size, Replace and Remove, and an in-area error) over a hidden file input, with keyboard support. The "Hide the title" option (`layout.showTitle`) is removed from the dialog, header, report, config rules and protocol; an old key in `gitask.json` is ignored on read and dropped on the next save. The header's "Customize header" button became a kebab menu in the corner (a quiet "Add project header" action when there is no project).
+- Needs: none
+
 ## 2026-11-05 · [Core] refactor: one shared "delete needs confirmed" rule
 - Owner: SNLRLONG
 - Task: Core-confirm-rule-shared (T-0080) · Branch/PR: refactor/confirm-rule-shared

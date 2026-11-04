@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadBoard, parseProject, readProject, setProject, isLogoPath, resolveLogo, MAX_LOGO_BYTES } from "../src/index.ts";
 
-const DEFAULTS = { align: "left", size: "md", logoPosition: "left", showTitle: true };
+const DEFAULTS = { align: "left", size: "md", logoPosition: "left" };
 
 function setup(git = false) {
   const root = mkdtempSync(join(tmpdir(), "gitask-proj-"));
@@ -31,13 +31,14 @@ test("parseProject: defaults for missing, malformed and wrong-typed input", () =
   for (const t of ["", "not json", "[]", "null", "{}", '{"project":5}', '{"project":[]}', '{"project":null}']) {
     assert.deepEqual(parseProject(t), { layout: DEFAULTS }, t);
   }
-  const p = parseProject(JSON.stringify({ project: { title: 5, subtitle: {}, logo: 7, layout: { align: "middle", size: 3, logoPosition: "bottom", showTitle: "yes" } } }));
+  const p = parseProject(JSON.stringify({ project: { title: 5, subtitle: {}, logo: 7, layout: { align: "middle", size: 3, logoPosition: "bottom" } } }));
   assert.deepEqual(p, { layout: DEFAULTS });
 });
 
 test("parseProject: good values, trimmed; each bad layout field falls back alone", () => {
   const p = parseProject(JSON.stringify({ project: { title: "  Acme  ", subtitle: "Plans", logo: "assets/a.SVG", layout: { align: "center", size: "lg", logoPosition: "nope", showTitle: false } } }));
-  assert.deepEqual(p, { title: "Acme", subtitle: "Plans", logo: "assets/a.SVG", layout: { align: "center", size: "lg", logoPosition: "left", showTitle: false } });
+  // an old showTitle key is ignored, never copied into the layout
+  assert.deepEqual(p, { title: "Acme", subtitle: "Plans", logo: "assets/a.SVG", layout: { align: "center", size: "lg", logoPosition: "left" } });
 });
 
 test("parseProject: control characters and bidi marks are replaced, length is capped", () => {
@@ -140,15 +141,24 @@ test("setProject: writes, merges layout, keeps unrelated and unknown keys, clear
   const { tasks } = setup();
   cfg(tasks, { other: 1, columns: { "1-backlog": { color: "#112233" } }, project: { future: "keep", layout: { custom: 1 } } });
   await setProject(tasks, { title: " Acme ", subtitle: "Sub", logo: "logo.png", layout: { align: "center" } });
-  await setProject(tasks, { layout: { size: "lg", showTitle: false } });
+  await setProject(tasks, { layout: { size: "lg" } });
   let j = JSON.parse(readFileSync(join(tasks, "gitask.json"), "utf8"));
   assert.equal(j.other, 1);
   assert.equal(j.columns["1-backlog"].color, "#112233");
-  assert.deepEqual(j.project, { future: "keep", title: "Acme", subtitle: "Sub", logo: "logo.png", layout: { custom: 1, align: "center", size: "lg", showTitle: false } });
+  assert.deepEqual(j.project, { future: "keep", title: "Acme", subtitle: "Sub", logo: "logo.png", layout: { custom: 1, align: "center", size: "lg" } });
   await setProject(tasks, { title: null, subtitle: null, logo: null });
   j = JSON.parse(readFileSync(join(tasks, "gitask.json"), "utf8"));
   assert.deepEqual(Object.keys(j.project).sort(), ["future", "layout"]);
   assert.equal(await readProject(tasks), undefined);
+});
+
+test("setProject: a stale showTitle is dropped when the project block is rewritten", async () => {
+  const { tasks } = setup();
+  cfg(tasks, { project: { title: "Acme", layout: { align: "center", showTitle: false } } });
+  assert.deepEqual((await readProject(tasks))?.layout, { ...DEFAULTS, align: "center" });
+  await setProject(tasks, { subtitle: "Sub" }); // no layout in the patch: the stale key still goes
+  const j = JSON.parse(readFileSync(join(tasks, "gitask.json"), "utf8"));
+  assert.deepEqual(j.project, { title: "Acme", subtitle: "Sub", layout: { align: "center" } });
 });
 
 test("setProject: creates the file; empty project block is removed", async () => {
@@ -169,7 +179,7 @@ test("setProject: rejects bad input and writes nothing", async () => {
     { layout: { align: "middle" } },
     { layout: { size: "xl" } },
     { layout: { logoPosition: "bottom" } },
-    { layout: { showTitle: "yes" } },
+    { layout: { showTitle: true } },
     { layout: { colour: "red" } },
     { layout: [] },
     { title: "x".repeat(81) },
