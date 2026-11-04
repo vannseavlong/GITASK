@@ -1071,25 +1071,6 @@ a,
   border-color: var(--accent-border-hover);
 }
 
-.download-card.is-primary {
-  border-color: var(--accent-border-hover);
-  background: var(--accent-soft);
-}
-
-.download-card .button.full {
-  justify-content: center;
-}
-
-.download-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.download-stack[data-os="mobile"] .two-grid {
-  order: -1;
-}
-
 .two-grid {
   grid-template-columns: repeat(2, 1fr);
 }
@@ -1132,10 +1113,20 @@ a,
   white-space: nowrap;
 }
 
-.os-grid .install-code code {
-  overflow: visible;
-  white-space: normal;
-  word-break: break-all;
+.install-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.download-card .release-status {
+  min-height: 0;
+  margin: 10px 0 0;
+  text-align: left;
+}
+
+.download-card .release-error {
+  margin: 10px 0 0;
 }
 
 .install-code code:focus-visible,
@@ -1682,6 +1673,11 @@ a,
     align-items: flex-start;
   }
 
+  .install-cta-actions .button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
   .install-cta .icon-tile {
     flex: none;
   }
@@ -1745,4 +1741,11 @@ a,
   .landing .nav-actions .menu-button {
     display: none;
   }
+}
+
+/* Install commands wrap instead of truncating on narrow screens. */
+.download-card .install-code code {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-all;
 }
