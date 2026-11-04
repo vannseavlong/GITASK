@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-04 · [Ext] feat: Ext-verify-in-vscode
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-verify-in-vscode.md
+- Branch/PR: `fix/verify-in-vscode`
+- What changed: Run the extension (F5 on packages/vscode) and `gitask serve` on a workspace with Tasks/, and walk through everything shipped in the UX wave. Nothing in it has been seen in a real VS Code webview or browser yet; only unit tests and headless screenshots back it. Fix bugs found, then move Ext-webview-board to 5-done.
+
 ## 2026-11-05 · [Ext] chore(release): 0.6.0, project header, tab order, Add status
 - Owner: SNLRLONG
 - Task: Ops-release-0-6-0 (T-0077) · Branch/PR: chore/release-0-6-0
