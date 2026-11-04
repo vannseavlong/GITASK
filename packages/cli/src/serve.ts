@@ -218,12 +218,22 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
     if (req.method === "POST" && path === "/api/message") {
       if (!/^application\/json\b/i.test(req.headers["content-type"] ?? "")) return json(res, 415, { error: "content-type must be application/json" });
       let raw: unknown;
-      // Only a logo upload may be larger than a normal message, and only when the client says so; the handler validates the content anyway.
+      // Only a logo upload may be larger than a normal message, and only when the client says so. A declared length over the
+      // cap is refused before any byte is read; the message type is only known after parsing, so a larger body that is not a
+      // `setProject` is refused right after (it never reaches the handler).
       const max = req.headers["x-gitask-upload"] === "logo" ? LOGO_BODY_BYTES : MAX_BODY_BYTES;
-      try { raw = JSON.parse(await readBody(req, o.bodyTimeoutMs, max)); } catch (e) {
+      const declared = Number(req.headers["content-length"]);
+      if (Number.isFinite(declared) && declared > max) { res.setHeader("Connection", "close"); return json(res, 413, { error: "body too large" }); }
+      let size = 0;
+      try {
+        const text = await readBody(req, o.bodyTimeoutMs, max);
+        size = Buffer.byteLength(text);
+        raw = JSON.parse(text);
+      } catch (e) {
         const status = (e as { status?: number }).status ?? 400;
         return json(res, status, { error: status === 413 ? "body too large" : status === 408 ? "request timeout" : "malformed JSON" });
       }
+      if (size > MAX_BODY_BYTES && (raw as { type?: unknown } | null)?.type !== "setProject") return json(res, 413, { error: "body too large" });
       const r = await handler.handle(raw);
       if (r.changed) await push(true);
       return json(res, r.status, { ok: r.status === 200, reply: r.reply });

@@ -15,6 +15,10 @@ export const MAX_LOGO_BYTES = 1024 * 1024;
 export const LOGO_TYPES: Readonly<Record<string, string>> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml" };
 /** Longest base64 text of a logo upload (4 characters per 3 bytes, with padding). */
 export const MAX_LOGO_BASE64 = Math.ceil(MAX_LOGO_BYTES / 3) * 4;
+/** Hex characters of the content hash in a generated logo name (`logo-<hash>.<ext>`). Files from before the change carry 12. */
+export const LOGO_HASH_HEX = 16;
+/** A name this code generates (current or earlier length). Only such a name may ever be deleted as an orphan. */
+export const GENERATED_LOGO_RE = /^logo-([0-9a-f]{12}|[0-9a-f]{16})\.(?:png|jpg|webp|gif|svg)$/;
 /** Largest request body that may carry a logo upload (base64 plus the JSON around it). */
 export const LOGO_BODY_BYTES = MAX_LOGO_BASE64 + 16 * 1024;
 

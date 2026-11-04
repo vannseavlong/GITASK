@@ -13,6 +13,12 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - What changed: the dialog stays open until the host answers `setProject` with the new `projectSaved` reply, and on failure keeps the draft and shows the error; only fields that differ are sent (no change sends nothing and makes no commit); `Board.project.logo` carries a `version` (mtime and size) so a logo replaced by hand under the same name is refetched. Diff logic in `packages/ui/src/lib/project-diff.ts`. See `Docs/architecture/ui.md`, `config.md`.
 - Needs: a check in a real VS Code webview
 
+## 2026-11-05 · [Core] fix: harden project logo handling
+- Owner: SNLRLONG
+- Task: Core-logo-hardening (T-0079) · Branch/PR: fix/logo-hardening
+- What changed: replacing or removing the logo deletes the previous generated `logo-<hex>.<ext>` in the same pathspec commit (only an exact generated name whose content hashes to it; hand-named files never); generated names use 16 hex; `readLogoBytes` verifies after the open that the real path is inside the real Tasks folder and is the same file; `gitask serve` allows the larger body only for `setProject` and refuses an oversize `Content-Length` before reading; SVG logos are checked with an element and attribute allow-list instead of a deny-list (`<image>`, `<a>` and Inkscape/Sodipodi metadata are no longer accepted). See `Docs/architecture/config.md` and `serve.md`.
+- Needs: a separate code and security review; a check in a real VS Code webview
+
 ## 2026-11-05 · [Ext] fix: view tab drag and keyboard polish
 - Owner: SNLRLONG
 - Task: Ext-view-tabs-polish (T-0076) · Branch/PR: fix/view-tabs-polish

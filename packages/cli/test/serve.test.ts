@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, symlinkSync,
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { request, type IncomingMessage } from "node:http";
+import { connect } from "node:net";
 import { startServer, MAX_BODY_BYTES, type RunningServer } from "../src/serve.ts";
 
 const TASK = "# Core-demo\n\n- **Repo:** GITASK\n- **Owner:** Sam\n- **Tier:** T2 · x\n- **Claimed by:** none\n- **Started / updated:** 2026-01-01 / 2026-01-01\n\n## Goal\nDemo.\n";
@@ -230,7 +231,7 @@ test("setProject: a logo upload needs the token and the upload header; hostile o
   const logo = await call(s, "GET", "/api/logo");
   assert.equal(logo.status, 200);
   assert.equal(logo.headers["content-type"], "image/png");
-  assert.match(g("show", "--name-only", "--format=", "HEAD"), /Tasks\/gitask\.json\nTasks\/logo-[0-9a-f]{12}\.png/);
+  assert.match(g("show", "--name-only", "--format=", "HEAD"), /Tasks\/gitask\.json\nTasks\/logo-[0-9a-f]{16}\.png/);
   for (const bad of [
     { type: "setProject", logo: { name: "x.exe", data: "AAAA" } },
     { type: "setProject", logo: { name: "../x.png", data: "AAAA" } },
@@ -244,4 +245,32 @@ test("setProject: a logo upload needs the token and the upload header; hostile o
   assert.equal(JSON.parse(fake.body).reply.type, "projectSaved");
   assert.equal(JSON.parse(fake.body).reply.ok, false);
   assert.equal(readdirSync(tasks).length, before);
+});
+
+test("the upload header only widens the cap for setProject; a declared length over the cap is refused before the body", async () => {
+  const { tasks } = workspace();
+  writeFileSync(join(tasks, "gitask.json"), "{}\n");
+  const s = await boot(tasks);
+  const up = { "X-Gitask-Upload": "logo" };
+  const pad = "x".repeat(MAX_BODY_BYTES + 1024);
+  // another message type with the upload header is still capped at 64 KiB (refused, never handled)
+  assert.equal((await post(s, { type: "createTask", title: pad }, up)).status, 413);
+  assert.equal((await post(s, { pad }, up)).status, 413, "no type at all");
+  assert.equal((await post(s, [pad], up)).status, 413, "not an object");
+  // (without the header the server hangs up mid-body, so the client may see a reset instead of the 413)
+  const bare = await post(s, { type: "createTask", title: pad }).then((r) => r.status, (e: NodeJS.ErrnoException) => (["ECONNRESET", "EPIPE"].includes(String(e.code)) ? 413 : -1));
+  assert.equal(bare, 413, "and without the header");
+  // small messages with the header are untouched
+  assert.equal((await post(s, { type: "setProject", title: "ok" }, up)).status, 200);
+  // a declared Content-Length over the cap is refused with no body sent
+  const status = (head: string) => new Promise<number>((resolve, reject) => {
+    const sock = connect(s.port, "127.0.0.1", () => sock.write(head));
+    let buf = "";
+    sock.on("data", (c) => { buf += c; const m = /^HTTP\/1\.1 (\d+)/.exec(buf); if (m) { sock.destroy(); resolve(Number(m[1])); } });
+    sock.on("error", reject);
+    setTimeout(() => { sock.destroy(); reject(new Error("no early answer")); }, 3000).unref();
+  });
+  const base = (len: number, extra = "") => `POST /api/message HTTP/1.1\r\nHost: 127.0.0.1:${s.port}\r\nX-Gitask-Token: ${s.token}\r\nContent-Type: application/json\r\nContent-Length: ${len}\r\n${extra}\r\n`;
+  assert.equal(await status(base(MAX_BODY_BYTES + 1)), 413, "over 64 KiB without the header");
+  assert.equal(await status(base(5 * 1024 * 1024, "X-Gitask-Upload: logo\r\n")), 413, "over the upload cap");
 });
