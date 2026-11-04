@@ -37,5 +37,10 @@
   "github": {
     "repo": "vannseavlong/GITASK",
     "project": 1
+  },
+  "project": {
+    "title": "GITASK",
+    "subtitle": "Kanban Board Project Management with git",
+    "logo": "logo-bbbfe5bf634cb94d.png"
   }
 }
