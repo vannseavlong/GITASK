@@ -133,3 +133,30 @@ test("validateMessage setProject: valid, invalid and hostile input", () => {
   ];
   for (const m of bad) assert.equal(v(m).ok, false, JSON.stringify(m).slice(0, 80));
 });
+
+test("svg bypass forms from the review are refused, plain svg and embedded images pass", () => {
+  const svg = (inner: string, attrs = "") => up("x.svg", `<svg xmlns="http://www.w3.org/2000/svg"${attrs}>${inner}</svg>`);
+  const bad: [string, { name: string; data: string }][] = [
+    ["slash before handler", up("x.svg", '<svg xmlns="http://www.w3.org/2000/svg"/onload=alert(1)>')],
+    ["quote before handler", up("x.svg", '<svg a="1"onload=alert(1)></svg>')],
+    ["namespaced script", svg('<x:script xmlns:x="http://www.w3.org/1999/xhtml">alert(1)</x:script>')],
+    ["javascript href", svg('<a xlink:href="javascript:alert(1)"><rect/></a>')],
+    ["animate handler", svg('<set attributeName="onload" to="alert(1)"/>')],
+    ["iframe", svg('<iframe src="x"></iframe>')],
+    ["data html href", svg('<image href="data:text/html;base64,AAAA"/>')],
+    ["entity", up("x.svg", '<!DOCTYPE svg [<!ENTITY a "b">]><svg xmlns="http://www.w3.org/2000/svg"/>')],
+  ];
+  for (const [label, u] of bad) assert.throws(() => checkLogoUpload(u), label);
+  assert.equal(checkLogoUpload(svg('<rect width="1" height="1"/>')).ext, "svg");
+  assert.equal(checkLogoUpload(svg('<image href="data:image/png;base64,AAAA"/>')).ext, "svg");
+});
+
+test("a failed commit restores gitask.json, unstages and removes the new logo", async () => {
+  const { root, tasks, g } = setup();
+  const before = readFileSync(join(tasks, "gitask.json"), "utf8");
+  writeFileSync(join(root, ".git", "hooks", "pre-commit"), "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+  await assert.rejects(saveProject(tasks, { title: "Acme", logo: up("a.png", PNG) }));
+  assert.equal(readFileSync(join(tasks, "gitask.json"), "utf8"), before, "config is back to what it was");
+  assert.deepEqual(logos(tasks), [], "the new logo file is gone");
+  assert.equal(g("status", "--porcelain").trim(), "", "nothing left staged or modified");
+});
