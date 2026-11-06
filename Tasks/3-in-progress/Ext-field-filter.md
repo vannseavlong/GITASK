@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new UI controls and webview state (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** Claude (session 334c0cd4), 2026-11-07
 - **Worktree:** `GITASK/GITASK-Ext-field-filter/` · **Branch:** `feat/Ext-field-filter`
-- **Started / updated:** none / 2026-11-07
+- **Started / updated:** 2026-11-07 / 2026-11-07
 - **Docs:** `Tasks/_plans/Core-configurable-fields.md`, `Docs/architecture/config.md`
 - **Depends on:** Core-field-values
 - **Touches:** `packages/ui/src/shell/filter-bar.tsx`, new `field-filter.tsx`, `components/subtasks.tsx`, `views/*.tsx`, `host/types.ts`, `mock-host.ts`, `packages/core/src/protocol.ts` (set field messages), `packages/web/docs/` (new `fields.md` guide + sidebar, written with the docs-writer skill once users can use the feature)
