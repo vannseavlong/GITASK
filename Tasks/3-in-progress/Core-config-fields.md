@@ -4,12 +4,13 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · new config block, shared core types (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** Claude (session 334c0cd4), 2026-11-07
 - **Worktree:** `GITASK/GITASK-Core-config-fields/` · **Branch:** `feat/Core-config-fields`
-- **Started / updated:** none / 2026-11-07
+- **Started / updated:** 2026-11-07 / 2026-11-07
 - **Docs:** `Tasks/_plans/Core-configurable-fields.md`, `Docs/architecture/config.md`
 - **Depends on:** none
 - **Touches:** `packages/core/src/config.ts` (or new `fields-config.ts`), `types.ts`, `board.ts`, `index.ts`, `packages/core/test/`
+- **Web docs:** `packages/web/docs/` page for the `fields` block (docs-writer skill) is part of G7
 
 ## Goal
 Read and validate the `fields` block of `Tasks/gitask.json` (key, label, values with id/label/color, multi) and expose it as `Board.config.fields`. Missing or malformed block yields none; one bad entry is dropped alone; unknown keys are kept on write. Rules are in the plan's "Data and API".
