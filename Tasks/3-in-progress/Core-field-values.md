@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T2 · parser and filter logic in shared core (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** Claude (session 334c0cd4), 2026-11-07
 - **Worktree:** `GITASK/GITASK-Core-field-values/` · **Branch:** `feat/Core-field-values`
-- **Started / updated:** none / 2026-11-07
+- **Started / updated:** 2026-11-07 / 2026-11-07
 - **Docs:** `Tasks/_plans/Core-configurable-fields.md`, `Docs/architecture/config.md`
 - **Depends on:** Core-config-fields
 - **Touches:** `packages/core/src/parse.ts`, `subtasks.ts`, `types.ts`, `packages/ui/src/shell/logic.ts` (filter fn), `packages/vscode/src/*-filter.ts`, tests
