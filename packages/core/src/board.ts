@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { colorOf, readColors, readProject } from "./config.ts";
+import { readFields } from "./fields-config.ts";
 import { parseTask } from "./parse.ts";
 import type { Board, Column } from "./types.ts";
 
@@ -41,5 +42,6 @@ export async function loadBoard(dir: string): Promise<Board> {
     columns.push({ id, label: columnLabel(id), ...(color ? { color } : {}), tasks });
   }
   const project = await readProject(dir);
-  return { dir, columns, ...(project ? { project } : {}) };
+  const fields = await readFields(dir);
+  return { dir, columns, ...(project ? { project } : {}), ...(fields.length ? { config: { fields } } : {}) };
 }

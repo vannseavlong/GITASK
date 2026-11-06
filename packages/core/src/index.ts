@@ -14,6 +14,7 @@ export type { ToggleOptions, ToggleResult } from "./toggle.ts";
 export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf, splitTokens } from "./parse.ts";
 export { parseColors, colorOf, readColors, setColumnColor, isColor, CONFIG_FILE } from "./config.ts";
 export { parseProject, readProject, setProject, resolveLogo, readLogoBytes, logoDataUrl, isLogoPath } from "./config.ts";
+export { parseFields, readFields, isFieldKey, isFieldValueId, MAX_FIELDS, MAX_FIELD_VALUES, RESERVED_FIELD_KEYS } from "./fields-config.ts";
 export { saveProject, checkLogoUpload } from "./project-save.ts";
 export { isPlainSvg } from "./svg-check.ts";
 export type { ColorOptions, ParsedProject, ProjectInput, ProjectOptions } from "./config.ts";

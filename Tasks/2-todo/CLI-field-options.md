@@ -9,7 +9,7 @@
 - **Started / updated:** none / 2026-11-07
 - **Docs:** `Tasks/_plans/Core-configurable-fields.md`, `Docs/architecture/config.md`
 - **Depends on:** Core-field-values
-- **Touches:** `packages/cli/src/commands.ts`, `main.ts`, `handler.ts`, `packages/core/src/report.ts`, `packages/cli/test/`, `packages/cli/README.md`
+- **Touches:** `packages/cli/src/commands.ts`, `main.ts`, `handler.ts`, `packages/core/src/report.ts`, `packages/cli/test/`, `packages/cli/README.md`, `packages/web/docs/` (new `fields.md` guide + sidebar, written with the docs-writer skill once users can use the feature)
 
 ## Goal
 `gitask add --platform app`, `gitask list --platform app`, and a `--by platform` grouping in reports, driven by the config; unknown ids refused with the allowed list in the message.

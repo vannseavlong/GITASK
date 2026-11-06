@@ -9,7 +9,7 @@
 - **Started / updated:** none / 2026-11-07
 - **Docs:** `Tasks/_plans/Core-configurable-fields.md`, `Docs/architecture/config.md`
 - **Depends on:** Core-field-values
-- **Touches:** `packages/ui/src/shell/filter-bar.tsx`, new `field-filter.tsx`, `components/subtasks.tsx`, `views/*.tsx`, `host/types.ts`, `mock-host.ts`, `packages/core/src/protocol.ts` (set field messages)
+- **Touches:** `packages/ui/src/shell/filter-bar.tsx`, new `field-filter.tsx`, `components/subtasks.tsx`, `views/*.tsx`, `host/types.ts`, `mock-host.ts`, `packages/core/src/protocol.ts` (set field messages), `packages/web/docs/` (new `fields.md` guide + sidebar, written with the docs-writer skill once users can use the feature)
 
 ## Goal
 Show the configured fields in the board: badges on cards, list rows and sub-task rows; a filter chip group per field in the filter bar (remembered in `UiState`, "N of M match" counts it); pickers in the detail and sub-task editor. Hidden entirely when no field is configured.
