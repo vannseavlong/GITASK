@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
-import { addColumn, addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete } from "gitask-core";
+import { addColumn, addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskField, setSubtaskLane, setTaskField, syncPeople, toggleSubtask, unconfirmedDelete } from "gitask-core";
 import { readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
@@ -278,6 +278,24 @@ function openBoard(ctx: vscode.ExtensionContext): void {
             if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
             if (m.type === "setSubtaskAssignee") await setSubtaskAssignee(task, m.index, m.assignee ?? undefined, opts);
             else await setSubtaskLane(task, m.index, m.lane ?? undefined, opts);
+          }
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+        return post();
+      }
+      case "setTaskField":
+      case "setSubtaskField": {
+        const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+        const opts = { commit: cfg.get<boolean>("autoCommit", true) };
+        try {
+          if (!task) throw new Error("task not found");
+          const field = board.config?.fields.find((f) => f.key === m.key);
+          if (!field) throw new Error(`"${m.key}" is not a field in gitask.json`);
+          if (m.type === "setTaskField") await setTaskField(task, field, m.ids, opts);
+          else {
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            await setSubtaskField(task, m.index, field, m.ids, opts);
           }
         } catch (e) {
           vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);

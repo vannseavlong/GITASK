@@ -15,6 +15,9 @@ import { NewTaskDialog } from "@/components/new-task-dialog.tsx";
 import { cn } from "@/lib/utils";
 import type { Host } from "@/host/index.ts";
 import { AvatarStack, SubtaskRows } from "@/components/subtasks.tsx";
+import { FieldBadges } from "@/components/fields.tsx";
+import type { FieldDef } from "gitask-core";
+import type { FieldSelection } from "@core-src/field-filter.ts";
 import { involvedPeople, listSubtasks, toggleExpanded } from "@host-src/subtask-logic.ts";
 import { ChevronRight } from "lucide-react";
 import { Assignee } from "@/components/assignee-avatar.tsx";
@@ -64,7 +67,7 @@ function ColorPicker({ col, host }: { col: Column; host: Host }) {
   );
 }
 
-function TaskCard({ t, color, host, people, expanded, onToggle, openTask, onDragStart, onDragEnd }: { t: Task; color?: string; host: Host; people?: readonly Person[]; expanded: boolean; onToggle: () => void; openTask: (path: string) => void; onDragStart: () => void; onDragEnd: () => void }) {
+function TaskCard({ t, color, host, people, fields, selection, expanded, onToggle, openTask, onDragStart, onDragEnd }: { t: Task; color?: string; host: Host; people?: readonly Person[]; fields?: readonly FieldDef[]; selection?: FieldSelection; expanded: boolean; onToggle: () => void; openTask: (path: string) => void; onDragStart: () => void; onDragEnd: () => void }) {
   const open = () => openTask(t.path);
   const [dragging, setDragging] = React.useState(false);
   const pct = t.progress && t.progress.total > 0 ? Math.round((100 * t.progress.done) / t.progress.total) : 0;
@@ -88,6 +91,7 @@ function TaskCard({ t, color, host, people, expanded, onToggle, openTask, onDrag
       <div className="break-words text-[13px]">{t.title}</div>
       <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px]">
         {t.prefix && <Badge>{t.prefix}</Badge>}
+        <FieldBadges fields={fields} values={t.values} />
         {t.tier && <Badge variant={t.tier === "T3" ? "destructive" : "default"}>{t.tier}</Badge>}
         {involvedPeople(t).length > 1 && <AvatarStack task={t} people={people} />}
         <AssigneePicker path={t.path} owner={t.owner} people={people} host={host}>
@@ -116,7 +120,7 @@ function TaskCard({ t, color, host, people, expanded, onToggle, openTask, onDrag
             <ChevronRight className={cn("size-3.5 transition-transform", expanded && "rotate-90")} />
             Sub-tasks
           </button>
-          {expanded && <div className="mt-1"><SubtaskRows task={t} host={host} people={people} /></div>}
+          {expanded && <div className="mt-1"><SubtaskRows task={t} host={host} people={people} fields={fields} selection={selection} /></div>}
         </div>
       )}
     </div>
@@ -170,7 +174,7 @@ export function BoardView({ board, full, host, ui, update, openTask }: ViewProps
               </Button>
             )}
             {col.tasks.map((t) => (
-              <TaskCard key={t.path} t={t} color={col.color} host={host} people={full.people} expanded={openCards.includes(t.path)} onToggle={() => update({ board: { ...ui.board, expanded: toggleExpanded(openCards, t.path) } })} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
+              <TaskCard key={t.path} t={t} color={col.color} host={host} people={full.people} fields={full.config?.fields} selection={ui.fields} expanded={openCards.includes(t.path)} onToggle={() => update({ board: { ...ui.board, expanded: toggleExpanded(openCards, t.path) } })} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
             ))}
           </section>
         ))}

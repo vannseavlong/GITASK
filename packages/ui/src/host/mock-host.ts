@@ -30,16 +30,19 @@ export const FIXTURE: BoardData = {
   people: FIXTURE_PEOPLE,
   github: { repo: "acme/app", project: 3 },
   settings: { staleDays: 14 },
+  config: { fields: [{ key: "platform", label: "Platform", multi: false, values: [
+    { id: "admin-portal", label: "Admin Portal", color: "#3794ff" }, { id: "app", label: "App", color: "#89d185" }, { id: "landing-page", label: "Landing Page", color: "#d18616" },
+  ] }] },
   columns: [
     { id: "1-backlog", label: "backlog", tasks: [task("1-backlog", "Ext-dark-mode", "Dark mode polish", { displayId: "T-0004", tier: "T1", owner: "Ann Roe", due: "2026-11-20", fields: { "started / updated": "2026-10-01 / 2026-10-12" } })] },
     { id: "2-todo", label: "todo", color: "#3794ff", tasks: [
       task("2-todo", "Core-people", "Contributors from git history", { displayId: "T-0035", tier: "T2", owner: "SNLRLONG", due: "2026-11-05", progress: { done: 1, total: 4 }, dependsOn: ["CLI-serve"], subtasks: [
-        { section: "Sub-tasks", text: "Read authors from git log", checked: true, line: 9, col: 3, assignee: "ann-roe", lane: "backend" },
+        { section: "Sub-tasks", text: "Read authors from git log", checked: true, line: 9, col: 3, assignee: "ann-roe", lane: "backend", values: { platform: ["admin-portal"] } },
         { section: "Sub-tasks", text: "Merge duplicate emails", checked: false, line: 10, col: 3, assignee: "bob-ng", lane: "backend" },
-        { section: "Sub-tasks", text: "Contributor list screen", checked: false, line: 11, col: 3, assignee: "SNLRLONG", lane: "frontend" },
-        { section: "Sub-tasks", text: "Empty-state design", checked: false, line: 12, col: 3, lane: "uxui" },
+        { section: "Sub-tasks", text: "Contributor list screen", checked: false, line: 11, col: 3, assignee: "SNLRLONG", lane: "frontend", values: { platform: ["app"] } },
+        { section: "Sub-tasks", text: "Empty-state design", checked: false, line: 12, col: 3, lane: "uxui", values: { platform: ["landing-page"] } },
       ], fields: { "started / updated": "2026-10-20 / 2026-10-28" } }),
-      task("2-todo", "CLI-serve", "Local web server", { displayId: "T-0040", tier: "T3", owner: "Bob Ng", claimedBy: "agent-7", due: "2026-12-01" }),
+      task("2-todo", "CLI-serve", "Local web server", { displayId: "T-0040", tier: "T3", owner: "Bob Ng", claimedBy: "agent-7", due: "2026-12-01", values: { platform: ["admin-portal"] } }),
     ] },
     { id: "3-in-progress", label: "in-progress", color: "#cca700", tasks: [
       task("3-in-progress", "Ext-ui-foundation", "React + shadcn shell and Board", { displayId: "T-0037", tier: "T2", owner: "SNLRLONG", due: "2026-11-02", progress: { done: 1, total: 3 }, subtasks: [
@@ -84,7 +87,14 @@ export function createMockHost(): Host {
   const msgSubs = new Set<Parameters<Host["onMessage"]>[0]>();
   const find = (path: string) => board.columns.flatMap((c) => c.tasks).find((t) => t.path === path);
   const emit = () => { for (const cb of subs) cb(structuredClone(board)); };
-  let state: UiState = {};
+  // `?view=board&platform=app,landing-page&expand=1` opens the page on a view with a field filter (and sub-tasks open) to look at.
+  const qs = typeof location === "undefined" ? new URLSearchParams() : new URLSearchParams(location.search);
+  const paths = board.columns.flatMap((c) => c.tasks.map((t) => t.path));
+  let state: UiState = {
+    ...(qs.get("view") ? { view: qs.get("view")! } : {}),
+    ...(qs.get("platform") ? { fields: { platform: qs.get("platform")!.split(",") } } : {}),
+    ...(qs.get("expand") ? { board: { expanded: paths }, list: { expanded: paths } } : {}),
+  };
   const logos = new Map<string, string>();
   return {
     confirmsDelete: true,
@@ -119,6 +129,14 @@ export function createMockHost(): Host {
           else st.lane = m.lane ?? undefined;
           emit();
         }
+      }
+      if (m.type === "setTaskField") {
+        const t = find(m.path);
+        if (t) { t.values = { ...(t.values ?? {}) }; if (m.ids.length) t.values[m.key] = m.ids; else delete t.values[m.key]; emit(); }
+      }
+      if (m.type === "setSubtaskField") {
+        const st = find(m.path)?.subtasks[m.index];
+        if (st && st.line === m.line) { st.values = { ...(st.values ?? {}) }; if (m.ids.length) st.values[m.key] = m.ids; else delete st.values[m.key]; emit(); }
       }
       if (m.type === "editTask") {
         const t = find(m.path), p = m.patch;

@@ -66,6 +66,6 @@ A task can instead start with a YAML block between two `---` lines holding the s
 
 A **sub-task** is a checkbox line, `- [ ]` or `- [x]`. GITASK counts the checkboxes under `## Done when` and `## Sub-tasks` as the task's progress, shown as `done/total` on the card. Checkboxes in other sections, and in code blocks, are not counted.
 
-Under `## Sub-tasks`, end a line with `@person` and `#lane` to say who does it and which part of the work it is. Only trailing tokens count; a lane must start with a letter. Ticking a box in the board writes that one line and commits that file.
+Under `## Sub-tasks`, end a line with `@person` and `#lane` to say who does it and which part of the work it is. Only trailing tokens count; a lane must start with a letter. Ticking a box in the board writes that one line and commits that file. You can also define your own pick-lists, such as Platform, and set them as `#platform:app` tokens or as a header line; see [Add your own fields](./custom-fields.md).
 
 Next: [see the views](./views.md).

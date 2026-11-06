@@ -35,6 +35,7 @@ Under a `## Sub-tasks` heading, add checkbox lines. End a line with `@person` an
 - [ ] Login screen #frontend
 ```
 
+- Need a team-specific label such as Platform? Add your own [field](./custom-fields.md) and set it as `#platform:app`.
 - `@person` is a person id from `gitask people`. `#lane` is any word, for example `backend`, `uiux` or `frontend`.
 - In the task detail panel you can add, tick, assign and set the lane. **Split into backend / UX/UI / frontend** adds one sub-task for each lane that is missing.
 - In **List**, the chevron expands a row into its sub-tasks. On the **Board**, the **Sub-tasks** toggle on a card does the same.

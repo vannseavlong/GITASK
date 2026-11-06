@@ -2,7 +2,9 @@ import * as React from "react";
 import { ChevronRight } from "lucide-react";
 import type { ListRow } from "@host-src/views/list-logic.ts";
 import { LIST_COLUMNS, listOptions, listView } from "virtual:gitask-list-logic";
-import type { Person } from "gitask-core";
+import type { FieldDef, Person, Task } from "gitask-core";
+import type { FieldSelection } from "@core-src/field-filter.ts";
+import { FieldBadges } from "@/components/fields.tsx";
 import { Assignee } from "@/components/assignee-avatar.tsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,10 +32,10 @@ const FILTERS = [
  * that opens under `row`, or null when the task has nothing to expand. The chevron column and the
  * expansion row below already exist; only this function needs a body.
  */
-export function renderRowExpansion(row: ListRow, ctx?: { board: BoardData; host: Host }): React.ReactNode | null {
+export function renderRowExpansion(row: ListRow, ctx?: { board: BoardData; host: Host; selection?: FieldSelection }): React.ReactNode | null {
   const task = ctx?.board.columns.flatMap((c) => c.tasks).find((t) => t.path === row.path);
   if (!task || !ctx || listSubtasks(task).length === 0) return null;
-  return <SubtaskRows task={task} host={ctx.host} people={ctx.board.people} />;
+  return <SubtaskRows task={task} host={ctx.host} people={ctx.board.people} fields={ctx.board.config?.fields} selection={ctx.selection} />;
 }
 
 function ListFilterSelect({ field, label, value, options, onChange }: { field: string; label: string; value: string; options: string[]; onChange: (v: string) => void }) {
@@ -50,14 +52,14 @@ function ListFilterSelect({ field, label, value, options, onChange }: { field: s
   );
 }
 
-function Cell({ r, k, color, people }: { r: ListRow; k: string; color?: string; people?: Person[] }) {
+function Cell({ r, k, color, people, task, fields }: { r: ListRow; k: string; color?: string; people?: Person[]; task?: Task; fields?: FieldDef[] }) {
   switch (k) {
     case "owner":
       return <TableCell>{r.owner ? <Assignee owner={r.owner} people={people} /> : null}</TableCell>;
     case "displayId":
       return <TableCell className="whitespace-nowrap font-mono opacity-80">{r.displayId}</TableCell>;
     case "title":
-      return <TableCell className="min-w-40 break-words">{r.title}</TableCell>;
+      return <TableCell className="min-w-40 break-words">{r.title}<FieldBadges fields={fields} values={task?.values} className="ml-2 align-middle" /></TableCell>;
     case "status":
       return (
         <TableCell>
@@ -97,6 +99,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
   const f = Object.fromEntries(FILTERS.map(({ key }) => [key, listOptions(all, key).includes((st as Record<string, string | undefined>)[key] ?? "") ? (st as Record<string, string>)[key] : ""]));
   const view = listView(board, { ...st, ...f });
   const rows = view.shown;
+  const byPath = new Map(board.columns.flatMap((c) => c.tasks).map((t) => [t.path, t] as const));
   const color: Record<string, string> = {};
   for (const c of board.columns) if (c.color) color[c.label] = c.color;
 
@@ -106,7 +109,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
     else set({ sort: "", dir: "" });
   };
   const toggle = (path: string) => set({ expanded: toggleExpanded(expandedList, path) });
-  const expandable = rows.filter((r) => renderRowExpansion(r, { board, host }) != null).map((r) => r.path);
+  const expandable = rows.filter((r) => renderRowExpansion(r, { board, host, selection: ui.fields }) != null).map((r) => r.path);
 
   return (
     <div className="p-3">
@@ -154,7 +157,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
           </TableHeader>
           <TableBody>
             {rows.map((r, i) => {
-              const extra = renderRowExpansion(r, { board, host });
+              const extra = renderRowExpansion(r, { board, host, selection: ui.fields });
               const isOpen = extra != null && expanded.has(r.path);
               return (
                 <React.Fragment key={r.path}>
@@ -187,7 +190,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
                         </button>
                       )}
                     </TableCell>
-                    {LIST_COLUMNS.map((c) => <Cell key={c.key} r={r} k={c.key} color={color[r.status]} people={full.people} />)}
+                    {LIST_COLUMNS.map((c) => <Cell key={c.key} r={r} k={c.key} color={color[r.status]} people={full.people} task={byPath.get(r.path)} fields={full.config?.fields} />)}
                     <TableCell>
                       <Button
                         variant="secondary"

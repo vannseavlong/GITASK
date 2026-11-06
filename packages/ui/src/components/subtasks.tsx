@@ -1,5 +1,7 @@
 import * as React from "react";
-import type { Person, Task } from "gitask-core";
+import type { FieldDef, Person, Task } from "gitask-core";
+import { subtaskMatchesFields, type FieldSelection } from "@core-src/field-filter.ts";
+import { FieldBadges, FieldPicker, valuesOf } from "@/components/fields.tsx";
 import { isSubSection, involvedPeople, listSubtasks } from "@host-src/subtask-logic.ts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -77,14 +79,21 @@ export function SubtaskLane({ value, onChange, label }: { value?: string; onChan
   );
 }
 
+/** True when any sub-task of the task carries a value of a selected field (otherwise the task matched through its own header and every row stays). */
+function taskHasFieldValues(task: Task, selection: FieldSelection): boolean {
+  return task.subtasks.some((s) => subtaskMatchesFields(s, selection));
+}
+
 /** Read-only-ish rows: tick, text, assignee avatar, lane badge. Used by the List and the Board card. */
-export function SubtaskRows({ task, host, people }: { task: Task; host: Host; people?: readonly Person[] }) {
-  const rows = listSubtasks(task);
+export function SubtaskRows({ task, host, people, fields, selection }: { task: Task; host: Host; people?: readonly Person[]; fields?: readonly FieldDef[]; selection?: FieldSelection }) {
+  const all = listSubtasks(task);
+  // With a field filter on, a task that matched only through one sub-task shows just the matching rows.
+  const rows = selection && Object.values(selection).some((v) => v.length) ? all.filter(({ sub }) => subtaskMatchesFields(sub, selection) || !taskHasFieldValues(task, selection)) : all;
   if (rows.length === 0) return null;
   return (
     <ul className="m-0 list-none space-y-1 p-0" aria-label={`Sub-tasks of ${task.title}`} data-testid="subtask-rows">
       {rows.map(({ sub, index }) => (
-        <li key={sub.line} className="flex items-center gap-2 text-[12px]">
+        <li key={sub.line} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px]">
           <input
             type="checkbox"
             className="size-3.5 shrink-0 accent-[var(--color-primary)]"
@@ -94,9 +103,10 @@ export function SubtaskRows({ task, host, people }: { task: Task; host: Host; pe
             onKeyDown={(e) => e.stopPropagation()}
             onChange={() => host.send({ type: "toggleSubtask", path: task.path, index, line: sub.line })}
           />
-          <span className={cn("min-w-0 flex-1 break-words", sub.checked && "line-through opacity-60")}>{sub.text}</span>
+          <span className={cn("min-w-24 flex-1 break-words", sub.checked && "line-through opacity-60")}>{sub.text}</span>
           {sub.assignee && <PersonAvatar id={sub.assignee} people={people} />}
           <LaneBadge lane={sub.lane} />
+          <FieldBadges fields={fields} values={sub.values} />
           <ActionMenu label={sub.text} className="size-5" onEdit={() => requestEdit(host, { kind: "subtask", path: task.path, index, line: sub.line })} onDelete={() => requestDelete(host, { kind: "subtask", path: task.path, index, line: sub.line, label: sub.text })} />
         </li>
       ))}
@@ -105,7 +115,7 @@ export function SubtaskRows({ task, host, people }: { task: Task; host: Host; pe
 }
 
 /** Detail panel section: add, tick, assign, set lane. */
-export function SubtasksSection({ task, host, people }: { task: Task; host: Host; people?: readonly Person[] }) {
+export function SubtasksSection({ task, host, people, fields }: { task: Task; host: Host; people?: readonly Person[]; fields?: readonly FieldDef[] }) {
   const rows = listSubtasks(task);
   const [text, setText] = React.useState("");
   const add = () => {
@@ -133,6 +143,9 @@ export function SubtasksSection({ task, host, people }: { task: Task; host: Host
             <span className={cn("min-w-32 flex-1 break-words", sub.checked && "line-through opacity-60")}>{sub.text}</span>
             <SubtaskAssignee value={sub.assignee} people={people} label={`Assignee of ${sub.text}`} onChange={(assignee) => host.send({ type: "setSubtaskAssignee", path: task.path, index, line: sub.line, assignee })} />
             <SubtaskLane value={sub.lane} label={`Lane of ${sub.text}`} onChange={(lane) => host.send({ type: "setSubtaskLane", path: task.path, index, line: sub.line, lane })} />
+            {fields?.map((f) => (
+              <FieldPicker key={f.key} field={f} value={valuesOf(sub.values, f.key)} label={`${f.label} of ${sub.text}`} onChange={(ids) => host.send({ type: "setSubtaskField", path: task.path, index, line: sub.line, key: f.key, ids })} />
+            ))}
             <ActionMenu label={sub.text} onEdit={() => requestEdit(host, { kind: "subtask", path: task.path, index, line: sub.line })} onDelete={() => requestDelete(host, { kind: "subtask", path: task.path, index, line: sub.line, label: sub.text })} />
           </li>
         ))}

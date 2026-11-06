@@ -46,6 +46,7 @@ A bar under the tabs applies to Board, List, Timeline and Overview at once:
 
 - **Date range:** `From` and `To`, by `Due` or `Updated` date. While a range is active, tasks with no usable date are hidden.
 - **People:** tasks a person owns or has a sub-task in, plus **Unassigned**.
+- **Your own fields**, such as **Platform**: one button per field you define in `Tasks/gitask.json`. See [Add your own fields](./custom-fields.md).
 - **Status chips:** click a status to hide or show it everywhere. **Show all** resets.
 
 The filters combine, and are remembered for you only; they are never committed.

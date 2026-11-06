@@ -16,6 +16,8 @@ export interface UiState {
   range?: { from?: string; to?: string; field?: string };
   /** Selected person ids in the People filter (`UNASSIGNED` for tasks without an owner). */
   people?: string[];
+  /** Selected value ids per configured field key (AND across fields, OR within one). */
+  fields?: Record<string, string[]>;
   /** Per-view state, remembered across tab switches. */
   list?: { q?: string; status?: string; tier?: string; owner?: string; sort?: string; dir?: string; /** Task paths whose sub-tasks are open. */ expanded?: string[] };
   board?: { expanded?: string[] };
