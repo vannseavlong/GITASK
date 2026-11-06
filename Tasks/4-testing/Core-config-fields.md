@@ -16,13 +16,13 @@
 Read and validate the `fields` block of `Tasks/gitask.json` (key, label, values with id/label/color, multi) and expose it as `Board.config.fields`. Missing or malformed block yields none; one bad entry is dropped alone; unknown keys are kept on write. Rules are in the plan's "Data and API".
 
 ## Gates (copy the rows your tier needs; write `Skipped Gn: reason` if you skip one)
-- [ ] G1 scope  - [ ] G2 static  - [ ] G3 tests (new logic has tests)  - [ ] G4 run it
-- [ ] G5 code review (fresh agent)  - [ ] G6 security (config is untrusted input)  - [ ] G7 docs sync
+- [x] G1 scope  - [x] G2 static  - [x] G3 tests (new logic has tests)  - [x] G4 run it (loadBoard on temp boards in tests; no UI in this task)
+- [x] G5 code review (fresh agent: no high/medium findings)  - [x] G6 security (same agent; low: no byte cap on gitask.json, shared by all config readers, left for a separate task)  - [x] G7 docs sync (`Docs/architecture/config.md`; web guide comes with Ext-field-filter)
 - [ ] G8 PR message  - [ ] G9 human review (optional)  - [ ] G11 changelog
 
 ## Done when
-- [ ] Valid block parses; every invalid case (reserved key, duplicate, bad colour, over limits, prototype-pollution keys like `__proto__`) is dropped without affecting others
-- [ ] Board without `fields` is byte-identical to today in tests
-- [ ] `Docs/architecture/config.md` updated (G7)
+- [x] Valid block parses; every invalid case (reserved key, duplicate, bad colour, over limits, prototype-pollution keys like `__proto__`) is dropped without affecting others
+- [x] Board without `fields` is byte-identical to today in tests
+- [x] `Docs/architecture/config.md` updated (G7)
 - [ ] Root `CHANGELOG.md` entry added
 - [ ] Worktree and branch removed after merge

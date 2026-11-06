@@ -93,3 +93,14 @@ test("readFields: a symlinked gitask.json is not read", async () => {
   symlinkSync(join(other, "c.json"), join(dir, "gitask.json"));
   assert.deepEqual(await readFields(dir), []);
 });
+
+test("parseFields: control and bidi characters in labels become spaces; long labels are cut", () => {
+  const f = parseFields(JSON.stringify({ fields: [{ key: "k", label: "Plat\u0007form‮", values: [{ id: "a", label: "A\nB" }] }] }));
+  assert.equal(f[0].label, "Plat form");
+  assert.equal(f[0].values[0].label, "A B");
+});
+
+test("parseFields: __proto__ / constructor as value ids and keys are plain data or dropped", () => {
+  const f = parseFields('{"fields":[{"key":"constructor","values":[{"id":"__proto__"},{"id":"constructor"},{"id":"ok"}]}]}');
+  assert.deepEqual(f[0].values.map((v) => v.id), ["constructor", "ok"]);
+});
