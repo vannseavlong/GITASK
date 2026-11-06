@@ -145,3 +145,27 @@ test("filterByFields: AND across fields, OR within one, sub-tasks count", async 
   assert.deepEqual(ids({ platform: ["admin-portal"] }), []);
   assert.equal(filterByFields(board, undefined), board);
 });
+
+test("filter: keys named like Object.prototype members do not crash", () => {
+  const board = { columns: [{ tasks: [{ values: {}, subtasks: [{ values: {} }] }] }] } as unknown as Parameters<typeof filterByFields>[0];
+  for (const k of ["constructor", "toString", "valueOf", "hasOwnProperty"]) assert.deepEqual(filterByFields(board, { [k]: ["x"] }).columns[0].tasks, []);
+});
+
+test("old sub-task text ending in #word:word now reads as a field token (documented)", () => {
+  assert.deepEqual(splitTokens("Fix bug #area:core"), { text: "Fix bug", assignee: undefined, lane: undefined, values: { area: ["core"] } });
+});
+
+test("setTaskField: stale file and non-id text are refused, not overwritten", async () => {
+  const w = ws();
+  writeFileSync(w.file, TASK.replace("- **Owner:** Me", "- **Owner:** Me\n- **Platform:** App, Admin Portal"));
+  const task = (await loadBoard(w.tasks)).columns[0].tasks[0];
+  await assert.rejects(setTaskField(task, multi, ["app"]), /not a value id/);
+  writeFileSync(w.file, TASK.replace("- **Owner:** Me", "- **Owner:** Me\n- **Platform:** app"));
+  await assert.rejects(setTaskField(task, multi, ["app"]), /changed since/);
+});
+
+test("addSubtask drops duplicate ids", async () => {
+  const w = ws();
+  await addSubtask((await loadBoard(w.tasks)).columns[0].tasks[0], "Dup", { values: { platform: ["app", "app"] } });
+  assert.match(readFileSync(w.file, "utf8"), /Dup #platform:app\n$/);
+});

@@ -160,7 +160,8 @@ export async function addSubtask(
   for (const [k, ids] of Object.entries(extra.values ?? {})) {
     if (!isFieldKey(k) || !ids.every(isFieldValueId)) throw new Error(`Invalid field value for "${k}"`);
   }
-  const entry = line("- [ ] ", clean, extra.assignee, extra.lane, extra.values);
+  const values = extra.values && Object.fromEntries(Object.entries(extra.values).map(([k, ids]) => [k, [...new Set(ids)]]));
+  const entry = line("- [ ] ", clean, extra.assignee, extra.lane, values);
 
   await assertTaskFile(task.path);
   const raw = await readFile(task.path, "utf8");

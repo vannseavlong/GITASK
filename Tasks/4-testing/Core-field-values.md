@@ -15,14 +15,14 @@
 Resolve task header values (`- **Platform:** app, admin-portal`) and sub-task `#platform:app` tokens against the config into `Task.values` / `Subtask.values`; add `setTaskField` / `setSubtaskField` writers (commit by pathspec); add a pure `filterByFields` (AND across fields, OR within; a task matches via itself or any sub-task). Plain `#lane` tokens keep working.
 
 ## Gates (copy the rows your tier needs; write `Skipped Gn: reason` if you skip one)
-- [ ] G1 scope  - [ ] G2 static  - [ ] G3 tests (new logic has tests)  - [ ] G4 run it
-- [ ] G5 code review (fresh agent)  - [ ] G6 security (config is untrusted input)  - [ ] G7 docs sync
+- [x] G1 scope  - [x] G2 static  - [x] G3 tests (new logic has tests)  - [x] G4 run it (real temp git repos; no UI in this task)
+- [x] G5 code review (fresh agent: 1 high, 1 medium fixed/documented)  - [x] G6 security (same agent; injection, regex, prototype keys checked)  - [x] G7 docs sync (`Docs/architecture/config.md`, `Docs/requirements/views.md`; web guide with Ext-field-filter)
 - [ ] G8 PR message  - [ ] G9 human review (optional)  - [ ] G11 changelog
 
 ## Done when
-- [ ] Old task files parse exactly as before (lane tests unchanged)
-- [ ] `#platform:app` round-trips through add/set/remove sub-task; unknown id kept and flagged
-- [ ] `filterByFields` tested for AND/OR and the sub-task rollup
-- [ ] `Docs/architecture/config.md` updated (G7)
+- [x] Old task files (one documented exception: a sub-task ending in `#word:word`) parse exactly as before (lane tests unchanged)
+- [x] `#platform:app` round-trips through add/set/remove sub-task; unknown id kept and flagged
+- [x] `filterByFields` tested for AND/OR and the sub-task rollup
+- [x] `Docs/architecture/config.md` updated (G7)
 - [ ] Root `CHANGELOG.md` entry added
 - [ ] Worktree and branch removed after merge

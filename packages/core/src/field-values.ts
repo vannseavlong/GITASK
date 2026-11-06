@@ -5,6 +5,7 @@ import { gitAdd, gitCommitPaths, isTracked, repoRoot } from "./git.ts";
 import { fillTemplate } from "./template.ts";
 import { editHeaderField } from "./taskedit.ts";
 import { checkFieldIds } from "./subtasks.ts";
+import { parseTask } from "./parse.ts";
 import { isFieldValueId } from "./field-rules.ts";
 import type { Board, FieldDef, Subtask, Task } from "./types.ts";
 
@@ -38,11 +39,12 @@ export function applyFieldValues(columns: Board["columns"], defs: readonly Field
   for (const c of columns) for (const t of c.tasks) t.values = taskFieldValues(t, defs);
 }
 
+const own = (v: Record<string, string[]> | undefined, k: string): readonly string[] | undefined => (v && Object.hasOwn(v, k) ? v[k] : undefined);
 const has = (ids: readonly string[] | undefined, want: readonly string[]) => !!ids && want.some((w) => ids.includes(w));
 
 /** Does one sub-task satisfy the selection? Every selected field needs a matching value. */
 export function subtaskMatchesFields(sub: Pick<Subtask, "values">, sel: FieldSelection): boolean {
-  return Object.entries(sel).every(([k, want]) => !want.length || has(sub.values?.[k], want));
+  return Object.entries(sel).every(([k, want]) => !want.length || has(own(sub.values, k), want));
 }
 
 /**
@@ -50,7 +52,7 @@ export function subtaskMatchesFields(sub: Pick<Subtask, "values">, sel: FieldSel
  * value or the value of any of its sub-tasks matches. A field with no selected value is not filtered.
  */
 export function taskMatchesFields(task: Pick<Task, "values" | "subtasks">, sel: FieldSelection): boolean {
-  return Object.entries(sel).every(([k, want]) => !want.length || has(task.values?.[k], want) || task.subtasks.some((s) => has(s.values?.[k], want)));
+  return Object.entries(sel).every(([k, want]) => !want.length || has(own(task.values, k), want) || task.subtasks.some((s) => has(own(s.values, k), want)));
 }
 
 /** The board with only the tasks that match; an empty selection returns the board itself. */
@@ -70,6 +72,12 @@ export async function setTaskField(task: Task, field: FieldDef, ids: readonly st
   checkFieldIds(field, ids);
   await assertTaskFile(task.path);
   const raw = await readFile(task.path, "utf8");
+  const now = parseTask(task.path, task.column, raw).fields;
+  const before = Object.hasOwn(now, field.key) ? now[field.key] : "";
+  if (before !== (Object.hasOwn(task.fields, field.key) ? task.fields[field.key] : "")) throw new Error(`${task.id} changed since it was read; reload and try again`);
+  // A line holding text that is not an id (`App, Admin Portal`) would be lost by the rewrite: leave it to the user.
+  const words = new Set(before.split(/[\s,;]+/).filter(Boolean));
+  if (words.size !== parseFieldList(before).length) throw new Error(`The ${field.label} line in ${task.id} holds text that is not a value id; edit it in the file`);
   const out = editHeaderField(raw, headerName(field.key), ids.join(", "));
   if (out === raw) return { path: task.path, changed: false, committed: false };
   await writeFile(task.path, out);
