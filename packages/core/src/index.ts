@@ -15,6 +15,9 @@ export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf, 
 export { parseColors, colorOf, readColors, setColumnColor, isColor, CONFIG_FILE } from "./config.ts";
 export { parseProject, readProject, setProject, resolveLogo, readLogoBytes, logoDataUrl, isLogoPath } from "./config.ts";
 export { parseFields, readFields, isFieldKey, isFieldValueId, MAX_FIELDS, MAX_FIELD_VALUES, RESERVED_FIELD_KEYS } from "./fields-config.ts";
+export { setTaskField, filterByFields, taskMatchesFields, subtaskMatchesFields, taskFieldValues, parseFieldList, headerName, FIELD_MESSAGE } from "./field-values.ts";
+export type { FieldSelection, FieldOptions } from "./field-values.ts";
+export { editHeaderField } from "./taskedit.ts";
 export { saveProject, checkLogoUpload } from "./project-save.ts";
 export { isPlainSvg } from "./svg-check.ts";
 export type { ColorOptions, ParsedProject, ProjectInput, ProjectOptions } from "./config.ts";
@@ -26,7 +29,7 @@ export type { AddColumnOptions, AddColumnResult, StatusNameResult } from "./add-
 export type { DeleteOptions, DeleteResult, DeleteImpact } from "./delete.ts";
 export { addPerson, listPeople, readPeople, parsePeople, syncPeople, setOwner, setOwnerField, personId, PEOPLE_MESSAGE, OWNER_MESSAGE } from "./people.ts";
 export type { Person, PeopleOptions, OwnerResult } from "./people.ts";
-export { addSubtask, editSubtask, deleteSubtask, setSubtaskAssignee, setSubtaskLane, SUBTASK_MESSAGE } from "./subtasks.ts";
+export { addSubtask, editSubtask, deleteSubtask, setSubtaskAssignee, setSubtaskLane, setSubtaskField, checkFieldIds, SUBTASK_MESSAGE } from "./subtasks.ts";
 export type { SubtaskOptions, SubtaskResult } from "./subtasks.ts";
 export { updateTask, editTaskText, isRealDay, EDIT_TASK_MESSAGE, MAX_TITLE, MAX_CLAIMED, TIERS } from "./taskedit.ts";
 export type { TaskPatch, TaskEditOptions, TaskEditResult } from "./taskedit.ts";

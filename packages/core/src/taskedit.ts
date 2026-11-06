@@ -113,6 +113,15 @@ function setField(d: Doc, name: string, value: (old: string | undefined) => stri
   insertAt(d, start, [line, ""]);
 }
 
+/** Return `content` with one `- **Name:** value` header line set (`""` leaves the line empty). Other lines are untouched. */
+export function editHeaderField(content: string, name: string, value: string): string {
+  if (!/^[A-Za-z][A-Za-z0-9-]*$/.test(name)) throw new Error(`Invalid header name "${name}"`);
+  if (/[\r\n]/.test(value)) throw new Error("A header value must be one line");
+  const d = toDoc(content);
+  setField(d, name, () => value);
+  return fromDoc(d);
+}
+
 /**
  * Return `content` with the patched header fields and title. Only those lines change (a missing field is inserted
  * after the last header field); every line keeps its own line ending. Throws on a value that is not one clean line.

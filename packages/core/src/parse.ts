@@ -1,4 +1,5 @@
 import type { Progress, Subtask, Task } from "./types.ts";
+import { isFieldKey, isFieldValueId } from "./field-rules.ts";
 
 const FIELD = /^\s*[-*]\s+\*\*([^*:]+):\*\*\s*(.*)$/;
 const CHECKBOX = /(?<=^|\s)[-*]\s+\[([ xX])\](?=\s|$)/g;
@@ -41,6 +42,7 @@ function unquote(raw: string): string {
 }
 
 const SUBTASK_SECTION = /^sub-?tasks\b/i;
+const FIELD_TAIL = /\s+#([a-z][a-z0-9-]*):([a-z0-9][a-z0-9-]*)$/;
 const TOKEN_TAIL = /\s+([@#])([A-Za-z0-9_](?:[\w.-]*\w)?)$/;
 
 /**
@@ -48,11 +50,20 @@ const TOKEN_TAIL = /\s+([@#])([A-Za-z0-9_](?:[\w.-]*\w)?)$/;
  * an `@name` or `#12` elsewhere stays text. Lanes must start with a letter (`#12` is an issue number, not a lane).
  * The ids are returned as written; whether a person exists is for the caller to check.
  */
-export function splitTokens(raw: string): { text: string; assignee?: string; lane?: string } {
+export function splitTokens(raw: string): { text: string; assignee?: string; lane?: string; values?: Record<string, string[]> } {
   let text = raw.trim();
   let assignee: string | undefined;
   let lane: string | undefined;
+  const values = new Map<string, string[]>();
   for (;;) {
+    const f = FIELD_TAIL.exec(text);
+    if (f && isFieldKey(f[1]) && isFieldValueId(f[2]) && text.slice(0, f.index).trimEnd()) {
+      const list = values.get(f[1]) ?? [];
+      if (!list.includes(f[2])) list.unshift(f[2]); // tokens are read from the end; keep file order
+      values.set(f[1], list);
+      text = text.slice(0, f.index).trimEnd();
+      continue;
+    }
     const m = TOKEN_TAIL.exec(text);
     if (!m || (m[1] === "#" && !/^[A-Za-z]/.test(m[2]))) break;
     const rest = text.slice(0, m.index).trimEnd();
@@ -61,7 +72,7 @@ export function splitTokens(raw: string): { text: string; assignee?: string; lan
     else lane = m[2];
     text = rest;
   }
-  return { text, assignee, lane };
+  return { text, assignee, lane, ...(values.size ? { values: Object.fromEntries(values) } : {}) };
 }
 
 /** True for the `## Sub-tasks` section title. */
@@ -101,6 +112,7 @@ export function parseSubtasks(content: string): Subtask[] {
       };
       if ("assignee" in split && split.assignee) sub.assignee = split.assignee;
       if ("lane" in split && split.lane) sub.lane = split.lane;
+      if ("values" in split && split.values) sub.values = split.values;
       out.push(sub);
     });
   });

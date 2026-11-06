@@ -4,22 +4,13 @@ import type { FieldDef, FieldValueDef } from "./types.ts";
 import { CONFIG_FILE, isColor } from "./config.ts";
 import { assertRegularFile } from "./taskfile.ts";
 import { cleanText } from "./project-rules.ts";
+import { RESERVED_FIELD_KEYS, isFieldKey, isFieldValueId } from "./field-rules.ts";
 
 export const MAX_FIELDS = 8;
 export const MAX_FIELD_VALUES = 30;
 export const MAX_FIELD_LABEL = 40;
 
-const KEY_RE = /^[a-z][a-z0-9-]{0,23}$/;
-const VALUE_RE = /^[a-z0-9][a-z0-9-]{0,31}$/;
-
-/** Header keys a task already uses; a field with one of these keys would shadow it. */
-export const RESERVED_FIELD_KEYS: readonly string[] = [
-  "id", "repo", "owner", "tier", "claimed", "claimed-by", "worktree", "branch", "started", "updated", "due",
-  "docs", "depends", "depends-on", "touches", "status", "title", "lane", "assignee", "people",
-];
-
-export const isFieldKey = (v: unknown): v is string => typeof v === "string" && KEY_RE.test(v) && !RESERVED_FIELD_KEYS.includes(v);
-export const isFieldValueId = (v: unknown): v is string => typeof v === "string" && VALUE_RE.test(v);
+export { RESERVED_FIELD_KEYS, isFieldKey, isFieldValueId };
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 

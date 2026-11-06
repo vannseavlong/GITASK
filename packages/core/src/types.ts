@@ -12,6 +12,8 @@ export interface Subtask {
   assignee?: string;
   /** Lane from a trailing `#lane` token (only under `## Sub-tasks`), e.g. `backend`. */
   lane?: string;
+  /** Configurable-field values from trailing `#key:id` tokens (only under `## Sub-tasks`), e.g. `{ platform: ["app"] }`. Not checked against the config. */
+  values?: Record<string, string[]>;
 }
 
 export interface Progress {
@@ -43,6 +45,8 @@ export interface Task {
   due?: string;
   /** Ids of existing tasks named in `Depends on`. */
   dependsOn: string[];
+  /** Values of configured fields from the header (`- **Platform:** app, admin-portal`), by field key. Set by `loadBoard` only when fields are configured. */
+  values?: Record<string, string[]>;
 }
 
 export interface Column {
