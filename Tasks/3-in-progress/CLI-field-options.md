@@ -4,9 +4,9 @@
 - **Repo:** GITASK
 - **Owner:** SNLRLONG
 - **Tier:** T1 · CLI flags over finished core API (auto picker, see `PIPELINE.md`)
-- **Claimed by:** none
+- **Claimed by:** Claude (session 334c0cd4), 2026-11-07
 - **Worktree:** `GITASK/GITASK-CLI-field-options/` · **Branch:** `feat/CLI-field-options`
-- **Started / updated:** none / 2026-11-07
+- **Started / updated:** 2026-11-07 / 2026-11-07
 - **Docs:** `Tasks/_plans/Core-configurable-fields.md`, `Docs/architecture/config.md`
 - **Depends on:** Core-field-values
 - **Touches:** `packages/cli/src/commands.ts`, `main.ts`, `handler.ts`, `packages/core/src/report.ts`, `packages/cli/test/`, `packages/cli/README.md`, `packages/web/docs/` (new `fields.md` guide + sidebar, written with the docs-writer skill once users can use the feature)
