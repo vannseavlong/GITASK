@@ -81,6 +81,18 @@ An older sub-task that already ends in `#word:word`, for example `Fix bug #area:
 
 The filter works in Overview, Board, List and Timeline together with the date, people and text filters. It is remembered for you only and is never committed.
 
+## From the command line
+
+```bash
+gitask fields                                   # list fields and values
+gitask field set Web-login platform app,admin-portal
+gitask subtask field Web-login 0 platform app   # index from `gitask subtask list`
+gitask board --field platform=app,landing-page  # tasks with App or Landing Page
+gitask report --format md --field platform=app  # done tasks with App
+```
+
+`--field key=id[,id]` can be repeated; fields combine with **and**. An unknown field or value stops with the list of allowed ones. See the [CLI reference](./cli.md).
+
 ## If something looks wrong
 
 - **The Platform button is missing:** the `fields` block is not valid JSON, or no entry passed the rules above. Check the file.
