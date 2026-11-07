@@ -27,3 +27,26 @@ export function filterByFields<B extends { columns: { tasks: Pick<Task, "values"
   return { ...board, columns: board.columns.map((c) => ({ ...c, tasks: c.tasks.filter((t) => taskMatchesFields(t, sel)) })) };
 }
 
+
+/**
+ * The sub-tasks of a task worth showing under an active selection. All of them when nothing is selected or when the
+ * task's own header already satisfies every selected field; otherwise the ones that carry a selected value of any
+ * selected field (a task can match through different sub-tasks for different fields).
+ */
+export function visibleSubtasks<S extends Pick<Subtask, "values">>(task: { values?: Record<string, string[]> }, subtasks: readonly S[], sel: FieldSelection | undefined): S[] {
+  const active = Object.entries(sel ?? {}).filter(([, want]) => want.length);
+  if (!active.length) return [...subtasks];
+  if (active.every(([k, want]) => has(own(task.values, k), want))) return [...subtasks];
+  return subtasks.filter((s) => active.some(([k, want]) => has(own(s.values, k), want)));
+}
+
+/** The selection without fields or values the config no longer lists, so a stale remembered choice cannot hide every task. */
+export function pruneFieldSelection(sel: FieldSelection | undefined, defs: readonly { key: string; values: readonly { id: string }[] }[] | undefined): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const f of defs ?? []) {
+    if (!sel || !Object.hasOwn(sel, f.key)) continue;
+    const ids = sel[f.key].filter((id) => f.values.some((v) => v.id === id));
+    if (ids.length) out[f.key] = ids;
+  }
+  return out;
+}

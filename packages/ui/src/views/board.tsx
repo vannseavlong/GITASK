@@ -17,7 +17,7 @@ import type { Host } from "@/host/index.ts";
 import { AvatarStack, SubtaskRows } from "@/components/subtasks.tsx";
 import { FieldBadges } from "@/components/fields.tsx";
 import type { FieldDef } from "gitask-core";
-import type { FieldSelection } from "@core-src/field-filter.ts";
+import { pruneFieldSelection, type FieldSelection } from "@core-src/field-filter.ts";
 import { involvedPeople, listSubtasks, toggleExpanded } from "@host-src/subtask-logic.ts";
 import { ChevronRight } from "lucide-react";
 import { Assignee } from "@/components/assignee-avatar.tsx";
@@ -174,7 +174,7 @@ export function BoardView({ board, full, host, ui, update, openTask }: ViewProps
               </Button>
             )}
             {col.tasks.map((t) => (
-              <TaskCard key={t.path} t={t} color={col.color} host={host} people={full.people} fields={full.config?.fields} selection={ui.fields} expanded={openCards.includes(t.path)} onToggle={() => update({ board: { ...ui.board, expanded: toggleExpanded(openCards, t.path) } })} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
+              <TaskCard key={t.path} t={t} color={col.color} host={host} people={full.people} fields={full.config?.fields} selection={pruneFieldSelection(ui.fields, full.config?.fields)} expanded={openCards.includes(t.path)} onToggle={() => update({ board: { ...ui.board, expanded: toggleExpanded(openCards, t.path) } })} openTask={openTask} onDragStart={() => (dragging.current = t)} onDragEnd={() => (dragging.current = null)} />
             ))}
           </section>
         ))}

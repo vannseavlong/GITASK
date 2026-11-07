@@ -8,17 +8,18 @@ import type { BoardData, UiState } from "@/host/index.ts";
 import { filterPeople } from "@host-src/people-filter.ts";
 import { PeopleFilter } from "./people-filter.tsx";
 import { FieldFilters } from "@/components/fields.tsx";
-import { filterByFields } from "@core-src/field-filter.ts";
+import { filterByFields, pruneFieldSelection } from "@core-src/field-filter.ts";
 import { countTasks, filterBoard, rangeActive, rangeNorm, type Range } from "./logic.ts";
 
 /** Text filter plus the date range. The state is shared by every tab and remembered. */
 export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; range: Range; board: BoardData | null; onChange: (p: Partial<UiState>) => void; extra?: React.ReactNode }) {
   const active = rangeActive(range);
   const peopleOn = (ui.people?.length ?? 0) > 0;
-  const fieldsOn = Object.values(ui.fields ?? {}).some((v) => v.length > 0);
+  const fieldSel = pruneFieldSelection(ui.fields, board?.config?.fields);
+  const fieldsOn = Object.keys(fieldSel).length > 0;
   const total = countTasks(board);
   const dated = filterBoard(board, range) as BoardData | null;
-  const shown = countTasks(dated ? filterByFields(filterPeople(dated, ui.people, board?.people), ui.fields) : dated);
+  const shown = countTasks(dated ? filterByFields(filterPeople(dated, ui.people, board?.people), fieldSel) : dated);
   return (
     <div role="group" aria-label="Filters" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-xs">
       <div className="relative">

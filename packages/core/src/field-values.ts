@@ -8,7 +8,7 @@ import { checkFieldIds } from "./subtasks.ts";
 import { parseTask } from "./parse.ts";
 import { isFieldValueId } from "./field-rules.ts";
 import type { Board, FieldDef, Task } from "./types.ts";
-export { filterByFields, taskMatchesFields, subtaskMatchesFields } from "./field-filter.ts";
+export { filterByFields, taskMatchesFields, subtaskMatchesFields, visibleSubtasks, pruneFieldSelection } from "./field-filter.ts";
 export type { FieldSelection } from "./field-filter.ts";
 
 export const FIELD_MESSAGE = "task({id}): set {field}";

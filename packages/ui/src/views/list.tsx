@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import type { ListRow } from "@host-src/views/list-logic.ts";
 import { LIST_COLUMNS, listOptions, listView } from "virtual:gitask-list-logic";
 import type { FieldDef, Person, Task } from "gitask-core";
-import type { FieldSelection } from "@core-src/field-filter.ts";
+import { pruneFieldSelection, type FieldSelection } from "@core-src/field-filter.ts";
 import { FieldBadges } from "@/components/fields.tsx";
 import { Assignee } from "@/components/assignee-avatar.tsx";
 import { Button } from "@/components/ui/button";
@@ -109,7 +109,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
     else set({ sort: "", dir: "" });
   };
   const toggle = (path: string) => set({ expanded: toggleExpanded(expandedList, path) });
-  const expandable = rows.filter((r) => renderRowExpansion(r, { board, host, selection: ui.fields }) != null).map((r) => r.path);
+  const expandable = rows.filter((r) => renderRowExpansion(r, { board, host, selection: pruneFieldSelection(ui.fields, full.config?.fields) }) != null).map((r) => r.path);
 
   return (
     <div className="p-3">
@@ -157,7 +157,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
           </TableHeader>
           <TableBody>
             {rows.map((r, i) => {
-              const extra = renderRowExpansion(r, { board, host, selection: ui.fields });
+              const extra = renderRowExpansion(r, { board, host, selection: pruneFieldSelection(ui.fields, full.config?.fields) });
               const isOpen = extra != null && expanded.has(r.path);
               return (
                 <React.Fragment key={r.path}>

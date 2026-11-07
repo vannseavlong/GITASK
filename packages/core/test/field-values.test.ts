@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { addSubtask, editSubtask, filterByFields, loadBoard, parseFieldList, parseTask, setSubtaskField, setSubtaskLane, setTaskField, splitTokens } from "../src/index.ts";
+import { addSubtask, editSubtask, filterByFields, pruneFieldSelection, visibleSubtasks, loadBoard, parseFieldList, parseTask, setSubtaskField, setSubtaskLane, setTaskField, splitTokens } from "../src/index.ts";
 import type { FieldDef } from "../src/index.ts";
 
 const platform: FieldDef = {
@@ -168,4 +168,22 @@ test("addSubtask drops duplicate ids", async () => {
   const w = ws();
   await addSubtask((await loadBoard(w.tasks)).columns[0].tasks[0], "Dup", { values: { platform: ["app", "app"] } });
   assert.match(readFileSync(w.file, "utf8"), /Dup #platform:app\n$/);
+});
+
+test("visibleSubtasks: header match keeps all rows; otherwise rows with a selected value of any selected field", () => {
+  const subs: { values?: Record<string, string[]> }[] = [{ values: { platform: ["app"] } }, { values: { env: ["prod"] } }, { values: undefined }];
+  assert.equal(visibleSubtasks({ values: {} }, subs, undefined).length, 3);
+  assert.equal(visibleSubtasks({ values: {} }, subs, { platform: [] }).length, 3);
+  assert.deepEqual(visibleSubtasks({ values: {} }, subs, { platform: ["app"] }), [subs[0]]);
+  assert.deepEqual(visibleSubtasks({ values: {} }, subs, { platform: ["app"], env: ["prod"] }), [subs[0], subs[1]]); // different rows satisfy different fields
+  assert.equal(visibleSubtasks({ values: { platform: ["app"] } }, subs, { platform: ["app"] }).length, 3); // header matched: siblings stay
+  assert.deepEqual(visibleSubtasks({ values: {} }, [{ values: {} }], { constructor: ["x"] }), []);
+});
+
+test("pruneFieldSelection drops removed fields and values", () => {
+  const defs = [{ key: "platform", values: [{ id: "app" }, { id: "web" }] }];
+  assert.deepEqual(pruneFieldSelection({ platform: ["app", "gone"], env: ["x"] }, defs), { platform: ["app"] });
+  assert.deepEqual(pruneFieldSelection({ platform: ["gone"] }, defs), {});
+  assert.deepEqual(pruneFieldSelection(undefined, defs), {});
+  assert.deepEqual(pruneFieldSelection({ platform: ["app"] }, undefined), {});
 });

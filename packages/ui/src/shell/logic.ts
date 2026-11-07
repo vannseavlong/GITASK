@@ -2,7 +2,7 @@
 import { statusVisibility } from "@host-src/status-visibility.ts";
 import { countTasks, filterBoard, rangeActive, rangeNorm } from "virtual:gitask-filter-logic";
 import { filterPeople } from "@host-src/people-filter.ts";
-import { filterByFields } from "@core-src/field-filter.ts";
+import { filterByFields, pruneFieldSelection } from "@core-src/field-filter.ts";
 import type { BoardData, UiState } from "@/host/index.ts";
 
 export { countTasks, filterBoard, rangeActive, rangeNorm };
@@ -34,7 +34,7 @@ export function derive(raw: BoardData | null, ui: UiState): Derived {
   const visible = (SV.apply(raw, ui.hiddenStatuses) ?? null) as BoardData | null;
   const byDate = filterBoard(visible, range) as BoardData | null;
   const byPeople = byDate ? filterPeople(byDate, ui.people, raw?.people) : byDate;
-  const byFields = byPeople ? filterByFields(byPeople, ui.fields) : byPeople;
+  const byFields = byPeople ? filterByFields(byPeople, pruneFieldSelection(ui.fields, raw?.config?.fields)) : byPeople;
   const shown = filterText(byFields, ui.filter ?? "");
   return { visible, shown, range };
 }

@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { BoardData, UiState } from "@/host/index.ts";
+import { pruneFieldSelection } from "@core-src/field-filter.ts";
 
 const NONE = "__none";
 
@@ -57,7 +58,9 @@ export function FieldPicker({ field, value, onChange, label }: { field: FieldDef
       </Select>
     );
   }
-  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+  // A change keeps the listed values only: an id the config no longer has would be refused by the host.
+  const known = (ids: readonly string[]) => ids.filter((id) => field.values.some((v) => v.id === id));
+  const toggle = (id: string) => onChange(known(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]));
   return (
     <span role="group" aria-label={label} className="inline-flex flex-wrap gap-1">
       {[...field.values.map((v) => ({ id: v.id, label: v.label })), ...unknown.map((id) => ({ id, label: `${id} (not in gitask.json)` }))].map((v) => (
@@ -73,7 +76,7 @@ export function FieldPicker({ field, value, onChange, label }: { field: FieldDef
 export function FieldFilters({ ui, board, onChange }: { ui: UiState; board: BoardData | null; onChange: (p: Partial<UiState>) => void }) {
   const fields = board?.config?.fields ?? [];
   if (!fields.length) return null;
-  const sel = ui.fields ?? {};
+  const sel = pruneFieldSelection(ui.fields, fields);
   const set = (key: string, ids: string[]) => {
     const next = { ...sel };
     if (ids.length) next[key] = ids;

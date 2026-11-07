@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { FieldDef, Person, Task } from "gitask-core";
-import { subtaskMatchesFields, type FieldSelection } from "@core-src/field-filter.ts";
+import { visibleSubtasks, type FieldSelection } from "@core-src/field-filter.ts";
 import { FieldBadges, FieldPicker, valuesOf } from "@/components/fields.tsx";
 import { isSubSection, involvedPeople, listSubtasks } from "@host-src/subtask-logic.ts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -79,16 +79,12 @@ export function SubtaskLane({ value, onChange, label }: { value?: string; onChan
   );
 }
 
-/** True when any sub-task of the task carries a value of a selected field (otherwise the task matched through its own header and every row stays). */
-function taskHasFieldValues(task: Task, selection: FieldSelection): boolean {
-  return task.subtasks.some((s) => subtaskMatchesFields(s, selection));
-}
-
 /** Read-only-ish rows: tick, text, assignee avatar, lane badge. Used by the List and the Board card. */
 export function SubtaskRows({ task, host, people, fields, selection }: { task: Task; host: Host; people?: readonly Person[]; fields?: readonly FieldDef[]; selection?: FieldSelection }) {
   const all = listSubtasks(task);
-  // With a field filter on, a task that matched only through one sub-task shows just the matching rows.
-  const rows = selection && Object.values(selection).some((v) => v.length) ? all.filter(({ sub }) => subtaskMatchesFields(sub, selection) || !taskHasFieldValues(task, selection)) : all;
+  // With a field filter on, a task that matched through its sub-tasks shows only the rows that carry a selected value.
+  const keep = new Set(visibleSubtasks(task, all.map((r) => r.sub), selection));
+  const rows = all.filter((r) => keep.has(r.sub));
   if (rows.length === 0) return null;
   return (
     <ul className="m-0 list-none space-y-1 p-0" aria-label={`Sub-tasks of ${task.title}`} data-testid="subtask-rows">

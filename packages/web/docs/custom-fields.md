@@ -51,7 +51,7 @@ In the task detail panel, the **Platform** row has a picker. It writes one heade
 - **Platform:** app, admin-portal
 ```
 
-A task with a single-value field (`multi` false) holds one id. Use commas between ids.
+A task with a single-value field (`multi` false) holds one id when you set it in the board. Use commas between ids. When you change a field in the board, ids that are not in `gitask.json` are dropped from that line.
 
 ## Set a field on a sub-task
 
@@ -77,14 +77,14 @@ An older sub-task that already ends in `#word:word`, for example `Fix bug #area:
 
 - Several values of one field mean **or**: App or Landing Page.
 - Several fields mean **and**: Platform App and Environment Prod.
-- A task matches when its own value, or the value of any of its sub-tasks, is selected. On the Board and List, an expanded task then shows only the matching sub-tasks.
+- A task matches when its own value, or the value of any of its sub-tasks, is selected. On the Board and List, an expanded task shows only the sub-tasks that carry a selected value, unless the task's own value already matches.
 
 The filter works in Overview, Board, List and Timeline together with the date, people and text filters. It is remembered for you only and is never committed.
 
 ## If something looks wrong
 
 - **The Platform button is missing:** the `fields` block is not valid JSON, or no entry passed the rules above. Check the file.
-- **A badge looks faded:** the task uses an id that is not in `gitask.json` (for example you removed it). GITASK keeps it as written and never rewrites your task files.
+- **A badge looks faded:** the task uses an id that is not in `gitask.json` (for example you removed it). GITASK keeps it as written until you change that field in the board. A filter choice for a value you removed is ignored.
 - **A header line will not change:** it holds text that is not an id, such as `App, Admin Portal`. Edit that line in the file to ids, for example `app, admin-portal`.
 
 Next: [Read and filter your tasks in the five views](./views.md), or [the task file format](./task-format.md).

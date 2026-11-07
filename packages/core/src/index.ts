@@ -15,7 +15,7 @@ export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf, 
 export { parseColors, colorOf, readColors, setColumnColor, isColor, CONFIG_FILE } from "./config.ts";
 export { parseProject, readProject, setProject, resolveLogo, readLogoBytes, logoDataUrl, isLogoPath } from "./config.ts";
 export { parseFields, readFields, isFieldKey, isFieldValueId, MAX_FIELDS, MAX_FIELD_VALUES, RESERVED_FIELD_KEYS } from "./fields-config.ts";
-export { setTaskField, filterByFields, taskMatchesFields, subtaskMatchesFields, taskFieldValues, parseFieldList, headerName, FIELD_MESSAGE } from "./field-values.ts";
+export { setTaskField, filterByFields, taskMatchesFields, subtaskMatchesFields, visibleSubtasks, pruneFieldSelection, taskFieldValues, parseFieldList, headerName, FIELD_MESSAGE } from "./field-values.ts";
 export type { FieldSelection, FieldOptions } from "./field-values.ts";
 export { editHeaderField } from "./taskedit.ts";
 export { saveProject, checkLogoUpload } from "./project-save.ts";
