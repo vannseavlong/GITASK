@@ -8,6 +8,12 @@ Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext
 - What changed: a `fields` block in `Tasks/gitask.json` defines pick-lists such as Platform (Admin Portal, App, Landing Page). Values live in a task header line (`- **Platform:** app`) and in sub-task tokens (`#platform:app`). The filter bar gets one button per field (AND across fields, OR within one; a task matches through itself or a sub-task, and sub-task rows hide to match); badges on cards, list rows and sub-task rows; pickers in the task detail and per sub-task. New messages `setTaskField` / `setSubtaskField`. CLI: `fields`, `field set`, `subtask field`, `subtask add --field`, `--field key=id` on `board` and `report`. A sub-task ending in `#word:word` now reads as a field value (file unchanged). Web guide `custom-fields.md` (needs 0.6.1), the landing "What's new" block now 0.6.1, CLI reference, READMEs and `Docs/architecture/config.md` / `ui.md` updated.
 - Needs: a check in a real VS Code webview; the release as 0.6.1 (`pnpm bump`, tag and publish by the owner), then `pnpm deploy:web`
 
+## 2026-11-04 · [Ext] feat: Ext-verify-in-vscode
+- Owner: SNLRLONG
+- Task: Tasks/5-done/Ext-verify-in-vscode.md
+- Branch/PR: `fix/verify-in-vscode`
+- What changed: Run the extension (F5 on packages/vscode) and `gitask serve` on a workspace with Tasks/, and walk through everything shipped in the UX wave. Nothing in it has been seen in a real VS Code webview or browser yet; only unit tests and headless screenshots back it. Fix bugs found, then move Ext-webview-board to 5-done.
+
 ## 2026-11-05 · [Ext] chore(release): 0.6.0, project header, tab order, Add status
 - Owner: SNLRLONG
 - Task: Ops-release-0-6-0 (T-0077) · Branch/PR: chore/release-0-6-0
