@@ -122,6 +122,7 @@ export const cliCommands = [
   { command: "gitask assign <task> <person>", text: "Set or clear a task owner.", isNew: true },
   { command: "gitask subtask add|assign|list", text: "Manage a task's checkboxes.", isNew: true },
   { command: "gitask report --format md", text: "Done report by person, to stdout or a file.", isNew: true },
+  { command: "gitask fields | field set", text: "List your custom fields, such as Platform, and set them on a task." },
   { command: "gitask serve", text: "The board in your browser, local and token-protected.", isNew: true },
   { command: "gitask github plan | sync", text: "Dry-run, then sync tasks to GitHub Issues.", isNew: true },
   { command: "gitask board | move | new | changelog", text: "The core commands from earlier releases." },

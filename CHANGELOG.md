@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-07 · [Cross] feat: configurable fields (Platform and more) from gitask.json
+- Owner: SNLRLONG
+- Task: Core-config-fields (T-0084), Core-field-values (T-0085), Ext-field-filter (T-0086), CLI-field-options (T-0087) · Branch/PR: feat/config-fields, feat/field-values, feat/field-filter, feat/cli-field-options (integration/configurable-fields)
+- What changed: a `fields` block in `Tasks/gitask.json` defines pick-lists such as Platform (Admin Portal, App, Landing Page). Values live in a task header line (`- **Platform:** app`) and in sub-task tokens (`#platform:app`). The filter bar gets one button per field (AND across fields, OR within one; a task matches through itself or a sub-task, and sub-task rows hide to match); badges on cards, list rows and sub-task rows; pickers in the task detail and per sub-task. New messages `setTaskField` / `setSubtaskField`. CLI: `fields`, `field set`, `subtask field`, `subtask add --field`, `--field key=id` on `board` and `report`. A sub-task ending in `#word:word` now reads as a field value (file unchanged). Web guide `custom-fields.md`, CLI reference, READMEs and `Docs/architecture/config.md` / `ui.md` updated.
+- Needs: a check in a real VS Code webview; the "What's new" block and version text on the website when the release version is chosen
+
 ## 2026-11-05 · [Ext] chore(release): 0.6.0, project header, tab order, Add status
 - Owner: SNLRLONG
 - Task: Ops-release-0-6-0 (T-0077) · Branch/PR: chore/release-0-6-0
