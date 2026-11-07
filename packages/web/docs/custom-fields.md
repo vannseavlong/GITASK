@@ -4,7 +4,7 @@ description: Define pick-lists like Platform (Admin Portal, App, Landing Page) i
 slug: /custom-fields
 ---
 
-After this page you can add your own pick-list, for example **Platform: Admin Portal, App, Landing Page**, set it on tasks and on the sub-tasks of a task, and filter every view by it. Needs the GITASK release after 0.6.0.
+After this page you can add your own pick-list, for example **Platform: Admin Portal, App, Landing Page**, set it on tasks and on the sub-tasks of a task, and filter every view by it. Needs GITASK 0.6.1.
 
 A **field** is a named list of allowed values that you define once in `Tasks/gitask.json`. Task files only hold the value ids.
 

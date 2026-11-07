@@ -1,12 +1,12 @@
-import { Download, Image as ImageIcon, LayoutGrid, ListPlus, ShieldCheck } from "lucide-react"
+import { Download, Filter, ListChecks, Tags, Terminal } from "lucide-react"
 import { cliCommands, links, whatsNew } from "../content"
 import { CopyButton, SectionHeading } from "./Shared"
 
 const icons = {
-  header: ImageIcon,
-  tabs: LayoutGrid,
-  status: ListPlus,
-  dialog: ShieldCheck,
+  fields: Tags,
+  filter: Filter,
+  subtask: ListChecks,
+  cli: Terminal,
 }
 
 export default function WhatsNew() {
@@ -15,8 +15,8 @@ export default function WhatsNew() {
       <div className="container">
         <SectionHeading
           eyebrow={`New in ${whatsNew.version}`}
-          title="Make the board yours."
-          text="A project header, tabs in your order, new statuses and a clearer delete, in the extension and in the browser."
+          title="Make the board fit your team."
+          text="Define your own fields, such as Platform, and filter the board, the list and the CLI by them."
         />
         <div className="new-grid">
           {whatsNew.items.map((item) => {
