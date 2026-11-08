@@ -9,10 +9,14 @@ gitask new <id> [column]       # create from Tasks/_TEMPLATE.md
 gitask changelog <task>         # add a CHANGELOG.md entry for a done task
 gitask people [--json]          # contributors from git history and Tasks/gitask.json
 gitask assign <task> <person|none>                    # set or clear the Owner (id, name or GitHub login)
-gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>]
+gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>] [--field key=id]
+gitask subtask field <task> <index> <key> <id[,id]|none>   # set a configured field (#key:id) on a sub-task
+gitask fields                   # fields defined in Tasks/gitask.json (for example Platform)
+gitask field set <task> <key> <id[,id]|none>          # set a field in the task header
+gitask board --field key=id[,id]                      # keep tasks with that field value (repeatable; also on report)
 gitask subtask assign <task> <index> <person|none>    # index from `gitask subtask list <task>`
 gitask report --format html|md|csv [--from YYYY-MM-DD] [--to YYYY-MM-DD] \
-              [--people a,b] [--date done|due|updated] [--no-subtasks] [--out file]
+              [--people a,b] [--date done|due|updated] [--no-subtasks] [--field key=id] [--out file]
 gitask github plan [task...]                          # dry run of a GitHub Issues sync
 gitask github sync --yes [task...]                    # apply it (token in GITHUB_TOKEN)
 gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   # the board in your browser

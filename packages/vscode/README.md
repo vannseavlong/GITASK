@@ -50,6 +50,7 @@ A task is a Markdown file. The `#` heading is the title and the `- **Key:** valu
 
 - **Assign:** click the owner on a card (or **+ Assign**) to pick a repo contributor. The **People** filter shows one person's tasks.
 - **Sub-tasks:** under `## Sub-tasks`, write `- [ ] Build login API @sam-lee #backend`. Expand them in List, or with the **Sub-tasks** toggle on a card; add and assign in the task detail.
+- **Your own fields (0.6.1):** add a `fields` list to `Tasks/gitask.json` (for example Platform: Admin Portal, App, Landing Page). Each field gets a filter button, badges on cards and rows, and a picker in the task detail and on each sub-task (`#platform:app`). See the [custom fields guide](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/custom-fields.md).
 - **Export:** the **Export** button builds a "what was done" report by person (HTML, Markdown or CSV) with a live preview. See the [report guide](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/report.md).
 - **GITASK: Sync to GitHub** (opt-in, shows a dry run first) creates issues for your tasks so assignees are notified. It does nothing until `Tasks/gitask.json` has a `github` entry; see [Docs/architecture/github.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/github.md).
 

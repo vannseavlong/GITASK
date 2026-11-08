@@ -20,7 +20,7 @@ Every task has a short ID in its header, `- **ID:** T-0001`, shown on board card
 ## Sub-tasks
 A sub-task is a Markdown checkbox line (`- [ ]` or `- [x]`) in the task file. Card progress counts the `## Done when` section only. Toggling writes the one line and commits that file, following the existing auto-commit setting.
 
-Under `## Sub-tasks` a line may end with `@person` and `#lane` tokens (core: `addSubtask`, `setSubtaskAssignee`, `setSubtaskLane`). The UI shows them Jira-style:
+Under `## Sub-tasks` a line may end with `@person` and `#lane` tokens (core: `addSubtask`, `setSubtaskAssignee`, `setSubtaskLane`). A team can add its own pick-lists (for example Platform) with `#key:id` tokens; see [config.md](../architecture/config.md#fields). The UI shows them Jira-style:
 - **List:** a chevron expands a task into its sub-task rows (tick, text, assignee avatar, lane badge); `Expand all` / `Collapse all`; the open set is remembered in view state.
 - **Board:** a card with sub-tasks has a `Sub-tasks` toggle (keyboard reachable) that shows the same rows in place; stacked avatars show the owner plus assignees, and `done/total` counts `Done when` and `Sub-tasks` checkboxes.
 - **Detail:** a Sub-tasks section to add, tick, assign, set lane, and a "Split into backend / UX/UI / frontend" button that adds one sub-task per missing lane. The rendered Markdown body hides the `## Sub-tasks` checkboxes (the section owns them, `hideSubtaskSection` in `packages/vscode/src/body-logic.ts`); other sections such as `Done when` keep theirs.

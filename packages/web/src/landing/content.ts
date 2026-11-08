@@ -91,27 +91,27 @@ export const commands = [
 export const extensionId = "vannseavlong.gitask-vscode"
 
 export const whatsNew = {
-  version: "0.6.0",
+  version: "0.6.1",
   items: [
     {
-      icon: "header",
-      title: "Your project, on every view",
-      text: "Add a title, subtitle and logo above the board and in reports, and choose the alignment, size and logo position.",
+      icon: "fields",
+      title: "Your own fields",
+      text: "Add a pick-list such as Platform (Admin Portal, App, Landing Page) in Tasks/gitask.json and set it on any task.",
     },
     {
-      icon: "tabs",
-      title: "Tabs in your order",
-      text: "Overview comes first now. Drag the tabs, or use Alt and the arrow keys, to arrange the views the way you work.",
+      icon: "filter",
+      title: "Filter by them",
+      text: "One filter button per field in every view. A task matches through itself or any of its sub-tasks.",
     },
     {
-      icon: "status",
-      title: "Add a status",
-      text: "Create a new column from the board. GITASK makes the next numbered folder and keeps it in git.",
+      icon: "subtask",
+      title: "On every sub-task",
+      text: "Tag a sub-task with #platform:app, or pick the value in the task detail. Badges show on cards and rows.",
     },
     {
-      icon: "dialog",
-      title: "Calmer create and delete",
-      text: "A new task keeps you on the board and opens its detail. Deleting shows what will be removed in a clear dialog.",
+      icon: "cli",
+      title: "In the CLI too",
+      text: "gitask fields, field set and --field on board, report and subtask add, with the allowed values listed on a mistake.",
     },
   ],
 } as const
@@ -122,6 +122,7 @@ export const cliCommands = [
   { command: "gitask assign <task> <person>", text: "Set or clear a task owner.", isNew: true },
   { command: "gitask subtask add|assign|list", text: "Manage a task's checkboxes.", isNew: true },
   { command: "gitask report --format md", text: "Done report by person, to stdout or a file.", isNew: true },
+  { command: "gitask fields | field set", text: "List your custom fields, such as Platform, and set them on a task.", isNew: true },
   { command: "gitask serve", text: "The board in your browser, local and token-protected.", isNew: true },
   { command: "gitask github plan | sync", text: "Dry-run, then sync tasks to GitHub Issues.", isNew: true },
   { command: "gitask board | move | new | changelog", text: "The core commands from earlier releases." },

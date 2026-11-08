@@ -4,6 +4,7 @@
 import type { DeleteImpact } from "./delete.ts";
 import { validateStatusName } from "./status-name.ts";
 import { validateProjectFields, type ProjectFields } from "./project-rules.ts";
+import { isFieldKey, isFieldValueId } from "./field-rules.ts";
 import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 /** Messages the webview may send. */
@@ -16,6 +17,9 @@ export type WebviewMessage =
   | { type: "addSubtask"; path: string; text: string; assignee?: string; lane?: string }
   | { type: "setSubtaskAssignee"; path: string; index: number; line: number; assignee: string | null }
   | { type: "setSubtaskLane"; path: string; index: number; line: number; lane: string | null }
+  /** Set the values of one configured field on a task header (`ids` empty clears it). The host checks `key` and `ids` against `gitask.json`. */
+  | { type: "setTaskField"; path: string; key: string; ids: string[] }
+  | { type: "setSubtaskField"; path: string; index: number; line: number; key: string; ids: string[] }
   | { type: "editSubtask"; path: string; index: number; line: number; text?: string; assignee?: string | null; lane?: string | null }
   /** `confirmed: true` is set only by a UI that has shown the confirm dialog; `gitask serve` and the VS Code extension refuse a delete without it. */
   | { type: "deleteSubtask"; path: string; index: number; line: number; confirmed?: true }
@@ -311,6 +315,19 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       const l = raw.lane;
       if (l !== null && (typeof l !== "string" || l.length > 40 || !LANE.test(l))) return fail("bad lane");
       return { ok: true, message: { type: "setSubtaskLane", path, ...il, lane: l } };
+    }
+    case "setTaskField":
+    case "setSubtaskField": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      const key = raw.key;
+      if (!isFieldKey(key)) return fail("bad field key");
+      const ids = raw.ids;
+      if (!Array.isArray(ids) || ids.length > 30 || !ids.every(isFieldValueId) || new Set(ids).size !== ids.length) return fail("bad field values");
+      if (raw.type === "setTaskField") return { ok: true, message: { type: "setTaskField", path, key, ids } };
+      const il = indexLine(raw);
+      if (typeof il === "string") return fail(il);
+      return { ok: true, message: { type: "setSubtaskField", path, ...il, key, ids } };
     }
     case "editSubtask": {
       const path = taskPathInside(raw.path, ctx);

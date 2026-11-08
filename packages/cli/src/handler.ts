@@ -1,7 +1,7 @@
 // Message handling for `gitask serve`: the same WebviewMessage union the VS Code extension handles,
 // validated by the same `validateMessage`, applied through gitask-core. No http here, so it is testable alone.
 import { basename } from "node:path";
-import { addColumn, addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, saveProject, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskLane, syncPeople, toggleSubtask, unconfirmedDelete, validateMessage } from "gitask-core";
+import { addColumn, addSubtask, applySync, assignIds, createTask, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, loadBoard, moveTask, readGithubConfig, readPeople, readTaskBody, saveProject, serialQueue, setColumnColor, taskCreatedMessage, setSubtaskAssignee, setSubtaskField, setSubtaskLane, setTaskField, syncPeople, toggleSubtask, unconfirmedDelete, validateMessage } from "gitask-core";
 import type { ApplyOptions, HostMessage } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
@@ -180,6 +180,23 @@ export function createHandler(o: HandlerOptions) {
             if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
             if (m.type === "setSubtaskAssignee") await setSubtaskAssignee(task, m.index, m.assignee ?? undefined, { commit });
             else await setSubtaskLane(task, m.index, m.lane ?? undefined, { commit });
+          }
+          return { status: 200, changed: true };
+        } catch (e) {
+          return err(`could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+      case "setTaskField":
+      case "setSubtaskField":
+        try {
+          const b = await loadBoard(o.dir);
+          const task = b.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
+          if (!task) throw new Error("task not found");
+          const field = b.config?.fields.find((f) => f.key === m.key);
+          if (!field) throw new Error(`"${m.key}" is not a field in gitask.json`);
+          if (m.type === "setTaskField") await setTaskField(task, field, m.ids, { commit });
+          else {
+            if (task.subtasks[m.index]?.line !== m.line) throw new Error("the task changed; try again");
+            await setSubtaskField(task, m.index, field, m.ids, { commit });
           }
           return { status: 200, changed: true };
         } catch (e) {

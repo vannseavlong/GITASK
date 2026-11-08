@@ -18,7 +18,8 @@ All commands find the nearest `Tasks/` folder in the current or a parent folder.
 | Command | What it does |
 |---|---|
 | `gitask init` | Create a `Tasks/` folder with six status folders and a template in the current folder |
-| `gitask board` | Print the board |
+| `gitask board [--field key=id[,id]]` | Print the board. `--field` keeps tasks with that [field](./custom-fields.md) value (repeat it for several fields) |
+| `gitask fields` | List the fields defined in `Tasks/gitask.json` and their values |
 | `gitask people [--json]` | List contributors (id, name, GitHub login) |
 
 ## Change tasks
@@ -35,13 +36,23 @@ gitask move Web-login-page 3-in-progress
 gitask assign Web-login-page sam-lee
 ```
 
+## Fields
+
+| Command | What it does |
+|---|---|
+| `gitask fields` | List the fields and their allowed values |
+| `gitask field set <task> <key> <id[,id]\|none>` | Set a field in the task header and commit that file |
+
+An unknown field or value exits non-zero and prints the allowed ones. More in [Add your own fields](./custom-fields.md).
+
 ## Sub-tasks
 
 | Command | What it does |
 |---|---|
-| `gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>]` | Add a checkbox line |
+| `gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>] [--field key=id]` | Add a checkbox line |
 | `gitask subtask list <task>` | List the checkboxes with their index (starting at 0) |
 | `gitask subtask assign <task> <index> <person\|none>` | Set or clear who does it |
+| `gitask subtask field <task> <index> <key> <id[,id]\|none>` | Set or clear a [field](./custom-fields.md) value on a sub-task |
 
 More in [people and sub-tasks](./people-and-subtasks.md).
 
@@ -57,6 +68,7 @@ gitask report --format md --from 2026-10-01 --to 2026-10-31 --out october.md
 | `--from`, `--to` | `YYYY-MM-DD` |
 | `--people a,b` | Only these people |
 | `--date done\|due\|updated` | Which date puts a task in the period |
+| `--field key=id` | Only tasks with that [field](./custom-fields.md) value |
 | `--no-subtasks` | Leave sub-tasks out |
 | `--out file` | Write a file. Without it the report goes to stdout |
 

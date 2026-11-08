@@ -12,6 +12,8 @@ export interface Subtask {
   assignee?: string;
   /** Lane from a trailing `#lane` token (only under `## Sub-tasks`), e.g. `backend`. */
   lane?: string;
+  /** Configurable-field values from trailing `#key:id` tokens (only under `## Sub-tasks`), e.g. `{ platform: ["app"] }`. Not checked against the config. */
+  values?: Record<string, string[]>;
 }
 
 export interface Progress {
@@ -43,6 +45,8 @@ export interface Task {
   due?: string;
   /** Ids of existing tasks named in `Depends on`. */
   dependsOn: string[];
+  /** Values of configured fields from the header (`- **Platform:** app, admin-portal`), by field key. Set by `loadBoard` only when fields are configured. */
+  values?: Record<string, string[]>;
 }
 
 export interface Column {
@@ -79,9 +83,35 @@ export interface Project {
   layout: ProjectLayout;
 }
 
+/** One allowed value of a configured field, e.g. `{ id: "admin-portal", label: "Admin Portal" }`. */
+export interface FieldValueDef {
+  /** Lower-case slug written in task files (`#platform:admin-portal`, `- **Platform:** admin-portal`). */
+  id: string;
+  label: string;
+  /** `#rrggbb`; undefined when not set. */
+  color?: string;
+}
+
+/** A team-defined pick-list from the `fields` block of `Tasks/gitask.json`, e.g. Platform. */
+export interface FieldDef {
+  /** Lower-case slug, the header key and the sub-task token prefix. */
+  key: string;
+  label: string;
+  /** More than one value allowed on a task. */
+  multi: boolean;
+  values: FieldValueDef[];
+}
+
+/** Validated settings from `Tasks/gitask.json` that hosts need beyond columns and project. */
+export interface BoardConfig {
+  fields: FieldDef[];
+}
+
 export interface Board {
   /** Absolute path to the tasks directory. */
   dir: string;
   columns: Column[];
   project?: Project;
+  /** Present only when at least one field is configured, so a board without the block looks as before. */
+  config?: BoardConfig;
 }

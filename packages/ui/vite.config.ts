@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
   const mock = mode === "mock";
   return {
     plugins: [react(), tailwindcss(), filterLogic()],
-    resolve: { alias: { "@host-src": resolve(import.meta.dirname, "../vscode/src"), "@": resolve(import.meta.dirname, "src") } },
+    resolve: { alias: { "@core-src": resolve(import.meta.dirname, "../core/src"), "@host-src": resolve(import.meta.dirname, "../vscode/src"), "@": resolve(import.meta.dirname, "src") } },
     define: { __MOCK__: JSON.stringify(mock || mode === "development") },
     build: mock
       ? { outDir: process.env.GITASK_UI_MOCK_OUT ?? "dist-mock", emptyOutDir: true }

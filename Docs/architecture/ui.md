@@ -25,6 +25,8 @@ The UI does not copy the tested logic. `status-visibility.ts` is imported as is.
 
 People: `packages/vscode/src/people-filter.ts` (pure, tested; owner-to-person matching, `filterPeople`, `initials`) is imported as is; host handlers for `setOwner`/`addPerson` are in `packages/vscode/src/owner.ts`; components are `components/assignee-avatar.tsx`, `components/assignee-picker.tsx` and `shell/people-filter.tsx`.
 
+Configurable fields (see [config.md](config.md#fields)): `packages/core/src/field-filter.ts` has no imports besides types, so the UI imports it as is through the `@core-src` alias (`vite.config.ts`, `tsconfig.json`). `shell/logic.ts` `derive()` applies it after the people filter and before the text filter; the selection is `UiState.fields` (`{ key: ids }`, a viewing preference, never committed). `components/fields.tsx` holds `FieldFilters` (one filter button per field in the filter bar, drawn only when `Board.config.fields` exists), `FieldBadges` (card, list title, sub-task row) and `FieldPicker` (detail panel, sub-task row). The pickers send `setTaskField` / `setSubtaskField`; `validateMessage` checks the shape (key and ids are slugs, at most 30, no duplicates) and each host checks the key and ids against `gitask.json` through core before writing. `SubtaskRows` hides sub-tasks that do not match an active selection when another sub-task of the task does.
+
 ## Webview and CSP
 
 `packages/vscode/src/html.ts` (`uiHtml`) builds the page; `extension.ts` passes `asWebviewUri` links to `dist/ui/ui.js` and `ui.css`. CSP:

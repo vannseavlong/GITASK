@@ -11,7 +11,7 @@ Built for workspaces installed from [My-Agent-SetUp](https://github.com/vannseav
 | Package | What |
 |---|---|
 | `packages/core` | Parse tasks, build the board, move/create tasks, changelog entries. No VS Code dependency. |
-| `packages/cli` | `gitask board \| move \| new \| changelog \| people \| assign \| subtask \| report \| github \| serve` |
+| `packages/cli` | `gitask board \| move \| new \| changelog \| people \| assign \| subtask \| fields \| field \| report \| github \| serve` |
 | `packages/ui` | The React + shadcn UI, shared by VS Code and `gitask serve` |
 | `packages/vscode` | The VS Code extension (loads the UI in a webview) |
 | `packages/web` | The website and user docs |
@@ -39,6 +39,7 @@ The H1 is the title; `- **Key:** value` lines above the first `##` are the field
 
 - **People:** assign a task to a repo contributor (from git history, never emails). [Docs](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/people-and-subtasks.md)
 - **Sub-tasks:** Jira-style, with `@person #lane` on each checkbox line under `## Sub-tasks`.
+- **Your own fields:** define pick-lists such as Platform (Admin Portal, App, Landing Page) in `Tasks/gitask.json`, set them on tasks and sub-tasks, and filter every view and the CLI by them. [Docs](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/custom-fields.md)
 - **Report:** what was done, by person, as HTML, Markdown or CSV (`gitask report`, or Export in the UI). [Docs](https://github.com/vannseavlong/GITASK/blob/main/packages/web/docs/report.md)
 - **`gitask serve`:** the same UI in a browser, local and token-protected. Security model: `Docs/architecture/serve.md`.
 - **GitHub sync:** opt-in, dry run first, one-way to Issues. `Docs/architecture/github.md`.

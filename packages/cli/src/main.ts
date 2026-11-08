@@ -4,22 +4,25 @@ import { openBrowser } from "./open.ts";
 import { appendChangelog, createTask, initTasks, loadBoard, moveTask, repoRoot } from "gitask-core";
 import type { Board, Task } from "gitask-core";
 import { findTasksDir, noTasksMessage } from "./find-tasks.ts";
-import { assignCmd, githubCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
+import { assignCmd, boardForFields, fieldCmd, fieldsCmd, githubCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
 
 const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
 
   gitask init                       create a Tasks/ folder (six status folders + template) in the current folder
-  gitask board                      print the board
+  gitask board [--field key=id[,id]]   print the board; --field keeps tasks with that value (repeatable)
+  gitask fields                     list the fields defined in Tasks/gitask.json (for example Platform) and their values
+  gitask field set <task> <key> <id[,id]|none>   set a field in the task header
   gitask move <task> <column>       move a task (git mv + commit); column = 2-todo or todo
   gitask new <id> [column]          create a task from _TEMPLATE.md (default column: backlog)
   gitask changelog <task>           add a CHANGELOG.md entry for a task (idempotent)
   gitask people [--json]            list contributors (id, name, GitHub login)
   gitask assign <task> <person|none>   set or clear the task Owner (person = id, name or GitHub login)
-  gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>]
+  gitask subtask add <task> "<text>" [--assign <person>] [--lane <lane>] [--field key=id]
+  gitask subtask field <task> <index> <key> <id[,id]|none>   set a field on a sub-task (#key:id)
   gitask subtask assign <task> <index> <person|none>   index from "subtask list" (0-based)
   gitask subtask list <task>        list a task's checkboxes with their index
   gitask report --format html|md|csv [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--people a,b]
-                [--date done|due|updated] [--no-subtasks] [--out file]   done report by person (stdout without --out)
+                [--date done|due|updated] [--no-subtasks] [--field key=id] [--out file]   done report by person (stdout without --out)
   gitask github plan [task...]      dry run: what a GitHub sync would create/update and who is notified
   gitask github sync --yes [--allow-repo owner/name] [task...]   apply it (token from GITHUB_TOKEN; needs "github" in
                                     Tasks/gitask.json; --allow-repo is required when that repo is not your origin remote)
@@ -62,7 +65,7 @@ async function main(argv: string[]) {
 
   switch (cmd) {
     case "board":
-      for (const c of board.columns) {
+      for (const c of boardForFields(board, parseArgs(argv)).columns) {
         console.log(`\n${c.label} (${c.tasks.length})`);
         for (const t of c.tasks) console.log(`  ${t.tier ?? "--"}  ${t.id}${t.claimedBy ? `  [claimed: ${t.claimedBy}]` : ""}`);
       }
@@ -88,6 +91,10 @@ async function main(argv: string[]) {
       console.log(added ? `changelog entry added for ${t.id}` : `${t.id} already in changelog`);
       return;
     }
+    case "fields":
+      return fieldsCmd(board);
+    case "field":
+      return fieldCmd(board, parseArgs(argv), findTask);
     case "people":
       return peopleCmd(dir, parseArgs(argv));
     case "assign":

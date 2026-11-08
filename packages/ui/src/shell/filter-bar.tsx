@@ -7,15 +7,19 @@ import { Button } from "@/components/ui/button";
 import type { BoardData, UiState } from "@/host/index.ts";
 import { filterPeople } from "@host-src/people-filter.ts";
 import { PeopleFilter } from "./people-filter.tsx";
+import { FieldFilters } from "@/components/fields.tsx";
+import { filterByFields, pruneFieldSelection } from "@core-src/field-filter.ts";
 import { countTasks, filterBoard, rangeActive, rangeNorm, type Range } from "./logic.ts";
 
 /** Text filter plus the date range. The state is shared by every tab and remembered. */
 export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; range: Range; board: BoardData | null; onChange: (p: Partial<UiState>) => void; extra?: React.ReactNode }) {
   const active = rangeActive(range);
   const peopleOn = (ui.people?.length ?? 0) > 0;
+  const fieldSel = pruneFieldSelection(ui.fields, board?.config?.fields);
+  const fieldsOn = Object.keys(fieldSel).length > 0;
   const total = countTasks(board);
   const dated = filterBoard(board, range) as BoardData | null;
-  const shown = countTasks(dated ? filterPeople(dated, ui.people, board?.people) : dated);
+  const shown = countTasks(dated ? filterByFields(filterPeople(dated, ui.people, board?.people), fieldSel) : dated);
   return (
     <div role="group" aria-label="Filters" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-xs">
       <div className="relative">
@@ -23,6 +27,7 @@ export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; 
         <Input type="search" value={ui.filter ?? ""} placeholder="Filter tasks" aria-label="Filter tasks" className="w-56 pl-6" onChange={(e) => onChange({ filter: e.target.value })} />
       </div>
       <PeopleFilter ui={ui} board={board} onChange={onChange} />
+      <FieldFilters ui={ui} board={board} onChange={onChange} />
       <span>Date:</span>
       <Select value={range.field} onValueChange={(field) => onChange({ range: rangeNorm({ ...range, field }) })}>
         <SelectTrigger aria-label="Filter by date" className="h-6 text-xs"><SelectValue /></SelectTrigger>
@@ -38,7 +43,8 @@ export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; 
           <Button variant="ghost" size="sm" onClick={() => onChange({ range: rangeNorm({ field: range.field }) })}>Clear dates</Button>
         </>
       )}
-      {(active || peopleOn) && <span aria-live="polite" className="opacity-80">{shown} of {total} match</span>}
+      {fieldsOn && <Button variant="ghost" size="sm" onClick={() => onChange({ fields: {} })}>Clear fields</Button>}
+      {(active || peopleOn || fieldsOn) && <span aria-live="polite" className="opacity-80">{shown} of {total} match</span>}
     </div>
   );
 }

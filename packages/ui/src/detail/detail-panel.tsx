@@ -10,6 +10,7 @@ import { ActionMenu } from "@/components/action-menu.tsx";
 import { Progress } from "@/components/ui/progress";
 import type { BoardData, Host } from "@/host/index.ts";
 import { SubtasksSection } from "@/components/subtasks.tsx";
+import { FieldPicker, valuesOf } from "@/components/fields.tsx";
 import { hideSubtaskSection } from "@host-src/body-logic.ts";
 import { Markdown, type SubtaskBinding } from "./markdown.tsx";
 
@@ -110,7 +111,19 @@ export function DetailPanel({ host, board, path, onOpenTask, onClose }: {
                 </div>
               )}
             </dl>
-            <SubtasksSection task={task} host={host} people={board?.people} />
+            {board?.config?.fields.length ? (
+              <section className="border-b border-border px-4 py-3" aria-label="Fields" data-testid="task-fields">
+                <dl className="m-0 grid gap-2 text-[13px]">
+                  {board.config.fields.map((f) => (
+                    <div key={f.key} className="flex flex-wrap items-center gap-2">
+                      <dt className="min-w-24 text-[11px] uppercase opacity-70">{f.label}</dt>
+                      <dd className="m-0"><FieldPicker field={f} value={valuesOf(task.values, f.key)} label={f.label} onChange={(ids) => host.send({ type: "setTaskField", path: task.path, key: f.key, ids })} /></dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ) : null}
+            <SubtasksSection task={task} host={host} people={board?.people} fields={board?.config?.fields} />
             <div className="min-h-0 overflow-auto px-4 pb-6 pt-2" tabIndex={-1}>
               {text?.error ? (
                 <p className="opacity-75">Cannot show the task text: {text.error}</p>

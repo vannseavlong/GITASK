@@ -117,3 +117,29 @@ test("over HTTP an unconfirmed delete leaves the file in place; ready via POST f
   await post({ type: "ready" });
   assert.ok((await readPeople(tasks)).length >= 2);
 });
+
+test("setTaskField / setSubtaskField through the handler: config decides, one file committed", async () => {
+  const { tasks, g, file } = repo();
+  writeFileSync(join(tasks, "gitask.json"), JSON.stringify({ fields: [{ key: "platform", label: "Platform", values: [{ id: "app", label: "App" }, { id: "landing-page", label: "Landing Page" }] }] }));
+  g("add", "--", "Tasks"); g("commit", "-q", "-m", "cfg");
+  const h = createHandler({ dir: tasks });
+  const sub = { type: "setSubtaskField", path: file, index: 0, line: 10, key: "platform", ids: ["app"] };
+  const r = await h.handle(sub);
+  assert.equal(r.changed, true);
+  assert.match(readFileSync(file, "utf8"), /- \[ \] first #platform:app\n/);
+  assert.match(g("log", "-1", "--format=%s"), /sub-task|first/);
+  assert.equal(g("status", "--porcelain"), "");
+  const t = await h.handle({ type: "setTaskField", path: file, key: "platform", ids: ["landing-page"] });
+  assert.equal(t.changed, true);
+  assert.match(readFileSync(file, "utf8"), /\*\*Platform:\*\* landing-page/);
+  // not in the config: refused with a visible error, file unchanged
+  const before = readFileSync(file, "utf8");
+  const bad = await h.handle({ type: "setTaskField", path: file, key: "env", ids: ["x"] });
+  assert.equal((bad.reply as { type: string }).type, "error");
+  const unknown = await h.handle({ type: "setTaskField", path: file, key: "platform", ids: ["nope"] });
+  assert.equal((unknown.reply as { type: string }).type, "error");
+  assert.equal(readFileSync(file, "utf8"), before);
+  // stale line number
+  const stale = await h.handle({ ...sub, line: 3, ids: ["landing-page"] });
+  assert.equal((stale.reply as { type: string }).type, "error");
+});

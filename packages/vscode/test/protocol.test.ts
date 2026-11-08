@@ -239,3 +239,26 @@ test("editTask rejects checkbox syntax in title and claimed by", () => {
   }
   assert.equal(validateMessage({ type: "editTask", path, patch: { title: "Fix [x] in docs" } }, ctx).ok, true);
 });
+
+test("setTaskField / setSubtaskField validation", () => {
+  const v = (m: unknown) => validateMessage(m, ctx);
+  assert.deepEqual(v({ type: "setTaskField", path: ok, key: "platform", ids: ["app", "admin-portal"] }), { ok: true, message: { type: "setTaskField", path: ok, key: "platform", ids: ["app", "admin-portal"] } });
+  assert.deepEqual(v({ type: "setTaskField", path: ok, key: "platform", ids: [] }).ok, true);
+  assert.deepEqual(v({ type: "setSubtaskField", path: ok, index: 1, line: 9, key: "platform", ids: ["app"] }), { ok: true, message: { type: "setSubtaskField", path: ok, index: 1, line: 9, key: "platform", ids: ["app"] } });
+  for (const bad of [
+    { type: "setTaskField", path: "/etc/passwd.md", key: "platform", ids: [] },
+    { type: "setTaskField", path: ok, key: "Platform", ids: [] },
+    { type: "setTaskField", path: ok, key: "owner", ids: [] },
+    { type: "setTaskField", path: ok, key: "__proto__", ids: [] },
+    { type: "setTaskField", path: ok, key: "platform" },
+    { type: "setTaskField", path: ok, key: "platform", ids: "app" },
+    { type: "setTaskField", path: ok, key: "platform", ids: ["App"] },
+    { type: "setTaskField", path: ok, key: "platform", ids: ["a b"] },
+    { type: "setTaskField", path: ok, key: "platform", ids: ["a\nb"] },
+    { type: "setTaskField", path: ok, key: "platform", ids: ["app", "app"] },
+    { type: "setTaskField", path: ok, key: "platform", ids: Array.from({ length: 31 }, (_, i) => `v${i}`) },
+    { type: "setSubtaskField", path: ok, index: -1, line: 9, key: "platform", ids: [] },
+    { type: "setSubtaskField", path: ok, index: 1, line: 0, key: "platform", ids: [] },
+    { type: "setSubtaskField", path: ok, index: 1, line: 9, key: "platform", ids: [5] },
+  ]) assert.equal(v(bad).ok, false, JSON.stringify(bad));
+});
