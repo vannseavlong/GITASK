@@ -40,7 +40,18 @@ Board cards, List rows (after the title) and the task detail panel show a small 
 
 ## Planning
 
-<!-- Ext-sprint-planning (T-0095) -->
+A **Sprint** tab (after Timeline, only while sprints are on; `GITASK: Show Sprint`, `Ctrl+Alt+G S` in VS Code) to plan and start a sprint. How it is built: [architecture/ui.md](../architecture/ui.md#sprint-planning).
+
+- **Which sprint.** The tab plans the sprint in the switcher's scope; with no sprint in scope, the active sprint, else the newest planned one. A select at the top lists the planned and active sprints; picking one also sets the switcher, so the strip and the other views follow. A closed sprint picked in the switcher shows read-only.
+- **Two panes.** Left, the backlog: tasks with no `Sprint` that are not done, after the filter bar's text, date, people, field and status filters, plus its own search box. Right, the sprint's tasks (all of them; filters do not hide committed work). The panes stack at narrow width.
+- **Add and remove.** Each backlog row has **Add**, each sprint row **Remove**; or drag a row to the other pane. Both buttons are reachable with Tab and work with Enter or Space. A task belongs to one sprint at a time. Each change is one commit of that task file (`task(Core-x): sprint S7` / `sprint none`).
+- **Estimates.** Each row has a small estimate field in the sprint's unit (`pts`, `h`). Enter or leaving the field saves, Escape restores, empty removes; 0-10000 with at most 2 decimals (anything else is marked and not sent). Hidden when `estimate` is `none`.
+- **Capacity bar.** Sum of the sprint's estimates against its `Capacity`: `12 / 30 pts`. Over capacity turns the bar and the numbers red and says "Over capacity: remove tasks or raise the capacity." Without a capacity it shows `12 pts · no capacity set`. Hidden when `estimate` is `none`.
+- **New sprint / Edit sprint.** A dialog with name (default `Sprint <n>`), goal, start, end and capacity. New sprints are `planned` with the next id. Errors (end before start, too long, bad number, or the host's reason) show in the dialog, which stays open. The state is never edited here.
+- **Start sprint.** Only on a planned sprint, and only while no other sprint is active; otherwise the button is disabled and a line says why ("S6 is active. Complete it before starting S7."). Starting sets `State: active`, and Start (today) and End (Start + `lengthDays` - 1) when they are empty. The switcher's Active entry and the strip then show it.
+- **New task in a sprint.** "+ New task in S7" on the tab, and a **Sprint** picker in every New task dialog (shown only with sprints on; closed sprints are not offered). It defaults to the sprint in scope (on the Sprint tab, the planned sprint), else No sprint (backlog).
+- **Empty states.** No sprint yet: "No sprints yet. Plan the first one" with a New sprint button. Empty backlog: "Backlog is empty". Empty sprint: "Add tasks from the backlog: use Add or drag a task here."
+- Sprint names, goals and task titles are shown as plain text.
 
 ## Complete sprint
 

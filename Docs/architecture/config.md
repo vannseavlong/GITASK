@@ -9,7 +9,7 @@ One JSON file in the Tasks folder holds board settings. Code: `packages/core/src
 | `github` | opt-in issue sync | [github.md](github.md) |
 | `project` | title, subtitle, logo, header layout | below |
 | `fields` | team-defined pick-lists such as Platform | [below](#fields) |
-| `defaultView` | view the board opens on when the user has none remembered: `overview` `board` `list` `timeline` | [below](#defaultview) |
+| `defaultView` | view the board opens on when the user has none remembered: `overview` `board` `list` `timeline` `sprint` | [below](#defaultview) |
 | `sprint` | turns sprints on and holds their settings | [below](#sprint), file format in [sprints.md](sprints.md) |
 
 ## `project`
@@ -52,7 +52,7 @@ Paths may contain spaces or non-ASCII characters, so a host must URL-encode them
 { "defaultView": "board" }
 ```
 
-**Reading** (`parseDefaultView` for text, `readDefaultView` for the folder): the value must be exactly one of `BOARD_VIEWS` (`overview`, `board`, `list`, `timeline`, kept equal to the UI registry by a test); missing, unknown, wrong type, malformed or symlinked file means `overview`. Nothing writes it; edit the file by hand. **Use:** a remembered view always wins. VS Code reads it when the panel opens and the workspace has no remembered view (`gitask.lastView`); `gitask serve` reads it for every page load and puts it in `data-initial-view`, and the browser's remembered tab (`gitask.ui` in localStorage) still wins over it.
+**Reading** (`parseDefaultView` for text, `readDefaultView` for the folder): the value must be exactly one of `BOARD_VIEWS` (`overview`, `board`, `list`, `timeline`, `sprint`, kept equal to the UI registry by a test); missing, unknown, wrong type, malformed or symlinked file means `overview`; `sprint` on a board without sprints opens Overview. Nothing writes it; edit the file by hand. **Use:** a remembered view always wins. VS Code reads it when the panel opens and the workspace has no remembered view (`gitask.lastView`); `gitask serve` reads it for every page load and puts it in `data-initial-view`, and the browser's remembered tab (`gitask.ui` in localStorage) still wins over it.
 
 ## `fields`
 

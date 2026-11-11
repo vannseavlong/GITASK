@@ -50,6 +50,7 @@ Press **Ctrl+Alt+G** (macOS: **Cmd+Alt+G**), let go, then press one letter. The 
 | Ctrl+Alt+G B | GITASK: Show Board |
 | Ctrl+Alt+G L | GITASK: Show List |
 | Ctrl+Alt+G T | GITASK: Show Timeline |
+| Ctrl+Alt+G S | GITASK: Show Sprint (only when sprints are on) |
 
 Change them in **Keyboard Shortcuts** (search for `gitask.show`).
 

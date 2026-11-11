@@ -93,7 +93,7 @@ export async function setColumnColor(dir: string, column: string, color: string 
 }
 
 /** The board's views (tab ids of packages/ui/src/views/registry.tsx). `defaultView` must be one of them. */
-export const BOARD_VIEWS = ["overview", "board", "list", "timeline"] as const;
+export const BOARD_VIEWS = ["overview", "board", "list", "timeline", "sprint"] as const;
 export type BoardView = (typeof BOARD_VIEWS)[number];
 export const FALLBACK_VIEW: BoardView = "overview";
 

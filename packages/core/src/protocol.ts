@@ -5,13 +5,16 @@ import type { DeleteImpact } from "./delete.ts";
 import { validateStatusName } from "./status-name.ts";
 import { validateProjectFields, type ProjectFields } from "./project-rules.ts";
 import { isFieldKey, isFieldValueId } from "./field-rules.ts";
+import { cleanText } from "./project-rules.ts";
+import { MAX_ESTIMATE, SPRINT_ID_RE, parseEstimate } from "./parse.ts";
 import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 /** Messages the webview may send. */
 export type WebviewMessage =
   | { type: "ready" }
   | { type: "open"; path: string }
-  | { type: "new"; column?: string; id?: string; title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null }
+  /** `sprint` puts the new task into that sprint (it must exist and not be closed). */
+  | { type: "new"; column?: string; id?: string; title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null; sprint?: string }
   | { type: "move"; path: string; to: string }
   | { type: "toggleSubtask"; path: string; index: number; line: number }
   | { type: "addSubtask"; path: string; text: string; assignee?: string; lane?: string }
@@ -49,7 +52,26 @@ export type WebviewMessage =
    * Apply the sync. The host recomputes the plan itself and holds the token; the webview sends none. It carries the
    * repo and the plan hash the user was shown; the host refuses when either differs from what it would use now.
    */
-  | { type: "githubSync"; confirmRepo: string; planHash: string };
+  | { type: "githubSync"; confirmRepo: string; planHash: string }
+  /** New planned sprint `S<n+1>` (see core `createSprint`). The host answers with `sprintSaved`. */
+  | { type: "createSprint"; sprint: SprintFields }
+  /** Edit an existing sprint; `null` removes a line. Never the state. The host answers with `sprintSaved`. */
+  | { type: "updateSprint"; id: string; patch: SprintFields }
+  /** Start a planned sprint (refused while another is active). The host answers with `sprintSaved`. */
+  | { type: "startSprint"; id: string }
+  /** Put a task into a sprint (`null`: back to the backlog). */
+  | { type: "setTaskSprint"; path: string; sprint: string | null }
+  /** Set (`null`: remove) a task's estimate, 0-10000 with at most 2 decimals. */
+  | { type: "setEstimate"; path: string; value: number | null };
+
+/** Validated sprint fields of `createSprint` / `updateSprint` (core `SprintPatch`). Absent = unchanged, `null` = remove. */
+export interface SprintFields {
+  name?: string;
+  goal?: string | null;
+  start?: string | null;
+  end?: string | null;
+  capacity?: number | null;
+}
 
 /** The validated patch of an `editTask` message (see `TaskPatch` in taskedit.ts; owner is a person id). */
 export interface EditTaskPatch {
@@ -82,6 +104,8 @@ export type HostMessage =
   | { type: "reportExported"; ok: boolean; path?: string; error?: string }
   | { type: "githubPlanResult"; plan?: GithubPlanView; error?: string }
   | { type: "githubSyncResult"; ok: boolean; summary?: string; warnings?: string[]; error?: string }
+  /** Answer to `createSprint`, `updateSprint` and `startSprint`: `ok` with the sprint id, else `error`. Nothing was written on failure. */
+  | { type: "sprintSaved"; action: "create" | "update" | "start"; ok: boolean; id?: string; error?: string }
   | { type: "error"; message: string };
 
 /** What the webview sees of a sync plan: titles, actions and GitHub names only (no paths, bodies or tokens). */
@@ -161,6 +185,8 @@ export interface ValidationContext {
   columns: readonly string[];
   /** Registered view ids. */
   views: readonly string[];
+  /** Sprints on the board (`Board.sprints.list`); absent when sprints are off, so sprint messages are refused. */
+  sprints?: readonly { id: string; state: string }[];
 }
 
 export type ValidationResult = { ok: true; message: WebviewMessage } | { ok: false; reason: string };
@@ -218,6 +244,63 @@ function fail(reason: string): ValidationResult {
   return { ok: false, reason };
 }
 
+const MAX_SPRINT_NAME = 80;
+const MAX_SPRINT_GOAL = 200;
+const SPRINT_FIELD_KEYS = ["name", "goal", "start", "end", "capacity"];
+
+/** A sprint id on this board (`S<n>`), or the reason. `open` also refuses a closed sprint. */
+function sprintRef(v: unknown, ctx: ValidationContext, open: boolean): string | { reason: string } {
+  if (!ctx.sprints) return { reason: "sprints are off" };
+  if (typeof v !== "string" || !SPRINT_ID_RE.test(v)) return { reason: "bad sprint id" };
+  const s = ctx.sprints.find((x) => x.id === v);
+  if (!s) return { reason: `sprint ${v} does not exist` };
+  if (open && s.state === "closed") return { reason: `sprint ${v} is closed` };
+  return v;
+}
+
+/** An estimate or capacity: a finite number 0-10000 with at most 2 decimals (core `parseEstimate`). */
+const isEstimate = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && parseEstimate(String(v)) === v;
+
+/** One-line sprint text (name, goal): same rules as the project header text, plus no checkbox syntax. */
+function sprintText(v: unknown, max: number, label: string): string | { reason: string } {
+  try {
+    const t = cleanText(v, max, label, true);
+    if (!t) return { reason: `${label} must not be empty` };
+    if (HEADER_CHECKBOX.test(t)) return { reason: `${label} must not contain checkbox syntax` };
+    return t;
+  } catch (e) {
+    return { reason: (e as Error).message };
+  }
+}
+
+/** Validate sprint fields. `create`: nothing may be `null` (there is nothing to remove). Unknown keys are refused. */
+function sprintFields(raw: unknown, create: boolean): SprintFields | { reason: string } {
+  if (!isRecord(raw)) return { reason: "sprint fields must be an object" };
+  const out: SprintFields = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (v === undefined) continue;
+    if (!SPRINT_FIELD_KEYS.includes(k)) return { reason: `unknown sprint field: ${k}` };
+    if (v === null) {
+      if (create || k === "name") return { reason: `${k} cannot be removed` };
+      (out as Record<string, null>)[k] = null;
+      continue;
+    }
+    if (k === "name" || k === "goal") {
+      const t = sprintText(v, k === "name" ? MAX_SPRINT_NAME : MAX_SPRINT_GOAL, k === "name" ? "Name" : "Goal");
+      if (typeof t !== "string") return t;
+      out[k] = t;
+    } else if (k === "start" || k === "end") {
+      if (typeof v !== "string" || !realDay(v)) return { reason: `${k} must be a real date, YYYY-MM-DD` };
+      out[k] = v;
+    } else {
+      if (!isEstimate(v)) return { reason: `capacity must be a number from 0 to ${MAX_ESTIMATE} with at most 2 decimals` };
+      out.capacity = v;
+    }
+  }
+  if (out.start && out.end && out.end < out.start) return { reason: "end must not be before start" };
+  return out;
+}
+
 export function validateMessage(raw: unknown, ctx: ValidationContext): ValidationResult {
   if (!isRecord(raw) || typeof raw.type !== "string") return fail("not a message");
   switch (raw.type) {
@@ -264,6 +347,11 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (raw.owner !== undefined) {
         if (raw.owner !== null && (typeof raw.owner !== "string" || raw.owner.length > MAX_NAME || !PERSON_ID.test(raw.owner))) return fail("bad person id");
         message.owner = raw.owner;
+      }
+      if (raw.sprint !== undefined) {
+        const s = sprintRef(raw.sprint, ctx, true);
+        if (typeof s !== "string") return fail(s.reason);
+        message.sprint = s;
       }
       return { ok: true, message };
     }
@@ -473,6 +561,36 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (typeof raw.confirmRepo !== "string" || !GITHUB_SLUG.test(raw.confirmRepo)) return fail("bad confirmRepo");
       if (typeof raw.planHash !== "string" || !/^[0-9a-f]{64}$/.test(raw.planHash)) return fail("bad planHash");
       return { ok: true, message: { type: "githubSync", confirmRepo: raw.confirmRepo, planHash: raw.planHash } };
+    }
+    case "createSprint": {
+      if (!ctx.sprints) return fail("sprints are off");
+      const f = sprintFields(raw.sprint, true);
+      return "reason" in f ? fail(f.reason as string) : { ok: true, message: { type: "createSprint", sprint: f } };
+    }
+    case "updateSprint": {
+      const id = sprintRef(raw.id, ctx, false);
+      if (typeof id !== "string") return fail(id.reason);
+      const f = sprintFields(raw.patch, false);
+      if ("reason" in f) return fail(f.reason as string);
+      if (!Object.keys(f).length) return fail("nothing to change");
+      return { ok: true, message: { type: "updateSprint", id, patch: f } };
+    }
+    case "startSprint": {
+      const id = sprintRef(raw.id, ctx, true);
+      return typeof id === "string" ? { ok: true, message: { type: "startSprint", id } } : fail(id.reason);
+    }
+    case "setTaskSprint": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      if (raw.sprint === null) return ctx.sprints ? { ok: true, message: { type: "setTaskSprint", path, sprint: null } } : fail("sprints are off");
+      const s = sprintRef(raw.sprint, ctx, true);
+      return typeof s === "string" ? { ok: true, message: { type: "setTaskSprint", path, sprint: s } } : fail(s.reason);
+    }
+    case "setEstimate": {
+      const path = taskPathInside(raw.path, ctx);
+      if (!path) return fail("path is not a task file in the Tasks dir");
+      if (raw.value !== null && !isEstimate(raw.value)) return fail(`estimate must be a number from 0 to ${MAX_ESTIMATE} with at most 2 decimals`);
+      return { ok: true, message: { type: "setEstimate", path, value: raw.value as number | null } };
     }
     default:
       return fail(`unknown message type`);

@@ -53,6 +53,10 @@
       {
         "command": "gitask.showTimeline",
         "title": "GITASK: Show Timeline"
+      },
+      {
+        "command": "gitask.showSprint",
+        "title": "GITASK: Show Sprint"
       }
     ],
     "keybindings": [
@@ -75,6 +79,11 @@
         "command": "gitask.showTimeline",
         "key": "ctrl+alt+g t",
         "mac": "cmd+alt+g t"
+      },
+      {
+        "command": "gitask.showSprint",
+        "key": "ctrl+alt+g s",
+        "mac": "cmd+alt+g s"
       }
     ],
     "configuration": {
