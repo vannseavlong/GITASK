@@ -122,6 +122,21 @@ export function editHeaderField(content: string, name: string, value: string): s
   return fromDoc(d);
 }
 
+/** Return `content` without any `- **Name:** ...` line of the header block. Other lines (and their endings) are untouched. */
+export function removeHeaderField(content: string, name: string): string {
+  if (!/^[A-Za-z][A-Za-z0-9-]*$/.test(name)) throw new Error(`Invalid header name "${name}"`);
+  const d = toDoc(content);
+  const { start, stop } = bounds(d);
+  const re = new RegExp(`^\\s*[-*]\\s+\\*\\*${name}:\\*\\*`, "i");
+  for (let n = stop - 1; n >= start; n--) {
+    if (re.test(d.body[n])) {
+      d.body.splice(n, 1);
+      d.cr.splice(n, 1);
+    }
+  }
+  return fromDoc(d);
+}
+
 /**
  * Return `content` with the patched header fields and title. Only those lines change (a missing field is inserted
  * after the last header field); every line keeps its own line ending. Throws on a value that is not one clean line.
