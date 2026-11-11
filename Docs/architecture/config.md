@@ -10,6 +10,7 @@ One JSON file in the Tasks folder holds board settings. Code: `packages/core/src
 | `project` | title, subtitle, logo, header layout | below |
 | `fields` | team-defined pick-lists such as Platform | [below](#fields) |
 | `defaultView` | view the board opens on when the user has none remembered: `overview` `board` `list` `timeline` | [below](#defaultview) |
+| `sprint` | turns sprints on and holds their settings | [below](#sprint), file format in [sprints.md](sprints.md) |
 
 ## `project`
 
@@ -79,3 +80,20 @@ At most 8 fields and 30 values per field; the rest are ignored. **Reading** (`pa
 **Filtering** (`filterByFields`, `taskMatchesFields`, `subtaskMatchesFields`): a selection `{ platform: ["app"] }` keeps a task when, for every selected field, its own value or the value of any of its sub-tasks is one of the selected ids (AND across fields, OR within one). A field with nothing selected is not filtered.
 
 **CLI** (`packages/cli/src/commands.ts`): `gitask fields`, `gitask field set`, `gitask subtask field`, `subtask add --field`, and `--field key=id[,id]` on `board` and `report` (`fieldSelection` checks the key and every id against the config before anything is read or written, then `filterByFields` or the core writers run). The grouping of reports by a field (`--by`) is not built.
+
+## `sprint`
+
+```json
+{ "sprint": { "lengthDays": 14, "estimate": "points", "doneColumns": ["5-done", "6-deploy"],
+              "unfinished": "backlog", "resetStatus": "2-todo" } }
+```
+
+| Key | Rule | Default |
+|---|---|---|
+| `lengthDays` | integer 1 to 60 | `14` |
+| `estimate` | `points` `hours` `none` | `points` |
+| `doneColumns` | column ids (`<n>-<name>`) that exist on the board; unknown ids dropped one by one, duplicates removed | `["5-done", "6-deploy"]` |
+| `unfinished` | `backlog` `next` | `backlog` |
+| `resetStatus` | an existing column id, or `null` to keep the status | `2-todo` |
+
+**Reading** (`parseSprintConfig(text, columns?)` for text, `readSprintConfig(dir, columns?)` for the folder, used by `loadBoard` through `loadSprints`): no block, a block that is not an object, or a missing, malformed or symlinked file means sprints are off, and `Board.sprints` is absent, so a board without the block looks as before. `{ "sprint": {} }` turns sprints on with all defaults. Each key is checked alone and falls back to its default when bad; a `doneColumns` list left empty falls back to the default. Defaults are not checked against the columns. Nothing writes the block yet; edit the file by hand. Sprint files and task headers: [sprints.md](sprints.md).

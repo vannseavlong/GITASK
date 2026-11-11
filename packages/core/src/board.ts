@@ -4,6 +4,7 @@ import { colorOf, readColors, readProject } from "./config.ts";
 import { readFields } from "./fields-config.ts";
 import { applyFieldValues } from "./field-values.ts";
 import { parseTask } from "./parse.ts";
+import { loadSprints } from "./sprints.ts";
 import type { Board, Column } from "./types.ts";
 
 /** Numbered folders (`1-backlog`, `2-todo`, …) are columns; `_inbox`, `_plans` and friends are not. */
@@ -45,5 +46,12 @@ export async function loadBoard(dir: string): Promise<Board> {
   const project = await readProject(dir);
   const fields = await readFields(dir);
   applyFieldValues(columns, fields);
-  return { dir, columns, ...(project ? { project } : {}), ...(fields.length ? { config: { fields } } : {}) };
+  const sprints = await loadSprints(dir, ids);
+  return {
+    dir,
+    columns,
+    ...(project ? { project } : {}),
+    ...(fields.length ? { config: { fields } } : {}),
+    ...(sprints ? { sprints } : {}),
+  };
 }
