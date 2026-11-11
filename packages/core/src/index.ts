@@ -40,6 +40,8 @@ export type { ReportHeader } from "./report-render.ts";
 export { fileHistory } from "./git.ts";
 export type { FileChange } from "./git.ts";
 export { parseGithubConfig, readGithubConfig, isRepoSlug } from "./config.ts";
+export { parseDefaultView, readDefaultView, BOARD_VIEWS, FALLBACK_VIEW } from "./config.ts";
+export type { BoardView } from "./config.ts";
 export type { GithubConfig } from "./config.ts";
 export { planSync, applySync, parseGithubRemote, readOriginRepo, setIssueField, parseIssueNumber, GithubError, ISSUE_MESSAGE } from "./github.ts";
 export type { RepoMismatch, SyncPlan, SyncIssuePlan, SyncSubPlan, SyncNotify, SyncOptions, ApplyOptions, SyncResult, GithubErrorKind } from "./github.ts";

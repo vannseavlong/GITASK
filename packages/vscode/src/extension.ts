@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { basename, join } from "node:path";
 import { addColumn, addSubtask, assignIds, createTaskWithFields, deleteColumn, deleteSubtask, editSubtask, updateTask, deleteImpact, deleteTask, describeDeleteImpact, guardMessagePath, initTasks, loadBoard, logoDataUrl, moveTask, readLogoBytes, readPeople, saveProject, serialQueue, setColumnColor, setSubtaskAssignee, setSubtaskField, setSubtaskLane, setTaskField, syncPeople, toggleSubtask, unconfirmedDelete } from "gitask-core";
-import { readGithubConfig } from "gitask-core";
+import { readDefaultView, readGithubConfig } from "gitask-core";
 import { taskActivityCached } from "gitask-core";
 import { syncFromDialog, syncGithub } from "./github.ts";
 import { buildPlan, syncErrorMessage, syncResultMessage, toPlanView } from "./github-plan.ts";
@@ -115,7 +115,7 @@ function showView(ctx: vscode.ExtensionContext, view: string): void {
 /** The React UI (packages/ui, built into dist/ui). */
 function openBoard(ctx: vscode.ExtensionContext, view?: string): void {
   if (panel) return panel.reveal();
-  const initialView = view ?? ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW);
+  const remembered = view ?? ctx.workspaceState.get<string>(VIEW_KEY); // a view command, then the user's last view, win over the team's defaultView
   panel = vscode.window.createWebviewPanel("gitask", "GITASK", vscode.ViewColumn.Active, {
     enableScripts: true,
     localResourceRoots: [vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui")],
@@ -123,7 +123,11 @@ function openBoard(ctx: vscode.ExtensionContext, view?: string): void {
   panel.iconPath = vscode.Uri.joinPath(ctx.extensionUri, "media", "icon.svg"); // coloured, with its own outline: reads on light and dark tabs
   const wv = panel.webview;
   const asset = (name: string) => wv.asWebviewUri(vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui", name)).toString();
-  wv.html = uiHtml(VIEW_IDS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });
+  const dir = tasksDir();
+  const known = (VIEW_IDS as readonly string[]).includes(remembered ?? "");
+  void (known || !dir ? Promise.resolve(remembered ?? DEFAULT_VIEW) : readDefaultView(dir)).then((initialView) => {
+    if (panel?.webview === wv) wv.html = uiHtml(VIEW_IDS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });
+  });
   idsAssigned = false;
   panel.onDidDispose(() => { panel = undefined; pendingView = undefined; }, undefined, ctx.subscriptions);
 
