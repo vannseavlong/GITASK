@@ -4,12 +4,14 @@ import { openBrowser } from "./open.ts";
 import { appendChangelog, createTask, initTasks, loadBoard, moveTask, repoRoot } from "gitask-core";
 import type { Board, Task } from "gitask-core";
 import { findTasksDir, noTasksMessage } from "./find-tasks.ts";
+import { boardForSprint, estimateCmd, sprintCmd } from "./sprint-commands.ts";
 import { assignCmd, boardForFields, fieldCmd, fieldsCmd, githubCmd, parseArgs, peopleCmd, reportCmd, subtaskCmd } from "./commands.ts";
 
 const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
 
   gitask init                       create a Tasks/ folder (six status folders + template) in the current folder
-  gitask board [--field key=id[,id]]   print the board; --field keeps tasks with that value (repeatable)
+  gitask board [--field key=id[,id]] [--sprint <id|active|backlog>]   print the board; --field keeps tasks with that
+                                    value (repeatable); --sprint keeps one sprint's tasks, or the backlog
   gitask fields                     list the fields defined in Tasks/gitask.json (for example Platform) and their values
   gitask field set <task> <key> <id[,id]|none>   set a field in the task header
   gitask move <task> <column>       move a task (git mv + commit); column = 2-todo or todo
@@ -26,6 +28,14 @@ const USAGE = `gitask: Kanban over a Tasks/ folder (folder = status)
   gitask github plan [task...]      dry run: what a GitHub sync would create/update and who is notified
   gitask github sync --yes [--allow-repo owner/name] [task...]   apply it (token from GITHUB_TOKEN; needs "github" in
                                     Tasks/gitask.json; --allow-repo is required when that repo is not your origin remote)
+  gitask sprint list [--json]       list sprints (* = active) with tasks done and points
+  gitask sprint new [--name <text>] [--goal <text>] [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--capacity <n>]
+  gitask sprint start <id>          start a planned sprint (Start = today when empty)
+  gitask sprint add <task> [sprint]  put a task in a sprint (default: the active, else the newest planned sprint)
+  gitask sprint remove <task>       take a task out of its sprint (back to the backlog)
+  gitask sprint complete <id|active> [--unfinished backlog|next] [--next <task>] [--backlog <task>] [--keep-status]
+                [--dry-run] [--yes]   print the close plan; applies only with --yes (one commit)
+  gitask estimate <task> <n|none>   set or clear a task's estimate
   gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   the board in your browser (local, token-protected)
 
 Options: --dir <path>  tasks folder (default: nearest Tasks/ in this or a parent folder)   --no-commit  move without committing`;
@@ -64,12 +74,16 @@ async function main(argv: string[]) {
   const board = await loadBoard(dir);
 
   switch (cmd) {
-    case "board":
-      for (const c of boardForFields(board, parseArgs(argv)).columns) {
+    case "board": {
+      const p = parseArgs(argv);
+      const scoped = boardForSprint(board, p);
+      if (scoped.header) console.log(scoped.header);
+      for (const c of boardForFields(scoped.board, p).columns) {
         console.log(`\n${c.label} (${c.tasks.length})`);
-        for (const t of c.tasks) console.log(`  ${t.tier ?? "--"}  ${t.id}${t.claimedBy ? `  [claimed: ${t.claimedBy}]` : ""}`);
+        for (const t of c.tasks) console.log(`  ${t.tier ?? "--"}  ${t.id}${scoped.header && t.estimate !== undefined ? `  (${t.estimate})` : ""}${t.claimedBy ? `  [claimed: ${t.claimedBy}]` : ""}`);
       }
       return;
+    }
     case "move": {
       if (!a || !b) throw new Error("usage: gitask move <task> <column>");
       const t = findTask(board, a);
@@ -105,6 +119,10 @@ async function main(argv: string[]) {
       return reportCmd(dir, board, parseArgs(argv));
     case "github":
       return githubCmd(dir, board, parseArgs(argv));
+    case "sprint":
+      return sprintCmd(dir, board, parseArgs(argv), findTask);
+    case "estimate":
+      return estimateCmd(board, parseArgs(argv), findTask);
     case "serve": {
       const val = (n: string) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : undefined; };
       const port = val("port") === undefined ? 4173 : Number(val("port"));

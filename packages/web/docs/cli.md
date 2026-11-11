@@ -1,6 +1,6 @@
 ---
 title: CLI reference
-description: Every gitask command and flag in 0.5.0, with what it does. Move, create and assign tasks, add sub-tasks, export reports, sync to GitHub and serve the board.
+description: Every gitask command and flag, with what it does. Move, create and assign tasks, add sub-tasks, plan and close sprints, export reports, sync to GitHub and serve the board.
 slug: /cli
 ---
 
@@ -18,7 +18,7 @@ All commands find the nearest `Tasks/` folder in the current or a parent folder.
 | Command | What it does |
 |---|---|
 | `gitask init` | Create a `Tasks/` folder with six status folders and a template in the current folder |
-| `gitask board [--field key=id[,id]]` | Print the board. `--field` keeps tasks with that [field](./custom-fields.md) value (repeat it for several fields) |
+| `gitask board [--field key=id[,id]] [--sprint <id\|active\|backlog>]` | Print the board. `--field` keeps tasks with that [field](./custom-fields.md) value (repeat it for several fields). `--sprint` keeps one sprint's tasks, or the backlog (see [Sprints](#sprints)) |
 | `gitask fields` | List the fields defined in `Tasks/gitask.json` and their values |
 | `gitask people [--json]` | List contributors (id, name, GitHub login) |
 
@@ -55,6 +55,65 @@ An unknown field or value exits non-zero and prints the allowed ones. More in [A
 | `gitask subtask field <task> <index> <key> <id[,id]\|none>` | Set or clear a [field](./custom-fields.md) value on a sub-task |
 
 More in [people and sub-tasks](./people-and-subtasks.md).
+
+## Sprints
+
+:::note Coming in the next release
+Sprint commands are not in 0.6.1 yet.
+:::
+
+Sprints are off until `Tasks/gitask.json` has a `sprint` block, for example `{"sprint": {}}`. Each sprint is a file in `Tasks/_sprints/` (`S1.md`, `S2.md`). A task joins a sprint through its `- **Sprint:** S1` header line; a task with no sprint is in the backlog.
+
+| Command | What it does |
+|---|---|
+| `gitask sprint list [--json]` | List sprints: `*` marks the active one, with tasks done and points done of the total |
+| `gitask sprint new [--name <text>] [--goal <text>] [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--capacity <n>]` | Create the next sprint as planned. With `--start` and no `--end`, the end comes from the sprint length in the config |
+| `gitask sprint start <id>` | Start a planned sprint. Start is today when empty. Only one sprint can be active |
+| `gitask sprint add <task> [sprint]` | Put a task in a sprint. Without a sprint: the active one, else the newest planned one |
+| `gitask sprint remove <task>` | Take a task out of its sprint (back to the backlog) |
+| `gitask estimate <task> <n\|none>` | Set or clear a task's estimate: a number from 0 to 10000 with at most 2 decimals. Works with sprints off too |
+| `gitask sprint complete <id\|active> [options]` | Print the close plan; apply it only with `--yes` |
+
+A task is its file name (`Core-login`) or its `ID` header (`T-0002`). A sprint is its id (`S1`, or `s1`). Each change commits only the files it touched; `--no-commit` writes without committing.
+
+### Close a sprint
+
+`gitask sprint complete` always prints the plan first: the done tasks (they stay where they are) and each unfinished task with its action and target status. Done tasks are the ones in a done status (`5-done` and `6-deploy` by default).
+
+| Option | Meaning |
+|---|---|
+| `--unfinished backlog\|next` | Action for every unfinished task. `backlog` moves it to `1-backlog` and clears its sprint; `next` puts it in the next sprint (created when missing). Default comes from the config |
+| `--next <task>`, `--backlog <task>` | Action for one task; repeat for several. Wins over `--unfinished` |
+| `--keep-status` | Tasks going to the next sprint keep their status instead of moving to `2-todo` |
+| `--dry-run` | Print the plan only, even with `--yes` |
+| `--yes` | Apply the plan in one commit |
+
+```bash
+gitask sprint complete S1 --unfinished next --backlog Core-docs          # plan only
+gitask sprint complete S1 --unfinished next --backlog Core-docs --yes    # apply
+```
+
+```text
+Complete S1 · Sprint one (active)
+Committed: 3 tasks · 8 pts   Done: 1 · 3 pts
+
+Done (1): stay where they are
+  T-0001  Core-login  [5-done]  3 pts
+
+Unfinished (2):
+  T-0002  Core-api  next (S2), stays in 2-todo  5 pts
+  T-0003  Core-docs  backlog, 2-todo → 1-backlog
+warning: Sprint S2 will be created
+
+Completed S1: 1 done, 1 to backlog, 1 to S2 (created S2)
+committed: sprint(S1): complete, 1 done, 1 to backlog, 1 to S2
+```
+
+Without `--yes` nothing changes and the exit code is 0. When the plan has blockers (lines starting with `blocked:`, for example the sprint is not active), nothing changes and the exit code is 1, even with `--yes`.
+
+## Exit codes
+
+Every command exits 0 on success and 1 on an error, with the message on stderr: an unknown task, person, column, field or sprint, a bad date or number, sprints off, or a blocked sprint close. Nothing is written when a command fails.
 
 ## Reports
 
