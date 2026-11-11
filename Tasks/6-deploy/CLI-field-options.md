@@ -19,10 +19,13 @@ The CLI has no `add` or `list` command, so the flags landed on the existing ones
 
 ## Gates (copy the rows your tier needs; write `Skipped Gn: reason` if you skip one)
 - [x] G1 scope  - [x] G2 static  - [x] G3 tests (existing pass, 7 new)  - [x] G4 run it (the tests spawn the real CLI on temp git repos)
-- [x] G7 docs sync (web `cli.md` and `custom-fields.md`, `packages/cli/README.md`, `Docs/architecture/config.md`)  - [ ] G8 PR message  - [ ] G11 changelog
+- [x] G7 docs sync (web `cli.md` and `custom-fields.md`, `packages/cli/README.md`, `Docs/architecture/config.md`)  - [x] G8 PR message  - [x] G11 changelog
 
 ## Done when
 - [x] CLI tests on a real temp git repo cover fields, board, field set, subtask field/add and report with a configured field
-- [ ] `Docs/architecture/config.md` updated (G7)
-- [ ] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] `Docs/architecture/config.md` updated (G7)
+- [x] Root `CHANGELOG.md` entry added
+- [x] Worktree and branch removed after merge
+
+## Result
+Merged in #23 and released in v0.6.1. Worktree and branch removed 2026-11-12.
