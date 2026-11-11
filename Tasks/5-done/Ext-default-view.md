@@ -16,14 +16,14 @@ A team-wide `"defaultView"` in `Tasks/gitask.json` (`overview` | `board` | `list
 
 ## Gates (T1)
 - [x] G1 scope  - [x] G2 static  - [x] G3 tests (existing + new for config parsing)  - [x] G4 run it (quick)
-- [x] G7 docs sync (config format doc)  - [ ] G8 PR message  - [ ] G11 changelog (on merge)
+- [x] G7 docs sync (config format doc)  - [x] G8 PR message  - [x] G11 changelog
 
 ## Done when
 - [x] `defaultView` is read and validated in core; invalid or missing value means `overview`
 - [x] VS Code panel and `gitask serve` open on it when no view is remembered
 - [x] Config doc lists the key
-- [ ] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] Root `CHANGELOG.md` entry added
+- [x] Worktree and branch removed after merge
 
 ## Notes (2026-11-12, commit 819ba7c on feat/default-view)
 - Tier re-checked on the real diff: stays T1 (8 files, 65+/8-, no protocol or shared UI change; `serve` only fills the existing `data-initial-view`).
@@ -31,4 +31,4 @@ A team-wide `"defaultView"` in `Tasks/gitask.json` (`overview` | `board` | `list
 - VS Code: a valid remembered `gitask.lastView` wins; otherwise the panel HTML is set after `readDefaultView`. Serve: read on every page load; the browser's remembered tab (localStorage) still wins.
 - Docs: `Docs/architecture/config.md` (`defaultView` section), `Docs/architecture/ui.md` (one phrase), `packages/web/docs/views.md` (one line).
 - G2: `pnpm typecheck` clean, `pnpm build` ok. G3: `pnpm test` 498/498 pass (6 new core, 1 new serve). G4: built `gitask serve` on a temp repo: `defaultView: board` gives `data-initial-view="board"`, a bogus value gives `overview`.
-- Not run: the VS Code panel live (no VS Code GUI here); covered by typecheck/build only. G8/G11 on PR/merge.
+- Not run: the VS Code panel live (no VS Code GUI here); covered by typecheck/build only. G8/G11 done at merge via PR from `integration/small-wins`.

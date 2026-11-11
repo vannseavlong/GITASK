@@ -28,13 +28,14 @@ Commit `c9d6007` on `chore/bump-root-version`; diff: `package.json`, `scripts/bu
 - [x] G5 code review: lead session read the diff cold (4 files, +9/-8). Same file list in bump and check, version regex validated before writes, release.yml call unchanged. No findings.
 - [x] G6 security: input is validated by the existing anchored regex `^\d+\.\d+\.\d+(-[\w.]+)?$` before any file is touched; checked that empty, `1.2`, `9.9.9"x` (bump) and `v0.6.1; rm -rf /` (check) are rejected with exit 1. `release.yml` passes `"$GITHUB_REF"` quoted. No new input paths; the file list is hard-coded
 - [x] G7 docs: `Docs/architecture/release.md` states the three versioned files, that `bump`/`check-release` cover all three, and that core/ui/web are internal and unversioned
-- [ ] G9 human review: for the user, not run
+- [x] G9 human review: the owner asked on 2026-11-12 to commit, push and merge; the diff was summarised to them, not read line by line
 - [x] G10 release plan: no release and no publish in this change; `release.yml` already calls `check-release.mjs`, which now also checks the root, so the next tag needs `pnpm bump` (which sets the root too). Rollback: revert `c9d6007`. Dependencies: none. Monitor: the owner watches the `verify` job on the next tag
-- G8 and G11 happen at PR/merge (CHANGELOG entry on merge)
+- [x] G8 PR message: one-line squash commit, PR from `integration/small-wins`
+- [x] G11 changelog: root `CHANGELOG.md` entry, 2026-11-12
 
 ## Done when
 - [x] Decision recorded: root follows the release version, or is left alone and documented as unversioned
 - [x] If it follows: `pnpm bump X.Y.Z` updates all three files and `check-release.mjs vX.Y.Z` fails when they differ
 - [x] `Docs/architecture/release.md` states which files carry the version
-- [ ] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] Root `CHANGELOG.md` entry added
+- [x] Worktree and branch removed after merge
