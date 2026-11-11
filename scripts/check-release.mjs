@@ -1,4 +1,4 @@
-// Release guard: the git tag vX.Y.Z must equal the version of every published package.
+// Release guard: the git tag vX.Y.Z must equal the version of the root and every published package.
 import { readFileSync } from "node:fs";
 
 const tag = (process.argv[2] ?? "").replace(/^refs\/tags\//, "");
@@ -8,7 +8,7 @@ if (!/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(want)) {
   process.exit(1);
 }
 let bad = false;
-for (const p of ["packages/cli/package.json", "packages/vscode/package.json"]) {
+for (const p of ["package.json", "packages/cli/package.json", "packages/vscode/package.json"]) {
   const v = JSON.parse(readFileSync(p, "utf8")).version;
   if (v !== want) {
     console.error(`${p} is ${v}, tag is ${want}`);

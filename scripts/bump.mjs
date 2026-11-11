@@ -1,4 +1,4 @@
-// Usage: pnpm bump <X.Y.Z[-pre]>   Sets the version in both published packages.
+// Usage: pnpm bump <X.Y.Z[-pre]>   Sets the release version in the root and both published packages.
 // Edits only the "version" line, so formatting stays untouched. Does not commit or tag.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -10,7 +10,7 @@ if (!/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(next ?? "")) {
   process.exit(1);
 }
 const root = join(fileURLToPath(import.meta.url), "..", "..");
-for (const p of ["packages/cli/package.json", "packages/vscode/package.json"]) {
+for (const p of ["package.json", "packages/cli/package.json", "packages/vscode/package.json"]) {
   const file = join(root, p);
   const text = readFileSync(file, "utf8");
   const out = text.replace(/("version"\s*:\s*)"[^"]*"/, `$1"${next}"`);

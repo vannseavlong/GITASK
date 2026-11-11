@@ -1,6 +1,6 @@
 # Release
 
-Updated: 2026-10-17
+Updated: 2026-11-12
 
 Tag-driven. `release.yml` runs on `git push origin vX.Y.Z`.
 
@@ -12,7 +12,8 @@ tag vX.Y.Z → verify (tag == package versions, typecheck, test)
                          → GitHub Release with the .vsix
 ```
 
-- One version for both packages. `pnpm bump X.Y.Z` sets both (`scripts/bump.mjs`); commit it in the PR, merge, pull `main`, then tag the merged commit. Never use `npm version`: it tags immediately and reformats `package.json`. `scripts/check-release.mjs` fails the run if they differ from the tag.
+- One release version in three files: the root `package.json` (`gitask-monorepo`, private, follows the release so no file shows a stale number), `packages/cli/package.json` and `packages/vscode/package.json`. `pnpm bump X.Y.Z` sets all three (`scripts/bump.mjs`); commit it in the PR, merge, pull `main`, then tag the merged commit. Never use `npm version`: it tags immediately and reformats `package.json`. `scripts/check-release.mjs` fails the run if any of the three differs from the tag.
+- `packages/core`, `packages/ui` and `packages/web` are internal and unversioned: their `version` is never bumped and means nothing.
 - `vX.Y.Z-beta.1` publishes to the npm `next` tag and the Marketplace/Open VSX pre-release channel.
 - A marketplace step is skipped (not failed) while its secret is missing.
 - Jobs `npm` and `extension` use the GitHub environment `release`; add required reviewers there to get a manual approval before anything goes live.
@@ -25,7 +26,7 @@ Day to day, nothing publishes: only a pushed tag does.
 
 1. **Work in the task's worktree** on its own branch (`feat/<name>`), per `Tasks/README.md`.
 2. **Commit and open a PR to `main`.** `ci.yml` runs typecheck, tests and `pnpm package`. Merge only when it is green.
-3. **If the PR is a release,** run `pnpm bump X.Y.Z` in the PR. It sets `packages/cli` and `packages/vscode` to the same version (one line each). Do not use `npm version`.
+3. **If the PR is a release,** run `pnpm bump X.Y.Z` in the PR. It sets the root, `packages/cli` and `packages/vscode` to the same version (one line each). Do not use `npm version`.
 4. **After the merge,** update local `main`: `git checkout main && git pull origin main`.
 5. **Check before tagging:** `git log -1 --oneline` is the merge you expect, and `node scripts/check-release.mjs vX.Y.Z` prints `stable` (or `prerelease`).
 6. **Tag the merged commit and push only the tag:**
