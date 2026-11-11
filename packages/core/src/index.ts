@@ -11,7 +11,11 @@ export { appendChangelog, changelogEntry } from "./changelog.ts";
 export { repoRoot } from "./git.ts";
 export { toggleSubtask, TOGGLE_MESSAGE } from "./toggle.ts";
 export type { ToggleOptions, ToggleResult } from "./toggle.ts";
-export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf, splitTokens } from "./parse.ts";
+export { parseFrontmatter, parseSubtasks, parseDue, parseDependsOn, progressOf, splitTokens, parseHeader, parseSprintRef, parseEstimate } from "./parse.ts";
+export {
+  parseSprintConfig, readSprintConfig, parseSprint, readSprints, pickActiveSprint, nextSprintId, loadSprints, sprintDefaults,
+  SPRINTS_DIR, SPRINT_ID_RE, SPRINT_STATES, ESTIMATE_UNITS, UNFINISHED_ACTIONS, MAX_ESTIMATE, MAX_SPRINT_LENGTH_DAYS, MAX_SPRINT_NAME, MAX_SPRINT_GOAL,
+} from "./sprints.ts";
 export { parseColors, colorOf, readColors, setColumnColor, isColor, CONFIG_FILE } from "./config.ts";
 export { parseProject, readProject, setProject, resolveLogo, readLogoBytes, logoDataUrl, isLogoPath } from "./config.ts";
 export { parseFields, readFields, isFieldKey, isFieldValueId, MAX_FIELDS, MAX_FIELD_VALUES, RESERVED_FIELD_KEYS } from "./fields-config.ts";

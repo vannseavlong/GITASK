@@ -147,12 +147,15 @@ export function parseDependsOn(text: string | undefined, known: ReadonlySet<stri
  * Parse one task file in the My-Agent-SetUp format.
  * `knownIds` are the ids of every task on the board; without it `dependsOn` is empty.
  */
-export function parseTask(path: string, column: string, content: string, knownIds: ReadonlySet<string> = new Set()): Task {
-  const id = path.replace(/^.*[\\/]/, "").replace(/\.md$/, "");
+/**
+ * The `# title` and header fields of a task-style Markdown file (tasks and `_sprints/S<n>.md`):
+ * `- **Key:** value` lines before the first `##` section, keys lower-cased, then frontmatter keys the bullets
+ * do not set. `title` is undefined when there is no `#` heading. Never throws.
+ */
+export function parseHeader(content: string): { title?: string; fields: Record<string, string> } {
   const fm = parseFrontmatter(content);
   const lines = content.split(/\r?\n/).slice(fm ? fm.end + 1 : 0);
-  const title = lines.find((l) => /^#\s+/.test(l))?.replace(/^#\s+/, "").trim() || id;
-
+  const title = lines.find((l) => /^#\s+/.test(l))?.replace(/^#\s+/, "").trim() || undefined;
   const fields: Record<string, string> = {};
   for (const line of lines) {
     if (/^##\s/.test(line)) break; // header block ends at the first section
@@ -160,11 +163,38 @@ export function parseTask(path: string, column: string, content: string, knownId
     if (m) fields[m[1].trim().toLowerCase()] = m[2].trim();
   }
   for (const [k, v] of Object.entries(fm?.fields ?? {})) if (!(k in fields)) fields[k] = v; // bullet header wins
+  return { title, fields };
+}
+
+/** Sprint id syntax: `S` then a number without leading zero (`S7`). */
+export const SPRINT_ID_RE = /^S[1-9]\d{0,5}$/;
+/** Largest estimate or capacity accepted; anything above is treated as a typo and dropped. */
+export const MAX_ESTIMATE = 10000;
+
+/** `S7` from a `Sprint` header (`s7` is accepted and upper-cased); undefined when missing or not a sprint id. */
+export function parseSprintRef(text: string | undefined): string | undefined {
+  const v = text?.trim().toUpperCase() ?? "";
+  return SPRINT_ID_RE.test(v) ? v : undefined;
+}
+
+/** A number >= 0 with at most 2 decimals and at most `MAX_ESTIMATE` (`3`, `0.5`, `1.25`); undefined otherwise. Never throws. */
+export function parseEstimate(text: string | undefined): number | undefined {
+  const v = text?.trim() ?? "";
+  if (!/^\d{1,5}(\.\d{1,2})?$/.test(v)) return undefined;
+  const n = Number(v);
+  return n <= MAX_ESTIMATE ? n : undefined;
+}
+
+export function parseTask(path: string, column: string, content: string, knownIds: ReadonlySet<string> = new Set()): Task {
+  const id = path.replace(/^.*[\\/]/, "").replace(/\.md$/, "");
+  const header = parseHeader(content);
+  const title = header.title || id;
+  const fields = header.fields;
 
   const claimed = fields["claimed by"];
   const tier = fields["tier"]?.match(/T[0-3]/)?.[0];
   const subtasks = parseSubtasks(content);
-  return {
+  const task: Task = {
     id,
     title,
     path,
@@ -180,4 +210,10 @@ export function parseTask(path: string, column: string, content: string, knownId
     due: parseDue(fields["due"]),
     dependsOn: parseDependsOn(fields["depends on"], knownIds, id),
   };
+  // Set only when present, so a task without the headers serialises exactly as before.
+  const sprint = parseSprintRef(fields["sprint"]);
+  const estimate = parseEstimate(fields["estimate"]);
+  if (sprint) task.sprint = sprint;
+  if (estimate !== undefined) task.estimate = estimate;
+  return task;
 }
