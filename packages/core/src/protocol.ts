@@ -75,6 +75,8 @@ export type HostMessage =
   | { type: "taskBody"; path: string; text?: string; error?: string }
   /** Sent only after a task was created: the UI opens its detail panel. `path` is the absolute task file. A failed create sends nothing. */
   | { type: "taskCreated"; path: string }
+  /** A view command (e.g. "GITASK: Show Board") asked for this tab on an already open panel. `id` is one of the view ids. */
+  | { type: "showView"; id: string }
   | { type: "deleteImpact"; path: string; impact: DeleteImpact; detail: string }
   | { type: "reportPreview"; html: string; error?: string }
   | { type: "reportExported"; ok: boolean; path?: string; error?: string }

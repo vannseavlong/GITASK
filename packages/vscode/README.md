@@ -19,7 +19,8 @@ Full walkthrough, including use with coding agents: [Use GITASK from install to 
 
 Open a workspace that has `Tasks/1-backlog/` (or any numbered folders under `Tasks/`). The extension activates by itself.
 
-- **GITASK: Open Board** shows the board. Drag a card to another column to move it.
+- **GITASK: Open Board** shows the board on the view you used last. Drag a card to another column to move it.
+- **GITASK: Show Overview / Show Board / Show List / Show Timeline** open (or focus) the board on that view, and it becomes the remembered one.
 - **GITASK: New Task** creates a task from `Tasks/_TEMPLATE.md`.
 - **GITASK: Initialize Tasks Folder** sets up a new project: it creates `Tasks/1-backlog` to `6-deploy` and a `_TEMPLATE.md`, then opens the board. Safe to run again; it never overwrites.
 
@@ -38,6 +39,19 @@ A task is a Markdown file. The `#` heading is the title and the `- **Key:** valu
 - **Tier:** T2 · new screen
 - **Started / updated:** 2026-10-01 / 2026-10-17
 ```
+
+## Keyboard shortcuts
+
+Press **Ctrl+Alt+G** (macOS: **Cmd+Alt+G**), let go, then press one letter. The chord is chosen to stay clear of VS Code's default shortcuts.
+
+| Shortcut | Command |
+|---|---|
+| Ctrl+Alt+G O | GITASK: Show Overview |
+| Ctrl+Alt+G B | GITASK: Show Board |
+| Ctrl+Alt+G L | GITASK: Show List |
+| Ctrl+Alt+G T | GITASK: Show Timeline |
+
+Change them in **Keyboard Shortcuts** (search for `gitask.show`).
 
 ## Make the board yours
 
