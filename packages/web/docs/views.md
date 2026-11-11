@@ -16,6 +16,8 @@ After this page you can pick the right view for a question and filter it. All vi
 
 The tabs open in this order, with Overview first. Drag a tab to put the views in your own order, or focus a tab and press **Alt+Left** or **Alt+Right**. **Reset tab order** appears once the order differs from the default. GITASK remembers your order in VS Code and in the browser.
 
+GITASK also reopens the view you used last. Until you have one, it opens on Overview, or on the team default set as `"defaultView": "board"` (or `overview`, `list`, `timeline`) in `Tasks/gitask.json`.
+
 ## Board
 
 One column per status folder. A card shows the task id, title, owner avatar, tier, who has claimed it and sub-task progress `done/total`. Drag a card to another column to move it: GITASK runs `git mv` and commits that one file. Click the owner to assign someone, and use the **Sub-tasks** toggle to show a card's sub-tasks in place. Set a column colour with the swatch on its header (saved in `Tasks/gitask.json`). **+ Add status** creates a new column: give it a name and an optional colour, and GITASK creates the next numbered folder. See [task format](./task-format.md).

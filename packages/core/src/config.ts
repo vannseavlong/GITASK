@@ -92,6 +92,34 @@ export async function setColumnColor(dir: string, column: string, color: string 
   return { committed: false };
 }
 
+/** The board's views (tab ids of packages/ui/src/views/registry.tsx). `defaultView` must be one of them. */
+export const BOARD_VIEWS = ["overview", "board", "list", "timeline"] as const;
+export type BoardView = (typeof BOARD_VIEWS)[number];
+export const FALLBACK_VIEW: BoardView = "overview";
+
+/** The team-wide `defaultView` of `Tasks/gitask.json`. Missing, malformed or unknown means `overview`; never throws. */
+export function parseDefaultView(text: string): BoardView {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return FALLBACK_VIEW;
+  }
+  const v = isRecord(json) ? json.defaultView : undefined;
+  return typeof v === "string" && (BOARD_VIEWS as readonly string[]).includes(v) ? (v as BoardView) : FALLBACK_VIEW;
+}
+
+/** `defaultView` of `<dir>/gitask.json`; `overview` when the file is missing, not a regular file or the value is not valid. */
+export async function readDefaultView(dir: string): Promise<BoardView> {
+  try {
+    const file = join(dir, CONFIG_FILE);
+    await assertRegularFile(file, dir);
+    return parseDefaultView(await readFile(file, "utf8"));
+  } catch {
+    return FALLBACK_VIEW;
+  }
+}
+
 /** Opt-in GitHub link: `github: { repo: "owner/name", project?: number }` in `Tasks/gitask.json`. */
 export interface GithubConfig {
   repo: string;
