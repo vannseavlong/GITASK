@@ -10,6 +10,7 @@ import { resolveOrder, sameOrder } from "@/lib/view-order.ts";
 import { FilterBar } from "./filter-bar.tsx";
 import { ProjectHeader } from "./project-header.tsx";
 import { StatusBar } from "./status-bar.tsx";
+import { SprintStrip } from "./sprint-strip.tsx";
 import { ExportDialog } from "@/components/export-dialog.tsx";
 import { DeleteConfirm } from "@/components/delete-confirm.tsx";
 import { EditDialogs } from "@/components/edit-dialogs.tsx";
@@ -76,7 +77,8 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
             onOrder={(order) => update({ viewOrder: sameOrder(order, DEFAULT_ORDER) ? undefined : order })}
           />
           {error && <div role="alert" className="shrink-0 px-3 pt-1 text-destructive">{error}</div>}
-          <FilterBar ui={ui} range={d.range} board={d.visible} onChange={update} extra={<span className="ml-auto flex gap-1.5">{!hasVsCodeApi() && <ThemeControls />}<Button variant="outline" size="sm" onClick={() => setGithubOpen(true)}>Sync to GitHub</Button><Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>Export</Button></span>} />
+          {raw && d.scope.kind === "sprint" && <SprintStrip sprint={d.scope.sprint} board={raw} />}
+          <FilterBar ui={ui} range={d.range} scope={d.scope} board={d.visible} onChange={update} extra={<span className="ml-auto flex gap-1.5">{!hasVsCodeApi() && <ThemeControls />}<Button variant="outline" size="sm" onClick={() => setGithubOpen(true)}>Sync to GitHub</Button><Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>Export</Button></span>} />
           <StatusBar raw={raw} ui={ui} onChange={update} />
           {raw && d.shown && d.visible ? (SV.summary(raw, ui.hiddenStatuses).allHidden ? null : (
             VIEWS.map((v) => (

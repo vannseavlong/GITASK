@@ -18,6 +18,8 @@ export interface UiState {
   people?: string[];
   /** Selected value ids per configured field key (AND across fields, OR within one). */
   fields?: Record<string, string[]>;
+  /** Sprint switcher: `all`, `active`, `backlog` or a sprint id. Missing means the active sprint (else All). Only used when the board has `sprints`. */
+  sprintScope?: string;
   /** Per-view state, remembered across tab switches. */
   list?: { q?: string; status?: string; tier?: string; owner?: string; sort?: string; dir?: string; /** Task paths whose sub-tasks are open. */ expanded?: string[] };
   board?: { expanded?: string[] };

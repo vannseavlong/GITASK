@@ -9,16 +9,19 @@ import { filterPeople } from "@host-src/people-filter.ts";
 import { PeopleFilter } from "./people-filter.tsx";
 import { FieldFilters } from "@/components/fields.tsx";
 import { filterByFields, pruneFieldSelection } from "@core-src/field-filter.ts";
+import { scopeBoard, scopeNarrows, type ResolvedScope } from "@host-src/sprint-scope.ts";
 import { countTasks, filterBoard, rangeActive, rangeNorm, type Range } from "./logic.ts";
+import { SprintSwitcher } from "./sprint-switcher.tsx";
 
-/** Text filter plus the date range. The state is shared by every tab and remembered. */
-export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; range: Range; board: BoardData | null; onChange: (p: Partial<UiState>) => void; extra?: React.ReactNode }) {
+/** Sprint scope, text filter and the date range. The state is shared by every tab and remembered. */
+export function FilterBar({ ui, range, scope, board, onChange, extra }: { ui: UiState; range: Range; scope: ResolvedScope; board: BoardData | null; onChange: (p: Partial<UiState>) => void; extra?: React.ReactNode }) {
   const active = rangeActive(range);
   const peopleOn = (ui.people?.length ?? 0) > 0;
   const fieldSel = pruneFieldSelection(ui.fields, board?.config?.fields);
   const fieldsOn = Object.keys(fieldSel).length > 0;
   const total = countTasks(board);
-  const dated = filterBoard(board, range) as BoardData | null;
+  const scopeOn = scopeNarrows(scope);
+  const dated = filterBoard(board ? scopeBoard(board, scope, board.sprints) : board, range) as BoardData | null;
   const shown = countTasks(dated ? filterByFields(filterPeople(dated, ui.people, board?.people), fieldSel) : dated);
   return (
     <div role="group" aria-label="Filters" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-xs">
@@ -26,6 +29,7 @@ export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; 
         <Search className="pointer-events-none absolute left-1.5 top-1.5 size-3.5 opacity-60" />
         <Input type="search" value={ui.filter ?? ""} placeholder="Filter tasks" aria-label="Filter tasks" className="w-56 pl-6" onChange={(e) => onChange({ filter: e.target.value })} />
       </div>
+      <SprintSwitcher scope={scope} sprints={board?.sprints} onChange={onChange} />
       <PeopleFilter ui={ui} board={board} onChange={onChange} />
       <FieldFilters ui={ui} board={board} onChange={onChange} />
       <span>Date:</span>
@@ -44,7 +48,7 @@ export function FilterBar({ ui, range, board, onChange, extra }: { ui: UiState; 
         </>
       )}
       {fieldsOn && <Button variant="ghost" size="sm" onClick={() => onChange({ fields: {} })}>Clear fields</Button>}
-      {(active || peopleOn || fieldsOn) && <span aria-live="polite" className="opacity-80">{shown} of {total} match</span>}
+      {(scopeOn || active || peopleOn || fieldsOn) && <span aria-live="polite" className="opacity-80">{shown} of {total} match</span>}
     </div>
   );
 }
