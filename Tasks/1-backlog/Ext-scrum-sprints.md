@@ -6,26 +6,30 @@
 - **Tier:** T2 · decided per item when promoted
 - **Claimed by:** none
 - **Worktree:** none yet
-- **Started / updated:** none / 2026-10-30
-- **Docs:** `Tasks/_plans/Ext-people-export-ui.md`
-- **Depends on:** Ops-release-0-5
+- **Started / updated:** none / 2026-11-12
+- **Docs:** `Tasks/_plans/Ext-scrum-sprints.md`
+- **Depends on:** wave 1: Core-sprint-model, Core-sprint-ops, Ext-sprint-scope, CLI-sprint, Ext-sprint-planning, Ext-sprint-complete
 - **Touches:** none yet
 
 ## Goal
-Sprints, Scrum ceremonies and the wider SDLC for the version after 0.5.0. Run `task-planner` on this file first; it needs its own plan (flow, screens, formats) before any task is cut.
+Later waves of Scrum support, after wave 1 (plan, run, complete sprints) is in `2-todo/`. Promote items one at a time with `task-planner`.
 
-## Ideas
-- Sprint: name, start, end, goal in `Tasks/gitask.json` or `Tasks/_sprints/*.md`; a task header `- **Sprint:** 2026-S21`; sprint board, sprint list, move unfinished tasks to the next sprint
-- Estimates (story points or hours) per task and sub-task; capacity per person; velocity
-- Burndown, burnup, velocity and cycle-time charts from git move history; sprint report reusing the 0.5.0 report engine
-- Scrum ceremonies: planning view, daily standup digest per person, review and retrospective notes saved as markdown
-- Backlog grooming: ranking by drag, ready/not-ready flag, epics grouping several tasks
-- SDLC stages as configurable columns (requirements, design, build, review, QA, release) and per-stage gates already in `PIPELINE.md`; bug/feature/chore types
-- GitHub: sprint as a Project iteration field, milestones, two-way issue sync (builds on Ext-github-sync)
-
-## Open questions for the plan
-- Do sprints live in git files (recommended: yes, same rule as everything else) or only in GitHub Projects iterations?
-- One workflow for everyone, or a configurable Scrum/Kanban mode per repo?
+## Ideas (ordered by value)
+- Burndown and burnup per sprint, with scope-change markers (tasks added after start), from git history of `Sprint` headers and moves into done statuses
+- Velocity across closed sprints (from each sprint's `## Summary`), and a forecast for the next sprint
+- Sprint report: `gitask report --sprint S7` and an Export option, reusing the report engine (committed vs done, carried over, per person)
+- Review and retro notes edited from the board (the `## Review` / `## Retro` sections of the sprint file), with simple templates (went well / to improve / actions)
+- Daily standup digest per person: yesterday's moves and ticks, today's in-progress tasks, blockers (from git log)
+- Backlog ranking by drag (`Rank` header) and a ready/not-ready flag
+- Epics grouping several tasks (an `Epic` header or a configured field), with progress per epic
+- WIP limits per status column, with a warning on the board
+- Per-person capacity and days off for a sprint
+- Sub-task estimates rolling up to the task
+- Cycle time and cumulative flow charts
+- Archive done tasks of closed sprints (`5-done/` stays small)
+- Several active sprints for parallel teams
+- GitHub: sprint as a Project iteration field, milestones (builds on Ext-github-sync)
+- Work item types (bug / feature / chore) as a configured field preset
 
 ## Done when
-- [ ] A plan exists in `Tasks/_plans/` and each idea is promoted to a task or dropped
+- [ ] Each idea is promoted to a task or dropped
