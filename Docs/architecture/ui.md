@@ -55,7 +55,24 @@ What the user sees: [requirements/sprints.md](../requirements/sprints.md#plannin
   | `new { …, sprint? }` | sprint an existing, not closed id; the host creates the task, then writes its `Sprint` line (`putNewTaskInSprint`; a new file is untracked, so nothing is committed) | `taskCreated` as before |
 
   Both hosts run the same handlers from `packages/vscode/src/sprint-messages.ts` (VS Code `extension.ts`, `gitask serve` `packages/cli/src/handler.ts`). A rejected message gets `error` (`Rejected: …`) and writes nothing.
-- Completing a sprint is the next task (Ext-sprint-complete); the Sprint tab has no Complete button yet.
+- Completing a sprint: [below](#complete-sprint).
+
+## Complete sprint
+
+What the user sees: [requirements/sprints.md](../requirements/sprints.md#complete-sprint). What the close writes: core `planSprintClose` / `applySprintClose` ([sprints.md](sprints.md#closing-a-sprint)).
+
+- Dialog: `components/complete-sprint-dialog.tsx`. Opened from the Sprint tab (`views/sprint.tsx`, own instance) and from the strip (`shell/sprint-strip.tsx` `onComplete`; the instance lives in `shell/App.tsx` so it survives the strip disappearing when the sprint closes). It keeps the sprint id it was opened with. "Plan next sprint" sets `UiState.sprintScope` to the next sprint (else `all`) and, from the strip, `view: "sprint"`.
+- Pure logic: `src/lib/sprint-close.ts` (`resetTarget`, `applyToAll`, `withAction`, `knownActions`, `summaryTiles`, `successLines`, `confirmBlocker`; tests in `packages/vscode/test/sprint-close.test.ts`).
+- Flow: plan first, then confirm, like the GitHub dialog. On open it sends `sprintClosePlan { id }` (config defaults); each change sends `sprintClosePlan { id, actions, resetStatus }` with the full action map. Hosts answer in order, so only the answer to the last request is shown. If a plan comes back without a task the request named (it left the sprint), the dialog plans once more without it. Confirm sends the shown plan's `actions`, `resetStatus` and hash. A `stale` answer re-plans and shows a notice; any other failure, or a rejection `error`, keeps the plan and shows the reason.
+- Messages, validated in `validateMessage`:
+
+  | Message | Rules | Answer |
+  |---|---|---|
+  | `sprintClosePlan { id, actions?, resetStatus? }` | id an existing sprint that is `active`; `actions` an object of at most 2000 entries, each key a task file under an existing column (`taskPathInside`, normalised; duplicates after normalising refused), each value `backlog` or `next`; `resetStatus` an existing column id or `null` | `sprintClosePlanResult { plan, planHash }` or `{ error }`; writes nothing |
+  | `completeSprint { id, actions, resetStatus, planHash, confirmed: true }` | same id and `actions` rules (required); `resetStatus` required, column id or `null`; `planHash` 64 lower-case hex; `confirmed` absent or `true` | `sprintCompleted { ok, summary?, next?, committed?, error?, stale? }` |
+
+  The plan sent to the page is `SprintClosePlanView` (`protocol.ts`, built by `toClosePlanView`): task paths, labels, titles, columns and estimates that are already on the board, the resolved actions, summary, warnings and blockers. It never holds file contents, target paths (`toPath`) or the sprint file path.
+- Both hosts run `handleSprintClosePlan` and `handleCompleteSprint` from `packages/vscode/src/sprint-messages.ts`. `handleCompleteSprint` refuses without `confirmed` (`unconfirmedBulk` in core `confirm.ts`, the same rule style as `unconfirmedDelete`; `CONFIRM_MESSAGE_TYPES` lists such messages and a test keeps it equal to the protocol), refuses a path that is no longer a task on the board (answered as `stale`) or is not a regular file (`assertRegularFile`), then calls `applySprintClose`, which plans again and throws `stale` on another hash and `blocked` on blockers. `next` is set when `S<n+1>` exists after the close. Every failure answer ends in "Nothing was changed": core rolls back every step.
 
 ## Webview and CSP
 

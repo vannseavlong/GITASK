@@ -13,7 +13,7 @@ import { resolveTasksDir } from "./tasks-dir.ts";
 import { buildReportFile } from "./report-request.ts";
 import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
 import { VIEW_COMMANDS } from "./view-commands.ts";
-import { handleSprintMessage, handleTaskSprintMessage, putNewTaskInSprint, sprintContext } from "./sprint-messages.ts";
+import { handleCompleteSprint, handleSprintClosePlan, handleSprintMessage, handleTaskSprintMessage, putNewTaskInSprint, sprintContext } from "./sprint-messages.ts";
 
 const VIEW_KEY = "gitask.lastView";
 let log: vscode.OutputChannel | undefined;
@@ -378,6 +378,15 @@ function openBoard(ctx: vscode.ExtensionContext, view?: string): void {
       case "startSprint":
         send(await handleSprintMessage(dir, m, { commit: cfg.get<boolean>("autoCommit", true) }));
         return post();
+      case "sprintClosePlan":
+        return send(handleSprintClosePlan(board, m)); // dry run: writes nothing
+      case "completeSprint": {
+        // Refused without `confirmed` (the dialog sets it) or with a stale plan hash; all or nothing, one commit.
+        const r = await handleCompleteSprint(dir, m, { commit: cfg.get<boolean>("autoCommit", true) });
+        if (!r.ok) log?.appendLine(`Complete sprint refused: ${r.error}`);
+        send(r);
+        return post();
+      }
       case "setTaskSprint":
       case "setEstimate":
         try {

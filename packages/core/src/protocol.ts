@@ -62,7 +62,24 @@ export type WebviewMessage =
   /** Put a task into a sprint (`null`: back to the backlog). */
   | { type: "setTaskSprint"; path: string; sprint: string | null }
   /** Set (`null`: remove) a task's estimate, 0-10000 with at most 2 decimals. */
-  | { type: "setEstimate"; path: string; value: number | null };
+  | { type: "setEstimate"; path: string; value: number | null }
+  /**
+   * Dry run: what completing the active sprint `id` would do. `actions` (task path → backlog/next) and `resetStatus`
+   * (column, or `null` to keep the status) override the config defaults. Changes nothing. The host answers with
+   * `sprintClosePlanResult`.
+   */
+  | { type: "sprintClosePlan"; id: string; actions?: Record<string, CloseAction>; resetStatus?: string | null }
+  /**
+   * Complete sprint `id` with the plan the user was shown. The host plans again and refuses when the hash differs
+   * (stale) or `confirmed` is missing (only the in-app dialog sets it). The host answers with `sprintCompleted`.
+   */
+  | { type: "completeSprint"; id: string; actions: Record<string, CloseAction>; resetStatus: string | null; planHash: string; confirmed?: true };
+
+/** What happens to an unfinished task when its sprint is completed. */
+export type CloseAction = "backlog" | "next";
+export const CLOSE_ACTIONS: readonly CloseAction[] = ["backlog", "next"];
+/** At most this many entries in a close `actions` map. */
+export const MAX_CLOSE_ACTIONS = 2000;
 
 /** Validated sprint fields of `createSprint` / `updateSprint` (core `SprintPatch`). Absent = unchanged, `null` = remove. */
 export interface SprintFields {
@@ -106,6 +123,13 @@ export type HostMessage =
   | { type: "githubSyncResult"; ok: boolean; summary?: string; warnings?: string[]; error?: string }
   /** Answer to `createSprint`, `updateSprint` and `startSprint`: `ok` with the sprint id, else `error`. Nothing was written on failure. */
   | { type: "sprintSaved"; action: "create" | "update" | "start"; ok: boolean; id?: string; error?: string }
+  /** Answer to `sprintClosePlan`: the plan and its hash (send both back in `completeSprint`), else `error`. */
+  | { type: "sprintClosePlanResult"; plan?: SprintClosePlanView; planHash?: string; error?: string }
+  /**
+   * Answer to `completeSprint`. `ok` with the summary and the next sprint id; else `error`, and nothing was changed.
+   * `stale` means the board changed since the plan was shown: plan again.
+   */
+  | { type: "sprintCompleted"; ok: boolean; summary?: SprintCloseSummaryView; next?: string; committed?: boolean; error?: string; stale?: true }
   | { type: "error"; message: string };
 
 /** What the webview sees of a sync plan: titles, actions and GitHub names only (no paths, bodies or tokens). */
@@ -127,6 +151,35 @@ export interface GithubPlanView {
   }[];
   notify: { login: string; name: string; tasks: string[] }[];
   warnings: string[];
+}
+
+/**
+ * What the webview sees of a sprint close plan (core `SprintClosePlan`): task paths, titles and columns that are already
+ * on the board, never file contents or new paths (no `toPath`, no sprint file path).
+ */
+export interface SprintClosePlanView {
+  id: string;
+  /** `S<n+1>`: the sprint carried-over tasks join. */
+  next: string;
+  /** True when the close creates `next`. */
+  createNext: boolean;
+  /** Column carried-over tasks move to, or `null` (they keep their status). */
+  resetStatus: string | null;
+  /** Resolved action per unfinished task path. */
+  actions: Record<string, CloseAction>;
+  done: SprintCloseTaskView[];
+  unfinished: (SprintCloseTaskView & { action: CloseAction; to: string; claimedBy?: string; worktree?: string })[];
+  summary: SprintCloseSummaryView;
+  /** Reasons the close cannot be applied; Confirm stays disabled while there is one. */
+  blockers: string[];
+  warnings: string[];
+}
+export interface SprintCloseTaskView { path: string; label: string; title: string; column: string; estimate?: number }
+export interface SprintCloseSummaryView {
+  committed: { tasks: number; points: number };
+  done: { tasks: number; points: number };
+  toBacklog: string[];
+  toNext: string[];
 }
 
 /** What the webview may ask for in a report. The host builds the report itself from these validated values. */
@@ -300,6 +353,33 @@ function sprintFields(raw: unknown, create: boolean): SprintFields | { reason: s
   if (out.start && out.end && out.end < out.start) return { reason: "end must not be before start" };
   return out;
 }
+
+/** The active sprint `id` on this board, or the reason. */
+function activeSprintRef(v: unknown, ctx: ValidationContext): string | { reason: string } {
+  const id = sprintRef(v, ctx, false);
+  if (typeof id !== "string") return id;
+  const state = ctx.sprints!.find((s) => s.id === id)!.state;
+  return state === "active" ? id : { reason: `sprint ${id} is ${state}; only the active sprint can be completed` };
+}
+
+/** A close `actions` map: keys are task files in the Tasks dir (`taskPathInside`), values `backlog` or `next`. */
+function closeActions(raw: unknown, ctx: ValidationContext): { ok: true; actions: Record<string, CloseAction> } | { ok: false; reason: string } {
+  if (!isRecord(raw)) return { ok: false, reason: "actions must be an object" };
+  const entries = Object.entries(raw);
+  if (entries.length > MAX_CLOSE_ACTIONS) return { ok: false, reason: `at most ${MAX_CLOSE_ACTIONS} actions` };
+  const out: Record<string, CloseAction> = {};
+  for (const [k, a] of entries) {
+    const path = taskPathInside(k, ctx);
+    if (!path) return { ok: false, reason: "action path is not a task file in the Tasks dir" };
+    if (typeof a !== "string" || !(CLOSE_ACTIONS as readonly string[]).includes(a)) return { ok: false, reason: "action must be backlog or next" };
+    if (Object.hasOwn(out, path)) return { ok: false, reason: "duplicate action path" };
+    out[path] = a as CloseAction;
+  }
+  return { ok: true, actions: out };
+}
+
+/** `resetStatus` of a close: an existing column id or `null`. */
+const isResetStatus = (v: unknown, ctx: ValidationContext): v is string | null => v === null || (typeof v === "string" && ctx.columns.includes(v));
 
 export function validateMessage(raw: unknown, ctx: ValidationContext): ValidationResult {
   if (!isRecord(raw) || typeof raw.type !== "string") return fail("not a message");
@@ -591,6 +671,32 @@ export function validateMessage(raw: unknown, ctx: ValidationContext): Validatio
       if (!path) return fail("path is not a task file in the Tasks dir");
       if (raw.value !== null && !isEstimate(raw.value)) return fail(`estimate must be a number from 0 to ${MAX_ESTIMATE} with at most 2 decimals`);
       return { ok: true, message: { type: "setEstimate", path, value: raw.value as number | null } };
+    }
+    case "sprintClosePlan": {
+      const id = activeSprintRef(raw.id, ctx);
+      if (typeof id !== "string") return fail(id.reason);
+      const message: Extract<WebviewMessage, { type: "sprintClosePlan" }> = { type: "sprintClosePlan", id };
+      if (raw.actions !== undefined) {
+        const a = closeActions(raw.actions, ctx);
+        if (!a.ok) return fail(a.reason);
+        message.actions = a.actions;
+      }
+      if (raw.resetStatus !== undefined) {
+        if (!isResetStatus(raw.resetStatus, ctx)) return fail("resetStatus must be an existing status or null");
+        message.resetStatus = raw.resetStatus;
+      }
+      return { ok: true, message };
+    }
+    case "completeSprint": {
+      const id = activeSprintRef(raw.id, ctx);
+      if (typeof id !== "string") return fail(id.reason);
+      const a = closeActions(raw.actions, ctx);
+      if (!a.ok) return fail(a.reason);
+      if (!isResetStatus(raw.resetStatus, ctx)) return fail("resetStatus must be an existing status or null");
+      if (typeof raw.planHash !== "string" || !/^[0-9a-f]{64}$/.test(raw.planHash)) return fail("bad planHash");
+      if (raw.confirmed !== undefined && raw.confirmed !== true) return fail("confirmed must be true");
+      const message: Extract<WebviewMessage, { type: "completeSprint" }> = { type: "completeSprint", id, actions: a.actions, resetStatus: raw.resetStatus, planHash: raw.planHash };
+      return { ok: true, message: raw.confirmed ? { ...message, confirmed: true } : message };
     }
     default:
       return fail(`unknown message type`);
