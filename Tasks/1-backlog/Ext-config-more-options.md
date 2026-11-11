@@ -18,7 +18,7 @@ Later wave of `gitask.json` options once configurable fields are in. Promote ite
 - Settings dialog to edit fields and values from the board (`setFields` message, committed by pathspec)
 - Configurable lanes list and the "Split into ..." button set (today hard-coded backend / UX/UI / frontend)
 - Configurable tiers and task prefixes (`Core`, `CLI`, `Ext`, `Ops`) with the template header fields
-- Default view, default date field and default filters when the board opens
+- Default date field and default filters when the board opens (default view promoted to `Ext-default-view`)
 - Status labels and order (display name separate from the folder name)
 - Commit message templates (`COLOR_MESSAGE`, `SUBTASK_MESSAGE` and others) in config
 - Field types beyond pick-lists: text, number, date; fields in `_TEMPLATE.md`
