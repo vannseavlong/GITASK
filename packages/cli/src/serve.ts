@@ -4,7 +4,7 @@ import { randomBytes, timingSafeEqual, createHash } from "node:crypto";
 import { watch, type FSWatcher } from "node:fs";
 import { networkInterfaces } from "node:os";
 import type { AddressInfo } from "node:net";
-import { LOGO_BODY_BYTES, readLogoBytes } from "gitask-core";
+import { LOGO_BODY_BYTES, readDefaultView, readLogoBytes, type BoardView } from "gitask-core";
 import { createHandler } from "./handler.ts";
 
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -78,11 +78,11 @@ function allowedHosts(host: string, port: number): Set<string> {
  */
 export const THEME_INIT = '(function(){try{var s={};try{s=JSON.parse(localStorage.getItem("gitask.theme"))||{}}catch(e){}var r=document.documentElement,m=s.mode,H=/^#[0-9a-fA-F]{6}$/;if(m!=="light"&&m!=="dark")m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";r.setAttribute("data-theme",m);r.classList.toggle("dark",m==="dark");r.style.setProperty("color-scheme",m);var t=s.tokens||{},V={primary:["--primary","--ring","--progress"],accent:["--accent"],background:["--background"],card:["--card","--popover"],border:["--border","--input-border"]};for(var k in V)if(Object.prototype.hasOwnProperty.call(t,k)&&H.test(t[k]))for(var i=0;i<V[k].length;i++)r.style.setProperty(V[k][i],t[k]);}catch(e){}})();';
 
-function indexHtml(nonce: string): string {
+function indexHtml(nonce: string, view: BoardView): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GITASK</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" href="/favicon.png"><link rel="stylesheet" href="/ui.css"><script nonce="${nonce}">${THEME_INIT}</script></head>
-<body><div id="root" data-nonce="${nonce}" data-initial-view="overview"></div>
+<body><div id="root" data-nonce="${nonce}" data-initial-view="${view}"></div>
 <script type="module" nonce="${nonce}" src="/ui.js"></script></body></html>`;
 }
 
@@ -164,8 +164,9 @@ export function startServer(o: ServeOptions): Promise<RunningServer> {
       const csp = (nonce: string) => `default-src 'none'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'nonce-${nonce}'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`;
       if (path === "/" || path === "/index.html") {
         const nonce = randomBytes(16).toString("base64");
+        const view = await readDefaultView(o.dir); // team default; a view the browser remembers still wins (UI state)
         res.writeHead(200, { ...baseHeaders, "Content-Type": "text/html; charset=utf-8", "Content-Security-Policy": csp(nonce) });
-        return void res.end(indexHtml(nonce));
+        return void res.end(indexHtml(nonce, view));
       }
       if (path === "/ui.js") { res.writeHead(200, { ...baseHeaders, "Content-Type": "text/javascript; charset=utf-8" }); return void res.end(o.assets.js); }
       if (path === "/ui.css") { res.writeHead(200, { ...baseHeaders, "Content-Type": "text/css; charset=utf-8" }); return void res.end(o.assets.css); }

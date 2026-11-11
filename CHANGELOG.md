@@ -2,6 +2,12 @@
 
 Merges to `main` across all projects, newest first. Tags: `[Core]`/`[CLI]`/`[Ext]`/`[Ops]`. Format and rules: `Tasks/README.md`.
 
+## 2026-11-12 · [Cross] feat: view commands, team default view, root version follows releases
+- Owner: SNLRLONG
+- Task: Ext-view-commands (T-0089), Ext-default-view (T-0090), Ops-bump-root-version (T-0002) · Branch/PR: feat/view-commands, feat/default-view, chore/bump-root-version (integration/small-wins)
+- What changed: VS Code palette commands `GITASK: Show Overview/Board/List/Timeline` with the chord `Ctrl+Alt+G` (`Cmd+Alt+G`) then `O`/`B`/`L`/`T`; an open panel switches tab through a new `showView` host message. `"defaultView"` in `Tasks/gitask.json` picks the view the board opens on (VS Code and `gitask serve`) when nobody has a remembered tab; invalid or missing means Overview. The root `package.json` now carries the release version (0.6.1): `pnpm bump` sets it and `check-release.mjs` fails when it differs. Docs: `ui.md`, `config.md`, `release.md`, extension README, web `views.md`.
+- Needs: a check in a real VS Code window (commands on a closed, visible and hidden panel; `defaultView` with no remembered tab); ships with the next release, no release now
+
 ## 2026-11-07 · [Cross] feat: configurable fields (Platform and more) from gitask.json
 - Owner: SNLRLONG
 - Task: Core-config-fields (T-0084), Core-field-values (T-0085), Ext-field-filter (T-0086), CLI-field-options (T-0087) · Branch/PR: feat/config-fields, feat/field-values, feat/field-filter, feat/cli-field-options (integration/configurable-fields)

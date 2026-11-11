@@ -274,3 +274,14 @@ test("the upload header only widens the cap for setProject; a declared length ov
   assert.equal(await status(base(MAX_BODY_BYTES + 1)), 413, "over 64 KiB without the header");
   assert.equal(await status(base(5 * 1024 * 1024, "X-Gitask-Upload: logo\r\n")), 413, "over the upload cap");
 });
+
+test("index page opens on the team defaultView; missing or unknown means overview", async () => {
+  const { tasks } = workspace();
+  const s = await boot(tasks);
+  const view = async () => /data-initial-view="([^"]*)"/.exec((await call(s, "GET", "/", { token: null })).body)?.[1];
+  assert.equal(await view(), "overview");
+  writeFileSync(join(tasks, "gitask.json"), '{"defaultView":"timeline"}');
+  assert.equal(await view(), "timeline");
+  writeFileSync(join(tasks, "gitask.json"), '{"defaultView":"<script>"}');
+  assert.equal(await view(), "overview");
+});

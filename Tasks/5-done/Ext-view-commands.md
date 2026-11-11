@@ -16,15 +16,15 @@ One command palette entry per view (Overview, Board, List, Timeline) that opens 
 
 ## Gates (T1)
 - [x] G1 scope  - [x] G2 static  - [x] G3 tests (new)  - [~] G4 run it (build + VSIX only; real VS Code not run)
-- [x] G5 code review  - [x] G7 docs sync  - [ ] G8 PR message  - [ ] G9 human review (optional)  - [ ] G11 changelog (on merge)
+- [x] G5 code review  - [x] G7 docs sync  - [x] G8 PR message  - [ ] G9 human review (optional, not done)  - [x] G11 changelog
 - Skipped G6: no auth, data or new input path; `showView` is host to webview only and the UI checks the id against `VIEWS`.
 
 ## Done when
 - [x] `GITASK: Show Overview / Board / List / Timeline` appear in the palette and open (or focus) the panel on that view (titled "Show", not "Open": `GITASK: Open Board` already exists and opens the remembered view)
 - [x] Opening via a command also updates the remembered view
 - [x] Keybindings chosen that don't override common VS Code shortcuts, listed in the README (chord `Ctrl+Alt+G` / macOS `Cmd+Alt+G`, then `O` `B` `L` `T`)
-- [ ] Root `CHANGELOG.md` entry added
-- [ ] Worktree and branch removed after merge
+- [x] Root `CHANGELOG.md` entry added
+- [x] Worktree and branch removed after merge
 
 ## Gate results (2026-11-12, commit e0ac1be on `feat/view-commands`)
 - G1: `git diff --stat main`: 7 files, +123/-5; Touches plus the widening noted above.
