@@ -60,7 +60,7 @@ export type { RepoMismatch, SyncPlan, SyncIssuePlan, SyncSubPlan, SyncNotify, Sy
 export { fillTemplate } from "./template.ts";
 export { serialQueue } from "./queue.ts";
 export * from "./protocol.ts";
-export { unconfirmedDelete, DELETE_MESSAGE_TYPES } from "./confirm.ts";
+export { unconfirmedDelete, unconfirmedBulk, DELETE_MESSAGE_TYPES, CONFIRM_MESSAGE_TYPES } from "./confirm.ts";
 export { readTaskBody, assertRegularFile, assertTaskFile, guardMessagePath, MAX_TASK_BYTES } from "./taskfile.ts";
 export { taskActivity, taskActivityCached } from "./activity.ts";
 export type { ActivityDay, ActivityOptions } from "./activity.ts";

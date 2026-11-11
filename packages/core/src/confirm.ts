@@ -13,3 +13,12 @@ export function unconfirmedDelete(m: WebviewMessage): string | undefined {
   if (m.type === "deleteSubtask" && m.confirmed !== true) return "the sub-task was not deleted: deleting needs the confirm dialog.";
   return undefined;
 }
+
+/** Message types that move or edit many files at once. Each needs the in-app confirm dialog, like a delete. */
+export const CONFIRM_MESSAGE_TYPES = ["completeSprint"] as const;
+
+/** Why a bulk write must be refused (no `confirmed: true` from the dialog), or undefined when it may run. */
+export function unconfirmedBulk(m: WebviewMessage): string | undefined {
+  if (m.type === "completeSprint" && m.confirmed !== true) return `Sprint ${m.id} was not completed: completing needs the confirm dialog. Nothing was changed.`;
+  return undefined;
+}

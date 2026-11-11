@@ -7,7 +7,7 @@ import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner, ownerName } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
-import { handleSprintMessage, handleTaskSprintMessage, putNewTaskInSprint, sprintContext } from "../../vscode/src/sprint-messages.ts";
+import { handleCompleteSprint, handleSprintClosePlan, handleSprintMessage, handleTaskSprintMessage, putNewTaskInSprint, sprintContext } from "../../vscode/src/sprint-messages.ts";
 
 export interface HandlerOptions {
   /** Absolute Tasks directory. */
@@ -255,6 +255,13 @@ export function createHandler(o: HandlerOptions) {
       case "updateSprint":
       case "startSprint": {
         const reply = await handleSprintMessage(o.dir, m, { commit });
+        return { status: 200, reply, changed: reply.ok };
+      }
+      case "sprintClosePlan":
+        return { status: 200, reply: handleSprintClosePlan(await loadBoard(o.dir), m), changed: false }; // dry run
+      case "completeSprint": {
+        // Refused without `confirmed` (the dialog sets it) or with a stale plan hash; all or nothing, one commit.
+        const reply = await handleCompleteSprint(o.dir, m, { commit });
         return { status: 200, reply, changed: reply.ok };
       }
       case "setTaskSprint":

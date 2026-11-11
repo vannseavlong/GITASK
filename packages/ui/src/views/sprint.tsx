@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NewTaskDialog } from "@/components/new-task-dialog.tsx";
 import { SprintDialog } from "@/components/sprint-dialog.tsx";
+import { CompleteSprintDialog } from "@/components/complete-sprint-dialog.tsx";
 import { cn } from "@/lib/utils";
 import type { Host } from "@/host/index.ts";
 import { derive, matchesText } from "@/shell/logic.ts";
@@ -103,6 +104,7 @@ export function SprintView({ full, host, ui, update, openTask }: ViewProps) {
   const [newTaskOpen, setNewTaskOpen] = React.useState(false);
   const [startError, setStartError] = React.useState("");
   const [starting, setStarting] = React.useState(false);
+  const [completing, setCompleting] = React.useState<string | null>(null); // sprint id while the Complete dialog is open
 
   // The switcher's scope picks the sprint; the backlog ignores it (it is always the backlog) but keeps the other filters.
   const d = React.useMemo(() => derive(full, ui), [full, ui]);
@@ -156,7 +158,9 @@ export function SprintView({ full, host, ui, update, openTask }: ViewProps) {
           </Button>
         )}
         {target && editable && <Button size="sm" variant="secondary" onClick={() => setNewTaskOpen(true)}>+ New task in {target.id}</Button>}
-        {/* Complete sprint (active only) is added by the Ext-sprint-complete task. */}
+        {target?.state === "active" && (
+          <Button size="sm" variant={sprintTime(target, today).warn ? "default" : "secondary"} onClick={() => setCompleting(target.id)}>Complete sprint</Button>
+        )}
       </div>
       {target?.state === "planned" && blocker && <p id="sprint-start-why" role="note" className="mb-2 text-xs text-muted-foreground">Cannot start {target.id}: {blocker}</p>}
       {startError && <p role="alert" className="mb-2 text-xs text-destructive">{startError}</p>}
@@ -242,6 +246,16 @@ export function SprintView({ full, host, ui, update, openTask }: ViewProps) {
         onOpenChange={(o) => { if (!o) setDialog(null); }}
         onSaved={(id) => pick(id)}
       />
+      {completing && (
+        <CompleteSprintDialog
+          host={host}
+          board={full}
+          sprintId={completing}
+          open
+          onOpenChange={(o) => { if (!o) setCompleting(null); }}
+          onPlanNext={(next) => update({ sprintScope: next ?? "all" })}
+        />
+      )}
       <NewTaskDialog host={host} columns={full.columns} people={full.people} sprints={sprints} defaultSprint={editable ? target?.id : undefined} open={newTaskOpen} onOpenChange={setNewTaskOpen} />
     </div>
   );

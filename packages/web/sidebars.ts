@@ -7,7 +7,7 @@ const sidebars: SidebarsConfig = {
     'getting-started',
     'task-format',
     'views',
-    {type: 'category', label: 'Guides', collapsed: false, items: ['people-and-subtasks', 'custom-fields', 'report', 'project-header', 'serve', 'github-sync']},
+    {type: 'category', label: 'Guides', collapsed: false, items: ['people-and-subtasks', 'custom-fields', 'sprints', 'report', 'project-header', 'serve', 'github-sync']},
     {type: 'category', label: 'Reference', collapsed: false, items: ['cli', 'faq']},
   ],
 };

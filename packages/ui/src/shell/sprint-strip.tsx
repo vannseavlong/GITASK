@@ -1,4 +1,5 @@
 import type { BoardData } from "@/host/index.ts";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { estimateUnit, localToday, sprintRange, sprintStats, sprintTime, type SprintLite } from "@host-src/sprint-scope.ts";
 
@@ -7,7 +8,7 @@ import { estimateUnit, localToday, sprintRange, sprintStats, sprintTime, type Sp
  * Counts use the whole board (the filters do not apply). An overdue sprint (end passed, not closed) shows in the
  * warning colour. Points are hidden when the estimate unit is `none`.
  */
-export function SprintStrip({ sprint, board }: { sprint: SprintLite; board: BoardData }) {
+export function SprintStrip({ sprint, board, onComplete }: { sprint: SprintLite; board: BoardData; /** Shown for the active sprint only: opens the Complete sprint dialog. */ onComplete?: () => void }) {
   const cfg = board.sprints?.config;
   if (!cfg) return null;
   const today = localToday();
@@ -24,6 +25,9 @@ export function SprintStrip({ sprint, board }: { sprint: SprintLite; board: Boar
       <span className="ml-auto whitespace-nowrap opacity-90">
         {stats.done}/{stats.total} tasks{unit && ` · ${stats.donePoints}/${stats.points} ${unit}`}
       </span>
+      {onComplete && sprint.state === "active" && (
+        <Button size="sm" variant={time.warn ? "default" : "outline"} className="h-6 px-2 text-xs" onClick={onComplete}>Complete sprint</Button>
+      )}
     </div>
   );
 }

@@ -55,4 +55,18 @@ A **Sprint** tab (after Timeline, only while sprints are on; `GITASK: Show Sprin
 
 ## Complete sprint
 
-<!-- Ext-sprint-complete (T-0096) -->
+Close the active sprint from the board: see what is done, choose per unfinished task Backlog or Next sprint, confirm, then plan the next sprint. How it is built: [architecture/ui.md](../architecture/ui.md#complete-sprint); what the close writes: [architecture/sprints.md](../architecture/sprints.md#closing-a-sprint). User guide: `packages/web/docs/sprints.md`.
+
+- **Where.** A **Complete sprint** button on the Sprint tab and on the strip, only for the active sprint (emphasised once the end date has passed). Both open the same dialog.
+- **Plan first.** The dialog opens on "Building the plan…", then shows the plan. Nothing is written until the user confirms.
+- **Summary tiles.** Done (`1` of `3 tasks`), Unfinished (`2`, with how many go to the backlog and to the next sprint), Points (`3/10 pts done`; hidden when `estimate` is `none`).
+- **Unfinished table.** One row per unfinished task: id and title, status, estimate, an action select (**Backlog** / **Next sprint (S2)**) and where it goes (`backlog`, `S2 · todo`). The default action is `sprint.unfinished`. "Apply to all" sets one action on every row. Done tasks are listed in a collapsed "Done (n): stay where they are".
+- **Reset status.** A "Reset status to todo for tasks going to S2" checkbox, ticked when `sprint.resetStatus` is set (else the target is `2-todo` when it exists). Unticked, carried-over tasks keep their status. Hidden when there is no status to reset to.
+- **Re-plan.** Changing an action, "Apply to all" or the checkbox asks for a new plan; Confirm is disabled ("Updating the plan…") until it arrives.
+- **Warnings** (shown, not blocking): a claimed task or one with a worktree (GITASK never removes worktrees), "Sprint S2 will be created", a done status or reset status that does not exist.
+- **Blockers** (Confirm disabled, the first one shown next to it): for example a file of the same name already in the backlog, no backlog status, the next sprint exists but is not planned.
+- **Confirm.** "Complete S1" applies the plan: done tasks stay; Backlog tasks move to `1-backlog/` and lose their `Sprint` line; Next-sprint tasks get `Sprint: S2` (and the reset status); `S2` is created when needed; the sprint file gets `State: closed` and `## Summary`. One commit. While it runs the dialog cannot be closed.
+- **Stale.** When the board changed after the plan was shown, nothing changes; the dialog says "The board changed since this plan was made, so nothing was changed. The plan below is new: check it and confirm again." and shows the new plan.
+- **Error.** Any other failure keeps the dialog open with the reason and "Nothing was changed".
+- **Success.** "S1 completed" with the summary (`Committed: 3 tasks · 10 pts · Done: 1 · 3 pts`, `To backlog: T-0002`, `To S2: T-0004`) and whether it was committed. **Plan next sprint** closes the dialog and opens the Sprint tab scoped to the next sprint (or, when none was created, the tab's default sprint), with the returned tasks in the backlog pane.
+- Narrow widths: the tiles wrap, the table scrolls sideways, the dialog keeps a side gutter.
