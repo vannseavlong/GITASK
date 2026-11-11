@@ -13,6 +13,7 @@ import { resolveTasksDir } from "./tasks-dir.ts";
 import { buildReportFile } from "./report-request.ts";
 import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
 import { VIEW_COMMANDS } from "./view-commands.ts";
+import { handleSprintMessage, handleTaskSprintMessage, putNewTaskInSprint, sprintContext } from "./sprint-messages.ts";
 
 const VIEW_KEY = "gitask.lastView";
 let log: vscode.OutputChannel | undefined;
@@ -56,7 +57,7 @@ async function post(): Promise<void> {
   }
 }
 
-async function newTask(ctx: vscode.ExtensionContext, id?: string, column?: string, fields?: { title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null }): Promise<void> {
+async function newTask(ctx: vscode.ExtensionContext, id?: string, column?: string, fields?: { title?: string; description?: string; start?: string | null; due?: string | null; tier?: "T0" | "T1" | "T2" | "T3" | null; owner?: string | null; sprint?: string }): Promise<void> {
   const dir = tasksDir();
   if (!dir) return;
   if (!id) {
@@ -75,6 +76,8 @@ async function newTask(ctx: vscode.ExtensionContext, id?: string, column?: strin
       tier: fields?.tier,
       owner: await ownerName(dir, fields?.owner),
     });
+    // The task exists either way; a sprint that cannot take it only leaves its Sprint line out (reported, not fatal).
+    if (fields?.sprint) await putNewTaskInSprint(dir, file, fields.sprint, { commit: vscode.workspace.getConfiguration("gitask").get<boolean>("autoCommit", true) }).then(undefined, (e: Error) => vscode.window.showErrorMessage(`GITASK: ${e.message}`));
     openBoard(ctx); // stay on (or reveal) the board; the new card shows in its column
     await post();
     const created = taskCreatedMessage(file, dir);
@@ -143,7 +146,7 @@ function openBoard(ctx: vscode.ExtensionContext, view?: string): void {
     } catch (e) {
       return send({ type: "error", message: `Cannot read ${dir}: ${(e as Error).message}` });
     }
-    const v = validateMessage(raw, { tasksDir: dir, columns: board.columns.map((c) => c.id), views: VIEW_IDS });
+    const v = validateMessage(raw, { tasksDir: dir, columns: board.columns.map((c) => c.id), views: VIEW_IDS, sprints: sprintContext(board) });
     if (!v.ok) {
       log?.appendLine(`Rejected webview message: ${v.reason}`);
       return send({ type: "error", message: `Rejected: ${v.reason}` }); // visible in the UI, not a silent no-op
@@ -183,7 +186,7 @@ function openBoard(ctx: vscode.ExtensionContext, view?: string): void {
       case "open":
         return void vscode.window.showTextDocument(vscode.Uri.file(m.path));
       case "new":
-        return newTask(ctx, m.id, m.column, { title: m.title, description: m.description, start: m.start, due: m.due, tier: m.tier, owner: m.owner });
+        return newTask(ctx, m.id, m.column, { title: m.title, description: m.description, start: m.start, due: m.due, tier: m.tier, owner: m.owner, sprint: m.sprint });
       case "move":
         try {
           await moveTask(dir, m.path, m.to, {
@@ -370,6 +373,19 @@ function openBoard(ctx: vscode.ExtensionContext, view?: string): void {
         }
         return post(); // issue numbers were written into task files
       }
+      case "createSprint":
+      case "updateSprint":
+      case "startSprint":
+        send(await handleSprintMessage(dir, m, { commit: cfg.get<boolean>("autoCommit", true) }));
+        return post();
+      case "setTaskSprint":
+      case "setEstimate":
+        try {
+          await handleTaskSprintMessage(board, m, { commit: cfg.get<boolean>("autoCommit", true) });
+        } catch (e) {
+          vscode.window.showErrorMessage(`GITASK: could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
+        return post();
       case "toggleSubtask": {
         const task = board.columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
         try {

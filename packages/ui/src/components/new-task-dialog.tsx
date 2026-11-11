@@ -3,24 +3,31 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Column, Person } from "gitask-core";
+import type { BoardSprints, Column, Person } from "gitask-core";
+import { sprintLabel } from "@host-src/sprint-scope.ts";
 import type { Host } from "@/host/index.ts";
 import { Field, DueField, TIERS } from "@/components/edit-dialogs.tsx";
 
 const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const slug = (title: string) => title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-/** Create a task from a filled-in form: title, description, start & due date, tier, status and member. */
+/** Create a task from a filled-in form: title, description, start & due date, tier, status, member and (with sprints on) sprint. */
 export function NewTaskDialog({
   host,
   columns,
   people,
+  sprints,
+  defaultSprint,
   open,
   onOpenChange,
 }: {
   host: Host;
   columns: readonly Column[];
   people?: readonly Person[];
+  /** `Board.sprints`: the Sprint picker is drawn only when present. Closed sprints are not offered. */
+  sprints?: BoardSprints;
+  /** Sprint picked when the dialog opens (the sprint in scope); empty means the backlog. */
+  defaultSprint?: string;
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
@@ -31,6 +38,8 @@ export function NewTaskDialog({
   const [tier, setTier] = React.useState("");
   const [column, setColumn] = React.useState(columns[0]?.id ?? "1-backlog");
   const [member, setMember] = React.useState("");
+  const openSprints = (sprints?.list ?? []).filter((s) => s.state !== "closed");
+  const [sprint, setSprint] = React.useState("");
   const [error, setError] = React.useState("");
   const [submitted, setSubmitted] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -40,6 +49,7 @@ export function NewTaskDialog({
     // A fresh form every time: the previous task's values must not carry over.
     setTitle(""); setDescription(""); setStart(""); setDue(""); setTier(""); setMember("");
     setColumn(columns[0]?.id ?? "1-backlog");
+    setSprint(defaultSprint && openSprints.some((s) => s.id === defaultSprint) ? defaultSprint : "");
     setSubmitted(false); setSubmitting(false); setError("");
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -51,7 +61,7 @@ export function NewTaskDialog({
     setError("");
     if (!valid) { setError("Enter a title."); return; }
     setSubmitting(true);
-    host.send({ type: "new", column, id, title, description, start: start || undefined, due: due || undefined, tier: (tier || undefined) as "T0" | "T1" | "T2" | "T3" | undefined, owner: member || undefined });
+    host.send({ type: "new", column, id, title, description, start: start || undefined, due: due || undefined, tier: (tier || undefined) as "T0" | "T1" | "T2" | "T3" | undefined, owner: member || undefined, ...(sprint ? { sprint } : {}) });
     // The server creates the task and pushes a fresh board; close once the request is dispatched.
     await new Promise((r) => setTimeout(r, 400));
     onOpenChange(false);
@@ -102,6 +112,17 @@ export function NewTaskDialog({
               </SelectContent>
             </Select>
           </Field>
+          {sprints && (
+            <Field label="Sprint">
+              <Select value={sprint || "__none"} onValueChange={(v) => setSprint(v === "__none" ? "" : v)}>
+                <SelectTrigger aria-label="Sprint" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">No sprint (backlog)</SelectItem>
+                  {openSprints.map((s) => <SelectItem key={s.id} value={s.id}>{sprintLabel(s)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
           {error && <span role="alert" className="text-xs text-destructive">{error}</span>}
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>

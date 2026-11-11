@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { BoardData, Host, UiState } from "@/host/index.ts";
-import { DEFAULT_VIEW, VIEWS } from "@/views/registry.tsx";
+import { DEFAULT_VIEW, VIEWS, availableViews } from "@/views/registry.tsx";
 import { SV, derive } from "./logic.ts";
 import { ViewTabs } from "./view-tabs.tsx";
 import { resolveOrder, sameOrder } from "@/lib/view-order.ts";
@@ -27,9 +27,12 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
   const [error, setError] = React.useState("");
   const [pendingOpen, setPendingOpen] = React.useState<string | null>(null); // a just-created task, opened once the board has it
   const [ui, setUi] = React.useState<UiState>(() => host.loadState());
-  const view = VIEWS.some((v) => v.id === ui.view) ? ui.view! : VIEWS.some((v) => v.id === initialView) ? initialView : DEFAULT_VIEW;
+  // The Sprint tab exists only while sprints are on; a saved or initial `sprint` view falls back until then.
+  const shown = availableViews(raw);
+  const view = shown.some((v) => v.id === ui.view) ? ui.view! : shown.some((v) => v.id === initialView) ? initialView : DEFAULT_VIEW;
+  const defaultOrder = React.useMemo(() => DEFAULT_ORDER.filter((id) => shown.some((v) => v.id === id)), [shown]);
 
-  const tabs = React.useMemo(() => resolveOrder(ui.viewOrder, DEFAULT_ORDER).map((id) => VIEWS.find((v) => v.id === id)!), [ui.viewOrder]);
+  const tabs = React.useMemo(() => resolveOrder(ui.viewOrder, DEFAULT_ORDER).map((id) => VIEWS.find((v) => v.id === id)!).filter((v) => shown.includes(v)), [ui.viewOrder, shown]);
 
   React.useEffect(() => {
     const offBoard = host.onBoard((b) => { setRaw(b); setError(""); });
@@ -73,15 +76,15 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
         >
           <ViewTabs
             items={tabs}
-            defaultOrder={DEFAULT_ORDER}
-            onOrder={(order) => update({ viewOrder: sameOrder(order, DEFAULT_ORDER) ? undefined : order })}
+            defaultOrder={defaultOrder}
+            onOrder={(order) => update({ viewOrder: sameOrder(order, defaultOrder) ? undefined : order })}
           />
           {error && <div role="alert" className="shrink-0 px-3 pt-1 text-destructive">{error}</div>}
           {raw && d.scope.kind === "sprint" && <SprintStrip sprint={d.scope.sprint} board={raw} />}
           <FilterBar ui={ui} range={d.range} scope={d.scope} board={d.visible} onChange={update} extra={<span className="ml-auto flex gap-1.5">{!hasVsCodeApi() && <ThemeControls />}<Button variant="outline" size="sm" onClick={() => setGithubOpen(true)}>Sync to GitHub</Button><Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>Export</Button></span>} />
           <StatusBar raw={raw} ui={ui} onChange={update} />
           {raw && d.shown && d.visible ? (SV.summary(raw, ui.hiddenStatuses).allHidden ? null : (
-            VIEWS.map((v) => (
+            shown.map((v) => (
               <TabsContent key={v.id} value={v.id}>
                 {renderView(v.id, d.shown!, raw, host, ui, update, setDetailPath)}
               </TabsContent>

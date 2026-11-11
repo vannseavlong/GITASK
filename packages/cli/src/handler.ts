@@ -7,6 +7,7 @@ import { taskActivityCached } from "gitask-core";
 import { buildPlan, confirmProblem, syncErrorMessage, syncResultMessage, toPlanView } from "../../vscode/src/github-plan.ts";
 import { handleAddPerson, handleSetOwner, ownerName } from "../../vscode/src/owner.ts";
 import { buildReportFile, type ReportFile } from "../../vscode/src/report-request.ts";
+import { handleSprintMessage, handleTaskSprintMessage, putNewTaskInSprint, sprintContext } from "../../vscode/src/sprint-messages.ts";
 
 export interface HandlerOptions {
   /** Absolute Tasks directory. */
@@ -53,14 +54,17 @@ export function createHandler(o: HandlerOptions) {
 
   async function handleNow(raw: unknown): Promise<HandlerResult> {
     let columns: string[];
+    let sprints: ReturnType<typeof sprintContext>;
     try {
-      columns = (await loadBoard(o.dir)).columns.map((c) => c.id);
+      const b = await loadBoard(o.dir);
+      columns = b.columns.map((c) => c.id);
+      sprints = sprintContext(b); // sprint ids in messages must exist on this board
     } catch (e) {
       return { status: 200, reply: { type: "error", message: `Cannot read ${o.dir}: ${(e as Error).message}` }, changed: false };
     }
     // The browser remembers its view itself (localStorage); nothing to do server-side.
     if (typeof raw === "object" && raw !== null && (raw as { type?: unknown }).type === "view") return { status: 200, changed: false };
-    const v = validateMessage(raw, { tasksDir: o.dir, columns, views: [] });
+    const v = validateMessage(raw, { tasksDir: o.dir, columns, views: [], sprints });
     if (!v.ok) return { status: 400, reply: { type: "error", message: `Rejected: ${v.reason}` }, changed: false };
     const m = v.message;
     const unsafe = await guardMessagePath(m, o.dir); // a symlink in Tasks/ must never be opened, moved or edited
@@ -91,6 +95,13 @@ export function createHandler(o: HandlerOptions) {
             tier: m.tier,
             owner: await ownerName(o.dir, m.owner),
           });
+          if (m.sprint) {
+            try {
+              await putNewTaskInSprint(o.dir, file, m.sprint, { commit });
+            } catch (e) {
+              return err((e as Error).message);
+            }
+          }
           return { status: 200, reply: taskCreatedMessage(file, o.dir) ?? undefined, changed: true };
         } catch (e) {
           return err((e as Error).message);
@@ -240,6 +251,20 @@ export function createHandler(o: HandlerOptions) {
           return { status: 200, reply: syncErrorMessage(e, token), changed: true };
         }
       }
+      case "createSprint":
+      case "updateSprint":
+      case "startSprint": {
+        const reply = await handleSprintMessage(o.dir, m, { commit });
+        return { status: 200, reply, changed: reply.ok };
+      }
+      case "setTaskSprint":
+      case "setEstimate":
+        try {
+          await handleTaskSprintMessage(await loadBoard(o.dir), m, { commit });
+          return { status: 200, changed: true };
+        } catch (e) {
+          return err(`could not update ${basename(m.path)}: ${(e as Error).message}`);
+        }
       case "toggleSubtask":
         try {
           const task = (await loadBoard(o.dir)).columns.flatMap((c) => c.tasks).find((t) => t.path === m.path);
