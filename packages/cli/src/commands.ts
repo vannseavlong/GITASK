@@ -8,7 +8,8 @@ import {
 import type { Board, FieldDef, FieldSelection, Person, ReportDateField, Task } from "gitask-core";
 
 /** Flags that take a value; everything else starting with `--` is a switch. */
-const VALUE_FLAGS = new Set(["dir", "from", "to", "people", "date", "format", "out", "assign", "lane", "allow-repo", "field"]);
+const VALUE_FLAGS = new Set(["dir", "from", "to", "people", "date", "format", "out", "assign", "lane", "allow-repo", "field",
+  "name", "goal", "start", "end", "capacity", "unfinished", "next", "backlog", "sprint"]);
 
 export interface Parsed {
   positional: string[];
@@ -111,7 +112,7 @@ export async function subtaskCmd(dir: string, board: Board, p: Parsed, find: (b:
   throw new Error("usage: gitask subtask add|assign|field|list ...");
 }
 
-function checkDate(name: string, v: string | undefined): string | undefined {
+export function checkDate(name: string, v: string | undefined): string | undefined {
   if (v === undefined) return undefined;
   const d = new Date(`${v}T00:00:00Z`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) {

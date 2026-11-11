@@ -20,13 +20,24 @@ gitask report --format html|md|csv [--from YYYY-MM-DD] [--to YYYY-MM-DD] \
 gitask github plan [task...]                          # dry run of a GitHub Issues sync
 gitask github sync --yes [task...]                    # apply it (token in GITHUB_TOKEN)
 gitask serve [--port 4173] [--host 127.0.0.1] [--no-open]   # the board in your browser
+gitask sprint list [--json]                           # sprints, * = active, tasks and points done
+gitask sprint new [--name <text>] [--goal <text>] [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--capacity <n>]
+gitask sprint start <id>                              # start a planned sprint
+gitask sprint add <task> [sprint]                     # default: the active, else the newest planned sprint
+gitask sprint remove <task>                           # back to the backlog
+gitask estimate <task> <n|none>                       # set or clear the Estimate header
+gitask sprint complete <id|active> [--unfinished backlog|next] [--next <task>] [--backlog <task>] \
+              [--keep-status] [--dry-run] [--yes]     # prints the close plan; applies only with --yes
+gitask board --sprint <id|active|backlog>             # one sprint's tasks, or the backlog
 ```
+
+Sprints are off until `Tasks/gitask.json` has a `sprint` block (`{"sprint": {}}`). `sprint complete` changes nothing without `--yes` and exits 1 when the plan has blockers. Details: [sprints.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/sprints.md).
 
 `serve` listens on `127.0.0.1` only and every request needs the random token in the printed URL; requests from other web pages are rejected. Using `--host 0.0.0.0` leaves the token as the only protection over plain HTTP. Details: [serve.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/serve.md).
 
 `github` is off until `Tasks/gitask.json` has `{"github": {"repo": "owner/name"}}`. `plan` sends nothing; `sync` needs `--yes`. Try it on a throwaway repo first. Details and token permissions: [github.md](https://github.com/vannseavlong/GITASK/blob/main/Docs/architecture/github.md).
 
-`report` prints to stdout without `--out`. Unknown tasks, people, columns, bad dates or formats exit non-zero with a message. `--no-commit` skips the commit for `assign` and `subtask`.
+`report` prints to stdout without `--out`. Unknown tasks, people, columns, bad dates or formats exit non-zero with a message. `--no-commit` skips the commit for `assign`, `subtask`, `sprint` and `estimate`.
 
 Run it from the repo root that contains `Tasks/`. GITASK never pushes.
 
