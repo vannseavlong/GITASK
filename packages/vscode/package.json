@@ -37,6 +37,44 @@
       {
         "command": "gitask.syncGithub",
         "title": "GITASK: Sync to GitHub"
+      },
+      {
+        "command": "gitask.showOverview",
+        "title": "GITASK: Show Overview"
+      },
+      {
+        "command": "gitask.showBoard",
+        "title": "GITASK: Show Board"
+      },
+      {
+        "command": "gitask.showList",
+        "title": "GITASK: Show List"
+      },
+      {
+        "command": "gitask.showTimeline",
+        "title": "GITASK: Show Timeline"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "gitask.showOverview",
+        "key": "ctrl+alt+g o",
+        "mac": "cmd+alt+g o"
+      },
+      {
+        "command": "gitask.showBoard",
+        "key": "ctrl+alt+g b",
+        "mac": "cmd+alt+g b"
+      },
+      {
+        "command": "gitask.showList",
+        "key": "ctrl+alt+g l",
+        "mac": "cmd+alt+g l"
+      },
+      {
+        "command": "gitask.showTimeline",
+        "key": "ctrl+alt+g t",
+        "mac": "cmd+alt+g t"
       }
     ],
     "configuration": {

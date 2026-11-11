@@ -12,12 +12,14 @@ import { readTaskBody } from "./taskfile.ts";
 import { resolveTasksDir } from "./tasks-dir.ts";
 import { buildReportFile } from "./report-request.ts";
 import { DEFAULT_VIEW, VIEW_IDS } from "./view-ids.ts";
+import { VIEW_COMMANDS } from "./view-commands.ts";
 
 const VIEW_KEY = "gitask.lastView";
 let log: vscode.OutputChannel | undefined;
 
 let panel: vscode.WebviewPanel | undefined;
 let idsAssigned = false;
+let pendingView: string | undefined; // asked for by a view command while the webview was not loaded; sent on `ready`
 const queue = serialQueue(); // webview messages are handled one at a time so two quick writes never race on one file
 
 let tasksDirErrorShown = false;
@@ -101,10 +103,19 @@ async function initTasksFolder(ctx: vscode.ExtensionContext): Promise<void> {
   await post();
 }
 
+/** "GITASK: Show Board" and friends: open (or focus) the panel on `view` and remember it. */
+function showView(ctx: vscode.ExtensionContext, view: string): void {
+  void ctx.workspaceState.update(VIEW_KEY, view);
+  if (!panel) return openBoard(ctx, view);
+  pendingView = view; // a hidden panel reloads on reveal and would drop a message; `ready` sends it then
+  if (panel.visible) { pendingView = undefined; send({ type: "showView", id: view }); }
+  panel.reveal();
+}
+
 /** The React UI (packages/ui, built into dist/ui). */
-function openBoard(ctx: vscode.ExtensionContext): void {
+function openBoard(ctx: vscode.ExtensionContext, view?: string): void {
   if (panel) return panel.reveal();
-  const initialView = ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW);
+  const initialView = view ?? ctx.workspaceState.get<string>(VIEW_KEY, DEFAULT_VIEW);
   panel = vscode.window.createWebviewPanel("gitask", "GITASK", vscode.ViewColumn.Active, {
     enableScripts: true,
     localResourceRoots: [vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui")],
@@ -114,7 +125,7 @@ function openBoard(ctx: vscode.ExtensionContext): void {
   const asset = (name: string) => wv.asWebviewUri(vscode.Uri.joinPath(ctx.extensionUri, "dist", "ui", name)).toString();
   wv.html = uiHtml(VIEW_IDS, { cspSource: wv.cspSource, scriptUri: asset("ui.js"), styleUri: asset("ui.css"), initialView });
   idsAssigned = false;
-  panel.onDidDispose(() => (panel = undefined), undefined, ctx.subscriptions);
+  panel.onDidDispose(() => { panel = undefined; pendingView = undefined; }, undefined, ctx.subscriptions);
 
   panel.webview.onDidReceiveMessage((raw: unknown) => queue(() => onWebviewMessage(raw)), undefined, ctx.subscriptions);
 
@@ -160,7 +171,9 @@ function openBoard(ctx: vscode.ExtensionContext): void {
             log?.appendLine(`Could not read contributors: ${(e as Error).message}`);
           }
         }
-        return post();
+        await post();
+        if (pendingView) { send({ type: "showView", id: pendingView }); pendingView = undefined; }
+        return;
       case "view":
         return void ctx.workspaceState.update(VIEW_KEY, m.id);
       case "open":
@@ -387,6 +400,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("gitask.newTask", () => newTask(ctx)),
     vscode.commands.registerCommand("gitask.initTasks", () => initTasksFolder(ctx)),
     vscode.commands.registerCommand("gitask.syncGithub", () => syncGithub(tasksDir(), log)),
+    ...VIEW_COMMANDS.map((c) => vscode.commands.registerCommand(c.command, () => showView(ctx, c.view))),
   );
 }
 

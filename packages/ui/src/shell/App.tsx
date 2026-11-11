@@ -47,6 +47,10 @@ export function App({ host, initialView }: { host: Host; initialView: string }) 
       return next;
     });
   }, [host]);
+  // A view command on an already open panel ("GITASK: Show Board"): switch tab like a click would.
+  React.useEffect(() => host.onMessage((m) => {
+    if (m.type === "showView" && VIEWS.some((v) => v.id === m.id)) update({ view: m.id });
+  }), [host, update]);
 
   const [detailPath, setDetailPath] = React.useState<string | null>(null);
   React.useEffect(() => {
