@@ -2,6 +2,7 @@ import { AssigneePicker } from "@/components/assignee-picker.tsx";
 import * as React from "react";
 import type { Task } from "gitask-core";
 import { Badge } from "@/components/ui/badge";
+import { SprintBadges } from "@/components/sprint-badges.tsx";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { requestDelete } from "@/lib/delete-flow.ts";
@@ -83,6 +84,7 @@ export function DetailPanel({ host, board, path, onOpenTask, onClose }: {
             <div className="flex flex-wrap items-center gap-3 px-4 pb-2">
               <Button size="sm" onClick={() => host.send({ type: "open", path: task.path })}>Open file</Button>
               <ActionMenu label={task.title} className="size-7" onEdit={() => requestEdit(host, { kind: "task", path: task.path })} onDelete={() => requestDelete(host, { kind: "task", path: task.path, label: task.displayId ?? task.id })} />
+              <SprintBadges sprints={board?.sprints} task={task} className="text-xs" />
               {total && (
                 <div className="flex min-w-36 flex-1 items-center gap-1.5 text-xs" title={`${total.done} of ${total.total} done`}>
                   <Progress value={(100 * total.done) / total.total} className="h-1.5 flex-1" />

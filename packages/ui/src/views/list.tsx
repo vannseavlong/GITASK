@@ -2,9 +2,10 @@ import * as React from "react";
 import { ChevronRight } from "lucide-react";
 import type { ListRow } from "@host-src/views/list-logic.ts";
 import { LIST_COLUMNS, listOptions, listView } from "virtual:gitask-list-logic";
-import type { FieldDef, Person, Task } from "gitask-core";
+import type { BoardSprints, FieldDef, Person, Task } from "gitask-core";
 import { pruneFieldSelection, type FieldSelection } from "@core-src/field-filter.ts";
 import { FieldBadges } from "@/components/fields.tsx";
+import { SprintBadges } from "@/components/sprint-badges.tsx";
 import { Assignee } from "@/components/assignee-avatar.tsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,14 +53,14 @@ function ListFilterSelect({ field, label, value, options, onChange }: { field: s
   );
 }
 
-function Cell({ r, k, color, people, task, fields }: { r: ListRow; k: string; color?: string; people?: Person[]; task?: Task; fields?: FieldDef[] }) {
+function Cell({ r, k, color, people, task, fields, sprints }: { r: ListRow; k: string; color?: string; people?: Person[]; task?: Task; fields?: FieldDef[]; sprints?: BoardSprints }) {
   switch (k) {
     case "owner":
       return <TableCell>{r.owner ? <Assignee owner={r.owner} people={people} /> : null}</TableCell>;
     case "displayId":
       return <TableCell className="whitespace-nowrap font-mono opacity-80">{r.displayId}</TableCell>;
     case "title":
-      return <TableCell className="min-w-40 break-words">{r.title}<FieldBadges fields={fields} values={task?.values} className="ml-2 align-middle" /></TableCell>;
+      return <TableCell className="min-w-40 break-words">{r.title}<FieldBadges fields={fields} values={task?.values} className="ml-2 align-middle" /><SprintBadges sprints={sprints} task={task} className="ml-2 align-middle" /></TableCell>;
     case "status":
       return (
         <TableCell>
@@ -190,7 +191,7 @@ export function ListView({ board, full, ui, update, host, openTask }: ViewProps)
                         </button>
                       )}
                     </TableCell>
-                    {LIST_COLUMNS.map((c) => <Cell key={c.key} r={r} k={c.key} color={color[r.status]} people={full.people} task={byPath.get(r.path)} fields={full.config?.fields} />)}
+                    {LIST_COLUMNS.map((c) => <Cell key={c.key} r={r} k={c.key} color={color[r.status]} people={full.people} task={byPath.get(r.path)} fields={full.config?.fields} sprints={full.sprints} />)}
                     <TableCell>
                       <Button
                         variant="secondary"

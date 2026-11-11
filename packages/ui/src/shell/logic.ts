@@ -3,6 +3,7 @@ import { statusVisibility } from "@host-src/status-visibility.ts";
 import { countTasks, filterBoard, rangeActive, rangeNorm } from "virtual:gitask-filter-logic";
 import { filterPeople } from "@host-src/people-filter.ts";
 import { filterByFields, pruneFieldSelection } from "@core-src/field-filter.ts";
+import { resolveScope, scopeBoard, type ResolvedScope } from "@host-src/sprint-scope.ts";
 import type { BoardData, UiState } from "@/host/index.ts";
 
 export { countTasks, filterBoard, rangeActive, rangeNorm };
@@ -24,17 +25,21 @@ export function filterText(board: BoardData | null, q: string): BoardData | null
 export interface Derived {
   /** Without hidden statuses: what the chips and the empty-column rule look at. */
   visible: BoardData | null;
-  /** Visible, then date range, then people, then fields, then text: what a view draws. */
+  /** Visible, then sprint scope, then date range, then people, then fields, then text: what a view draws. */
   shown: BoardData | null;
   range: Range;
+  /** The sprint switcher's scope checked against the board (`off` when sprints are not on). */
+  scope: ResolvedScope;
 }
 
 export function derive(raw: BoardData | null, ui: UiState): Derived {
   const range = rangeNorm(ui.range);
   const visible = (SV.apply(raw, ui.hiddenStatuses) ?? null) as BoardData | null;
-  const byDate = filterBoard(visible, range) as BoardData | null;
+  const scope = resolveScope(ui.sprintScope, raw?.sprints);
+  const scoped = visible ? scopeBoard(visible, scope, raw?.sprints) : visible;
+  const byDate = filterBoard(scoped, range) as BoardData | null;
   const byPeople = byDate ? filterPeople(byDate, ui.people, raw?.people) : byDate;
   const byFields = byPeople ? filterByFields(byPeople, pruneFieldSelection(ui.fields, raw?.config?.fields)) : byPeople;
   const shown = filterText(byFields, ui.filter ?? "");
-  return { visible, shown, range };
+  return { visible, shown, range, scope };
 }
