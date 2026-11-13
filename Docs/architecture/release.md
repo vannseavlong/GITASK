@@ -47,6 +47,8 @@ Rules:
 
 `packages/web` (Docusaurus) is hosted on Firebase Hosting: site `gitask-me` (`https://gitask-me.web.app`) in project `longcelot-eco-system`. It is deployed **from the owner's machine**, never from CI. CI (`ci.yml`, job `web`) only typechecks and builds it on PRs, with read-only permissions and no secrets. The website does not take part in the tag release; the Download section reads the latest release at runtime.
 
+Visit and event tracking (GA4) only runs on the live host; see [analytics.md](analytics.md).
+
 The target comes from `packages/web/.firebaserc` and `packages/web/firebase.json`. `firebase-tools` is pinned in `scripts/deploy-web.sh` (`FIREBASE_TOOLS_VERSION`, never `@latest`); bump it on purpose, using a release at least two weeks old.
 
 **Deploy (live), from an up-to-date `main`:**

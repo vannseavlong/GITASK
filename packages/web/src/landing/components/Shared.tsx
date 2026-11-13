@@ -1,5 +1,7 @@
 import { Check, Copy } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { track } from "../../analytics/track"
+import { cleanText } from "../../analytics/events"
 
 export function SectionHeading({
   eyebrow,
@@ -41,6 +43,8 @@ export function CopyButton({
     let text = "Copied"
     try {
       await navigator.clipboard.writeText(value)
+      // The commands are fixed text from this site, never user input.
+      track("copy_command", { command: cleanText(value) })
     } catch {
       text = "Copy failed. Select the text and copy it by hand."
     }
