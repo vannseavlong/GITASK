@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import analyticsPlugin from './src/analytics/plugin';
 
 // Final production URL is set in Ops-web-deploy; one value, used for canonicals and the sitemap.
 const SITE_URL = 'https://gitask-me.web.app';
@@ -10,6 +11,9 @@ const THEME_COLOR = '#3b82f6'; // --brand-primary in src/css/custom.css
 // Public ownership token for Google Search Console (an HTML-tag verification, not a secret).
 const GOOGLE_SITE_VERIFICATION = 'jAVN--LqYyMndNhV65oe70UmMoMOhgejwSV6BzO2WUo';
 const REPO = 'https://github.com/vannseavlong/GITASK';
+// Public GA4 measurement id of the `gitask-web` app in Firebase project longcelot-eco-system (shown to every
+// visitor, not a secret). Empty turns analytics off. Setup and events: Docs/architecture/analytics.md.
+const GA_MEASUREMENT_ID = 'G-XWPLC3S02X';
 
 const config: Config = {
   title: 'GITASK',
@@ -28,6 +32,8 @@ const config: Config = {
   i18n: {defaultLocale: 'en', locales: ['en']},
 
   plugins: [
+    // Only sends data from the SITE_URL host, so local builds, the preview channel and forks stay out of the stats.
+    [analyticsPlugin, {measurementId: GA_MEASUREMENT_ID, hostname: new URL(SITE_URL).hostname}],
     // robots.txt is generated so the sitemap URL comes from SITE_URL, the one place the host is set.
     function robotsTxt() {
       return {

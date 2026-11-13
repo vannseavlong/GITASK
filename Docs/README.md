@@ -3,7 +3,7 @@
 | Folder | What is in it | Read when |
 |---|---|---|
 | [requirements/](requirements/) | What we build and why: [views.md](requirements/views.md) (views, people, sub-tasks, report), [landing-page.md](requirements/landing-page.md), [web-redesign-brief.md](requirements/web-redesign-brief.md) | You need business rules or screens |
-| [architecture/](architecture/) | How the system works (UI: [ui.md](architecture/ui.md), browser server: [serve.md](architecture/serve.md), GitHub sync: [github.md](architecture/github.md), project config: [config.md](architecture/config.md), releases: [release.md](architecture/release.md), manual testing before a release: [manual-testing.md](architecture/manual-testing.md), one-time publisher and token setup: [setupguide.md](architecture/setupguide.md)) | You touch data, jobs, events or the UI |
+| [architecture/](architecture/) | How the system works (UI: [ui.md](architecture/ui.md), browser server: [serve.md](architecture/serve.md), GitHub sync: [github.md](architecture/github.md), project config: [config.md](architecture/config.md), releases: [release.md](architecture/release.md), website analytics: [analytics.md](architecture/analytics.md), manual testing before a release: [manual-testing.md](architecture/manual-testing.md), one-time publisher and token setup: [setupguide.md](architecture/setupguide.md)) | You touch data, jobs, events or the UI |
 | [api/](api/) | The contract between client and backend (current) | You call or build an endpoint |
 | [archive/](archive/) | Superseded; do not follow | History only |
 
