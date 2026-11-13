@@ -3,7 +3,8 @@
 // - gtag.js only loads on the real site host, never on localhost, the preview channel or a fork;
 // - "#section" jumps on the landing page are not counted as page views;
 // - Google signals and ad personalisation are off (no consent banner, so no cross-site data);
-// - page_location never carries the query string or hash.
+// - page_location and page_referrer never carry a query string or hash, and the search page title
+//   (which contains the query) is replaced with "Search".
 // Event code lives in ./client.ts; what gets sent is decided in ./events.ts.
 import type {LoadContext, Plugin} from '@docusaurus/types';
 
@@ -34,11 +35,12 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 window.gtag = gtag;
 gtag('js', new Date());
-gtag('config', ${id}, {
-  page_location: location.origin + location.pathname,
-  allow_google_signals: false,
-  allow_ad_personalization_signals: false
-});
+var ref = '';
+try { if (document.referrer) { var r = new URL(document.referrer); ref = r.origin + r.pathname; } } catch (e) {}
+var page = {page_location: location.origin + location.pathname, page_referrer: ref};
+if (/^\\/search\\/?$/.test(location.pathname)) page.page_title = 'Search';
+gtag('set', page);
+gtag('config', ${id}, {allow_google_signals: false, allow_ad_personalization_signals: false});
 var s = document.createElement('script');
 s.async = true;
 s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(${id});

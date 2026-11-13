@@ -8,7 +8,10 @@ export type EventParams = Record<string, string | number | boolean>
 export type AnalyticsEvent = { name: string; params: EventParams }
 
 const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/g
+// 20+ word characters in a row: API keys, tokens (ghp_…, sk-…), JWT parts, hashes.
+const TOKEN = /[A-Za-z0-9_-]{20,}/g
 // 6+ digits in a row (phone numbers, ids, card-like numbers), allowing spaces and dashes inside.
+// Dates such as 2026-11-13 are caught too; that is accepted.
 const LONG_NUMBER = /\d(?:[\s-]?\d){5,}/g
 
 /** Trim, collapse whitespace, redact emails and long numbers, cap the length. */
@@ -18,6 +21,7 @@ export function cleanText(value: string | null | undefined, max = MAX_PARAM_LENG
     .replace(/\s+/g, " ")
     .trim()
     .replace(EMAIL, "[email]")
+    .replace(TOKEN, "[token]")
     .replace(LONG_NUMBER, "[number]")
     .slice(0, max)
 }
@@ -65,7 +69,12 @@ export function eventsForLink(click: LinkClick): AnalyticsEvent[] {
   if (click.isButton) {
     events.push({
       name: "cta_click",
-      params: { cta_text: text, link_url: external ? target : url.pathname + hashOf(click.href), section, outbound: external },
+      params: {
+        cta_text: text,
+        link_url: external ? target : (url.pathname + hashOf(click.href)).slice(0, MAX_PARAM_LENGTH),
+        section,
+        outbound: external,
+      },
     })
   }
   if (external) {
@@ -79,6 +88,22 @@ function hashOf(href: string): string {
   const i = href.indexOf("#")
   if (i < 0) return ""
   return cleanText(href.slice(i), 40)
+}
+
+/** Visible text of a link, or its aria-label for icon-only links. */
+export function linkText(textContent: string | null | undefined, ariaLabel: string | null | undefined): string {
+  return cleanText(textContent) || cleanText(ariaLabel)
+}
+
+/** The search page puts the query in its title ("Search results for …"), so it gets a fixed title. */
+export function pageTitle(pathname: string, title: string): string {
+  return /^\/search\/?$/.test(pathname) ? "Search" : cleanText(title, 300)
+}
+
+/** Origin and path of the referrer, or "" when there is none. */
+export function cleanReferrer(referrer: string): string {
+  if (!referrer) return ""
+  return cleanUrl(referrer, referrer) ?? ""
 }
 
 /** A docs or navbar search worth sending: at least 2 characters after cleaning. */

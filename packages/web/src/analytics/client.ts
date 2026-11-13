@@ -1,8 +1,8 @@
 // Browser side of the analytics plugin: page views on route change and a few delegated listeners.
 // Every call is a no-op when gtag is missing (wrong host, ad blocker), and nothing here may break the page.
 import type {ClientModule} from '@docusaurus/types';
-import {eventsForLink, isNewPage, searchEvent, cleanText, type AnalyticsEvent} from './events';
-import {track} from './track';
+import {eventsForLink, isNewPage, linkText, pageTitle, searchEvent, cleanText, type AnalyticsEvent} from './events';
+import {setPage, track} from './track';
 
 function send(event: AnalyticsEvent | null): void {
   if (event) track(event.name, event.params);
@@ -29,7 +29,7 @@ function onClick(e: MouseEvent): void {
     eventsForLink({
       href: link.getAttribute('href') ?? '',
       pageUrl: location.href,
-      text: link.textContent ?? link.getAttribute('aria-label') ?? '',
+      text: linkText(link.textContent, link.getAttribute('aria-label')),
       isButton: link.classList.contains('button'),
       section: sectionOf(link),
     }).forEach(send);
@@ -74,12 +74,18 @@ const clientModule: ClientModule = {
     if (!isNewPage(location, previousLocation)) return;
     // Docusaurus sets the new title on the next tick; wait so page_view carries the right one.
     window.setTimeout(() => {
-      track('page_view', {
+      // "set" first: later clicks and searches on this page then report this page, not the first one.
+      const page = {
         page_location: `${window.location.origin}${location.pathname}`,
-        page_title: document.title,
-      });
+        page_title: pageTitle(location.pathname, document.title),
+      };
+      setPage(page);
+      track('page_view', page);
       if (location.pathname.replace(/\/$/, '') === '/search') {
-        send(searchEvent(new URLSearchParams(location.search).get('q') ?? '', 'search_page'));
+        const event = searchEvent(new URLSearchParams(location.search).get('q') ?? '', 'search_page');
+        // Enter in the navbar search opens this page with the term already sent: send it once.
+        if (event && event.params.search_term !== lastSearch) send(event);
+        lastSearch = '';
       }
     });
   },

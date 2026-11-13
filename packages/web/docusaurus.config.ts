@@ -13,7 +13,7 @@ const GOOGLE_SITE_VERIFICATION = 'jAVN--LqYyMndNhV65oe70UmMoMOhgejwSV6BzO2WUo';
 const REPO = 'https://github.com/vannseavlong/GITASK';
 // Public GA4 measurement id of the `gitask-web` app in Firebase project longcelot-eco-system (shown to every
 // visitor, not a secret). Empty turns analytics off. Setup and events: Docs/architecture/analytics.md.
-const GA_MEASUREMENT_ID = '';
+const GA_MEASUREMENT_ID = 'G-XWPLC3S02X';
 
 const config: Config = {
   title: 'GITASK',
